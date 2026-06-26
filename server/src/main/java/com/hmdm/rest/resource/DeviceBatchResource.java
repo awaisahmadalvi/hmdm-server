@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -13,7 +14,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -37,17 +37,17 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import com.hmdm.persistence.ConfigurationDAO;
 import com.hmdm.persistence.GroupDAO;
+import com.hmdm.rest.json.BatchDevicePreviewResponse;
+import com.hmdm.rest.json.BatchDevicePreviewRow;
+import com.hmdm.rest.json.BatchImportResult;
 import com.hmdm.rest.json.Response;
+import com.hmdm.service.DeviceBatchExcelParser;
+import com.hmdm.service.DeviceBatchImportService;
+import com.hmdm.service.DeviceBatchValidationService;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
-
-import com.hmdm.service.DeviceBatchExcelParser;
-import com.hmdm.service.DeviceBatchValidationService;
-import com.hmdm.rest.json.BatchDevicePreviewResponse;
-import com.hmdm.rest.json.BatchDeviceUploadRow;
-import java.util.List;
 
 @Api(tags = { "Batch Device Upload" }, authorizations = { @Authorization("Bearer Token") })
 @Singleton
@@ -58,6 +58,7 @@ public class DeviceBatchResource {
     private ConfigurationDAO configurationDAO;
     private DeviceBatchExcelParser excelParser;
     private DeviceBatchValidationService validationService;
+    private DeviceBatchImportService importService;
 
     /**
      * Constructor required by Swagger/Jersey
@@ -69,11 +70,29 @@ public class DeviceBatchResource {
     public DeviceBatchResource(GroupDAO groupDAO,
             ConfigurationDAO configurationDAO,
             DeviceBatchExcelParser excelParser,
-            DeviceBatchValidationService validationService) {
+            DeviceBatchValidationService validationService,
+            DeviceBatchImportService importService) {
         this.groupDAO = groupDAO;
         this.configurationDAO = configurationDAO;
         this.excelParser = excelParser;
         this.validationService = validationService;
+        this.importService = importService;
+    }
+
+    @ApiOperation(value = "Download batch device upload Excel template", notes = "Downloads an Excel template containing Device Upload sheet and reference sheets for groups and configurations")
+    @GET
+    @Path("/template")
+    @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public javax.ws.rs.core.Response downloadTemplate() throws IOException {
+        byte[] fileBytes = buildTemplate();
+
+        String fileName = "device-batch-template-" +
+                LocalDate.now().format(DateTimeFormatter.ISO_DATE) + ".xlsx";
+
+        return javax.ws.rs.core.Response.ok(fileBytes)
+                .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
+                .header("Content-Length", fileBytes.length)
+                .build();
     }
 
     @ApiOperation(value = "Preview batch device upload Excel", notes = "Parses uploaded Excel and validates each device row before import")
@@ -98,20 +117,29 @@ public class DeviceBatchResource {
         }
     }
 
-    @ApiOperation(value = "Download batch device upload Excel template", notes = "Downloads an Excel template containing Device Upload sheet and reference sheets for groups and configurations")
-    @GET
-    @Path("/template")
-    @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    public javax.ws.rs.core.Response downloadTemplate() throws IOException {
-        byte[] fileBytes = buildTemplate();
+    @ApiOperation(value = "Import batch device upload Excel", notes = "Parses uploaded Excel and imports valid device rows")
+    @POST
+    @Path("/import")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response importDevices(@FormDataParam("file") InputStream fileInputStream) {
+        if (fileInputStream == null) {
+            return Response.ERROR("error.file.required");
+        }
 
-        String fileName = "device-batch-template-" +
-                LocalDate.now().format(DateTimeFormatter.ISO_DATE) + ".xlsx";
+        try {
+            BatchDevicePreviewResponse previewResponse = this.validationService
+                    .validate(this.excelParser.parse(fileInputStream));
 
-        return javax.ws.rs.core.Response.ok(fileBytes)
-                .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
-                .header("Content-Length", fileBytes.length)
-                .build();
+            List<BatchDevicePreviewRow> rows = previewResponse.getRows();
+            BatchImportResult result = importService.importDevices(rows);
+
+            return Response.OK(result);
+        } catch (IllegalArgumentException e) {
+            return Response.ERROR(e.getMessage());
+        } catch (Exception e) {
+            return Response.ERROR("Failed to parse uploaded Excel file");
+        }
     }
 
     private byte[] buildTemplate() throws IOException {
@@ -194,11 +222,11 @@ public class DeviceBatchResource {
 
         // Column C = Configuration (index 2)
         addNamedRangeDropdown(validationHelper, uploadSheet,
-                "CONFIGURATION_OPTIONS", firstRow, lastRow, 2, 2);
+                "CONFIGURATION_OPTIONS", firstRow, lastRow, 1, 1);
 
         // Column D = Group (index 3)
         addNamedRangeDropdown(validationHelper, uploadSheet,
-                "GROUP_OPTIONS", firstRow, lastRow, 3, 3);
+                "GROUP_OPTIONS", firstRow, lastRow, 2, 2);
     }
 
     private void addNamedRangeDropdown(DataValidationHelper validationHelper,
@@ -233,11 +261,9 @@ public class DeviceBatchResource {
         CellStyle headerStyle = createHeaderStyle(workbook);
 
         Row header = sheet.createRow(0);
-        createCell(header, 0, "Bus No", headerStyle);
-        createCell(header, 1, "Device Name", headerStyle);
-        createCell(header, 2, "Configuration", headerStyle);
-        createCell(header, 3, "Group", headerStyle);
-        createCell(header, 4, "Description", headerStyle);
+        createCell(header, 0, "Device Name", headerStyle);
+        createCell(header, 1, "Configuration", headerStyle);
+        createCell(header, 2, "Group", headerStyle);
 
         for (int i = 1; i <= 20; i++) {
             sheet.createRow(i);
@@ -332,7 +358,7 @@ public class DeviceBatchResource {
 
     private void autoSizeColumns(Workbook workbook) {
         Sheet uploadSheet = workbook.getSheet("Device Upload");
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 3; i++) {
             uploadSheet.autoSizeColumn(i);
             uploadSheet.setColumnWidth(i, Math.max(uploadSheet.getColumnWidth(i), 4500));
         }

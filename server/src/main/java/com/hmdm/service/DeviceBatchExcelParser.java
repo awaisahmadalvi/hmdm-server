@@ -1,21 +1,27 @@
 package com.hmdm.service;
 
-import com.hmdm.rest.json.BatchDeviceUploadRow;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import javax.inject.Singleton;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.inject.Singleton;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import com.hmdm.rest.json.BatchDevicePreviewRow;
 
 @Singleton
 public class DeviceBatchExcelParser {
 
     private static final String SHEET_NAME = "Device Upload";
 
-    public List<BatchDeviceUploadRow> parse(InputStream inputStream) throws Exception {
-        List<BatchDeviceUploadRow> rows = new ArrayList<>();
+    public List<BatchDevicePreviewRow> parse(InputStream inputStream) throws Exception {
+        List<BatchDevicePreviewRow> rows = new ArrayList<>();
 
         try (Workbook workbook = new XSSFWorkbook(inputStream)) {
             Sheet sheet = workbook.getSheet(SHEET_NAME);
@@ -31,13 +37,11 @@ public class DeviceBatchExcelParser {
                     continue;
                 }
 
-                BatchDeviceUploadRow dto = new BatchDeviceUploadRow();
+                BatchDevicePreviewRow dto = new BatchDevicePreviewRow();
                 dto.setRowNumber(i + 1); // Excel row number
-                dto.setBusNo(getCellString(row, 0));
-                dto.setDeviceName(getCellString(row, 1));
-                dto.setConfigurationValue(getCellString(row, 2));
-                dto.setGroupValue(getCellString(row, 3));
-                dto.setDescription(getCellString(row, 4));
+                dto.setDeviceName(getCellString(row, 0));
+                dto.setConfigurationValue(getCellString(row, 1));
+                dto.setGroupValue(getCellString(row, 2));
 
                 rows.add(dto);
             }
@@ -70,7 +74,7 @@ public class DeviceBatchExcelParser {
             return true;
         }
 
-        for (int i = 0; i <= 4; i++) {
+        for (int i = 0; i <= 2; i++) {
             String value = getCellString(row, i);
             if (value != null && !value.trim().isEmpty()) {
                 return false;

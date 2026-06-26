@@ -1,17 +1,21 @@
 package com.hmdm.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.hmdm.persistence.ConfigurationDAO;
 import com.hmdm.persistence.GroupDAO;
 import com.hmdm.persistence.domain.Configuration;
 import com.hmdm.persistence.domain.Group;
 import com.hmdm.rest.json.BatchDevicePreviewResponse;
 import com.hmdm.rest.json.BatchDevicePreviewRow;
-import com.hmdm.rest.json.BatchDeviceUploadRow;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Singleton
 public class DeviceBatchValidationService {
@@ -26,7 +30,7 @@ public class DeviceBatchValidationService {
         this.configurationDAO = configurationDAO;
     }
 
-    public BatchDevicePreviewResponse validate(List<BatchDeviceUploadRow> uploadedRows) {
+    public BatchDevicePreviewResponse validate(List<BatchDevicePreviewRow> uploadedRows) {
         BatchDevicePreviewResponse response = new BatchDevicePreviewResponse();
 
         List<Group> groups = this.groupDAO.getAllGroups();
@@ -47,7 +51,7 @@ public class DeviceBatchValidationService {
                 .collect(Collectors.toMap(c -> normalize(c.getName()), c -> c, (a, b) -> a, LinkedHashMap::new));
 
         Map<String, Integer> deviceNameCount = new HashMap<>();
-        for (BatchDeviceUploadRow row : uploadedRows) {
+        for (BatchDevicePreviewRow row : uploadedRows) {
             if (row.getDeviceName() != null) {
                 String key = normalize(row.getDeviceName());
                 deviceNameCount.put(key, deviceNameCount.getOrDefault(key, 0) + 1);
@@ -56,14 +60,12 @@ public class DeviceBatchValidationService {
 
         List<BatchDevicePreviewRow> previewRows = new ArrayList<>();
 
-        for (BatchDeviceUploadRow row : uploadedRows) {
+        for (BatchDevicePreviewRow row : uploadedRows) {
             BatchDevicePreviewRow preview = new BatchDevicePreviewRow();
             preview.setRowNumber(row.getRowNumber());
-            preview.setBusNo(row.getBusNo());
             preview.setDeviceName(row.getDeviceName());
             preview.setConfigurationValue(row.getConfigurationValue());
             preview.setGroupValue(row.getGroupValue());
-            preview.setDescription(row.getDescription());
 
             List<String> errors = new ArrayList<>();
 

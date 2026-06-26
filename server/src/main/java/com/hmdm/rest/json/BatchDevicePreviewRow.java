@@ -5,11 +5,9 @@ import java.util.List;
 
 public class BatchDevicePreviewRow {
     private int rowNumber;
-    private String busNo;
     private String deviceName;
     private String configurationValue;
     private String groupValue;
-    private String description;
 
     private Integer configurationId;
     private Integer groupId;
@@ -26,14 +24,6 @@ public class BatchDevicePreviewRow {
 
     public void setRowNumber(int rowNumber) {
         this.rowNumber = rowNumber;
-    }
-
-    public String getBusNo() {
-        return busNo;
-    }
-
-    public void setBusNo(String busNo) {
-        this.busNo = busNo;
     }
 
     public String getDeviceName() {
@@ -58,14 +48,6 @@ public class BatchDevicePreviewRow {
 
     public void setGroupValue(String groupValue) {
         this.groupValue = groupValue;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public Integer getConfigurationId() {
