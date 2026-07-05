@@ -23,8 +23,6 @@ package com.hmdm.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.BaseEncoding;
-import com.hmdm.rest.json.Response;
-import com.hmdm.rest.json.SyncResponseInt;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -57,7 +55,7 @@ public class CryptoUtil {
     public static String getHexString(byte[] digest) {
         char[] hexChars = new char[digest.length * 2];
 
-        for(int i = 0; i < digest.length; ++i) {
+        for (int i = 0; i < digest.length; ++i) {
             int v = digest[i] & 255;
             hexChars[i * 2] = hexArray[v >>> 4];
             hexChars[i * 2 + 1] = hexArray[v & 15];
@@ -67,7 +65,10 @@ public class CryptoUtil {
     }
 
     /**
-     * <p>Encodes the specified content into Base-64 URL-safe format according to RFC 3548.</p>
+     * <p>
+     * Encodes the specified content into Base-64 URL-safe format according to RFC
+     * 3548.
+     * </p>
      *
      * @param digest a content to encode.
      * @return a base-64 encoded string representing the specified content.
@@ -81,7 +82,7 @@ public class CryptoUtil {
         // Calculate checksum
         MessageDigest md = MessageDigest.getInstance("MD5");
         try (InputStream is = new BufferedInputStream(fileContent);
-             DigestInputStream dis = new DigestInputStream(is, md)) {
+                DigestInputStream dis = new DigestInputStream(is, md)) {
             /* Read decorated stream (dis) to EOF as normal... */
             int b;
             while ((b = dis.read()) != -1) {
@@ -110,7 +111,7 @@ public class CryptoUtil {
     public static String getSHA1String(String value) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
-            md.update( value.getBytes());
+            md.update(value.getBytes());
             byte[] digest = md.digest();
 
             char[] hexChars = new char[digest.length * 2];
@@ -121,7 +122,7 @@ public class CryptoUtil {
             }
             return new String(hexChars).toUpperCase();
         } catch (Exception e) {
-            throw new RuntimeException( e );
+            throw new RuntimeException(e);
         }
     }
 

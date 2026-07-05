@@ -9,6 +9,7 @@ import com.hmdm.persistence.DeviceDAO;
 import com.hmdm.persistence.domain.Device;
 import com.hmdm.rest.json.BatchDevicePreviewRow;
 import com.hmdm.rest.json.BatchImportResult;
+import com.hmdm.rest.json.BatchImportRowResult;
 import com.hmdm.rest.json.LookupItem;
 
 @Singleton
@@ -33,8 +34,11 @@ public class DeviceBatchImportService {
 
             if (!row.isValid()) {
                 result.setFailedCount(result.getFailedCount() + 1);
-                result.getErrors().add(
-                        "Row " + row.getRowNumber() + " is invalid.");
+                result.getRows().add(
+                        new BatchImportRowResult(
+                                row.getRowNumber(),
+                                false,
+                                "Data is invalid."));
                 continue;
             }
 
@@ -44,12 +48,11 @@ public class DeviceBatchImportService {
 
                 if (existing != null) {
                     result.setFailedCount(result.getFailedCount() + 1);
-                    result.getErrors().add(
-                            "Row "
-                                    + row.getRowNumber()
-                                    + ": Device already exists ("
-                                    + row.getDeviceName()
-                                    + ")");
+                    result.getRows().add(
+                            new BatchImportRowResult(
+                                    row.getRowNumber(),
+                                    false,
+                                    "Device already exists"));
                     continue;
                 }
 
@@ -77,16 +80,20 @@ public class DeviceBatchImportService {
                 deviceDAO.insertDevice(device);
 
                 result.setSuccessCount(result.getSuccessCount() + 1);
+                result.getRows().add(
+                        new BatchImportRowResult(
+                                row.getRowNumber(),
+                                true,
+                                "Imported"));
 
             } catch (Exception ex) {
 
                 result.setFailedCount(result.getFailedCount() + 1);
-
-                result.getErrors().add(
-                        "Row "
-                                + row.getRowNumber()
-                                + ": "
-                                + ex.getMessage());
+                result.getRows().add(
+                        new BatchImportRowResult(
+                                row.getRowNumber(),
+                                false,
+                                ex.getMessage()));
 
             }
 

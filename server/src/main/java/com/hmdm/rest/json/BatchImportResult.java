@@ -9,7 +9,11 @@ public class BatchImportResult {
     private int successCount;
     private int failedCount;
 
-    private List<String> errors = new ArrayList<>();
+    private List<BatchImportRowResult> rows = new ArrayList<>();
+
+    public List<BatchImportRowResult> getRows() {
+        return rows;
+    }
 
     public void setTotalRows(int size) {
         this.totalRows = size;
@@ -21,10 +25,6 @@ public class BatchImportResult {
 
     public void setFailedCount(int count) {
         this.failedCount = count;
-    }
-
-    public List<String> getErrors() {
-        return errors;
     }
 
     public int getFailedCount() {

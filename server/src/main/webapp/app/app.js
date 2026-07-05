@@ -5,51 +5,10 @@ angular.module('headwind-kiosk',
     .constant("SUPPORTED_LANGUAGES", {
         'en': 'en_US',
         'en_US': 'en_US',
-        'en_UK': 'en_US',
-        'en_GB': 'en_US',
-        'en_IN': 'en_US',
-        'ru': "ru_RU",
-        'ru_RU': "ru_RU",
-        'fr': 'fr_FR',
-        'fr_FR': 'fr_FR',
-        'fr_CH': 'fr_FR',
-        'fr_BE': 'fr_FR',
-        'fr_CA': 'fr_FR',
-        'ar': 'ar_AE',
-        'ar_AE': 'ar_AE',
-        'ar_DZ': 'ar_AE',
-        'ar_EG': 'ar_AE',
-        'ar_KW': 'ar_AE',
-        'ar_PS': 'ar_AE',
-        'ar_QA': 'ar_AE',
-        'ar_SA': 'ar_AE',
-        'es': 'es_ES',
-        'es_US': 'es_ES',
-        'es_MX': 'es_ES',
-        'es_AR': 'es_ES',
-        'es_419': 'es_ES',
-        'de': 'de_DE',
-        'de_DE': 'de_DE',
-        'de_AT': 'de_DE',
-        'de_CH': 'de_DE',
-        'zh_TW': 'zh_TW',
-        'zh_HK': 'zh_TW',
-        'zh_CN': 'zh_CN',
-        'pt': 'pt_PT',
-        'pt_PT': 'pt_PT',
-        'pt_BR': 'pt_PT',
-        'ja_JP': 'ja_JP',
-        'tr': 'tr_TR',
-        'tr_TR': 'tr_TR',
-        'vi': 'vi_VN',
-        'vi_VN': 'vi_VN',
-        'it': 'it_IT',
-        'it_IT': 'it_IT'
     })
     .constant("LOCALIZATION_BUNDLES", [
-        'en_US', 'ru_RU', 'fr_FR', 'pt_PT', 'ar_AE', 'es_ES', 'de_DE',
-        'zh_TW', 'zh_CN', 'ja_JP', 'tr_TR', 'vi_VN', 'it_IT'])
-    .constant("APP_VERSION", "5.39.4") // Update this value on each commit
+        'en_US'])
+    .constant("APP_VERSION", "5.39.5") // Update this value on each commit
     .constant("ENGLISH", "en_US")
     .provider('getBrowserLanguage', function (ENGLISH, SUPPORTED_LANGUAGES) {
         this.f = function () {
@@ -68,7 +27,7 @@ angular.module('headwind-kiosk',
             return userLang;
         };
 
-        this.$get = function() {
+        this.$get = function () {
             return this.f;
         };
 
@@ -76,7 +35,7 @@ angular.module('headwind-kiosk',
     .constant("localizeText", function (locale, key) {
         var value = document.localization[locale][key];
         if (!value) {
-//            console.error('Message key ', key, ' is missing from I18N resource bundle for locale ', locale);
+            //            console.error('Message key ', key, ' is missing from I18N resource bundle for locale ', locale);
         }
         return value ? value : key;
     })
@@ -86,7 +45,7 @@ angular.module('headwind-kiosk',
                 var extended = {
                     goNewTab: function (stateName, params) {
                         $window.open(
-                            document.location.origin + document.location.pathname + $delegate.href(stateName, params, {absolute: false}), '_blank');
+                            document.location.origin + document.location.pathname + $delegate.href(stateName, params, { absolute: false }), '_blank');
                     }
                 };
                 angular.extend($delegate, extended);
@@ -113,7 +72,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.summary" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "SUMMARY"}
+                    openTab: function () { return "SUMMARY" }
                 }
 
             })
@@ -125,7 +84,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.devices" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "DEVICES"}
+                    openTab: function () { return "DEVICES" }
                 }
 
             })
@@ -137,7 +96,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.applications" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "APPS"}
+                    openTab: function () { return "APPS" }
                 }
             })
             .state('appVersionsEditor', {
@@ -158,7 +117,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.configurations" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "CONFS"}
+                    openTab: function () { return "CONFS" }
                 }
             })
             .state('files', {
@@ -169,7 +128,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.files" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "FILES"}
+                    openTab: function () { return "FILES" }
                 }
             })
             .state('designSettings', {
@@ -180,7 +139,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.default.design" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "DESIGN"}
+                    openTab: function () { return "DESIGN" }
                 }
             })
             .state('commonSettings', {
@@ -191,7 +150,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.common.settings" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "COMMON"}
+                    openTab: function () { return "COMMON" }
                 }
             })
             .state('langSettings', {
@@ -202,7 +161,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.language.settings" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "LANG"}
+                    openTab: function () { return "LANG" }
                 }
             })
             .state('users', {
@@ -213,7 +172,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.users" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "USERS"}
+                    openTab: function () { return "USERS" }
                 }
             })
             .state('roles', {
@@ -224,7 +183,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.roles" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "ROLES"}
+                    openTab: function () { return "ROLES" }
                 }
             })
             .state('groups', {
@@ -235,7 +194,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.groups" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "GROUPS"}
+                    openTab: function () { return "GROUPS" }
                 }
             })
             .state('icons', {
@@ -246,7 +205,7 @@ angular.module('headwind-kiosk',
                     label: '{{"tab.icons" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "ICONS"}
+                    openTab: function () { return "ICONS" }
                 }
             })
             .state('hints', {
@@ -257,7 +216,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.hints" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "HINTS"}
+                    openTab: function () { return "HINTS" }
                 }
             })
             .state('pluginSettings', {
@@ -268,7 +227,7 @@ angular.module('headwind-kiosk',
                     label: '{{"breadcrumb.plugins" | localize}}' //label to show in breadcrumbs
                 },
                 resolve: {
-                    openTab: function () {return "PLUGINS"}
+                    openTab: function () { return "PLUGINS" }
                 }
             })
             .state('configEditor', {
@@ -384,13 +343,13 @@ angular.module('headwind-kiosk',
             ]
         }
     ])
-    .config(['$ocLazyLoadProvider', 'SUPPORTED_LIBS', function($ocLazyLoadProvider, SUPPORTED_LIBS) {
+    .config(['$ocLazyLoadProvider', 'SUPPORTED_LIBS', function ($ocLazyLoadProvider, SUPPORTED_LIBS) {
         $ocLazyLoadProvider.config({
             events: true,
             modules: angular.copy(SUPPORTED_LIBS, [])
         });
     }])
-    .config(function($cssProvider) {
+    .config(function ($cssProvider) {
         angular.extend($cssProvider.defaults, {
             container: 'head',
             method: 'append',
@@ -403,12 +362,12 @@ angular.module('headwind-kiosk',
 
         var libs = {};
         SUPPORTED_LIBS.forEach(function (lib) {
-            libs[lib.name] = angular.extend(angular.copy(lib, {}), {loadedFiles: [], loading: false, loaded: false})
+            libs[lib.name] = angular.extend(angular.copy(lib, {}), { loadedFiles: [], loading: false, loaded: false })
         });
 
         var noOpLoader = function () {
             console.log("External library has been loaded already: ", libId);
-            return new Promise(function(resolve) {
+            return new Promise(function (resolve) {
                 resolve();
             })
         };
@@ -428,7 +387,7 @@ angular.module('headwind-kiosk',
                                 $css.bind(style, $rootScope);
                             });
                         }
-                        
+
                         loader = function () {
                             console.log("Loading external library: ", libId, " ...");
 
@@ -436,7 +395,7 @@ angular.module('headwind-kiosk',
                                 var listenerRemove = $rootScope.$on('ocLazyLoad.fileLoaded', function (e, url) {
                                     if (library.files.indexOf(url) >= 0) {
                                         console.log('Loaded external library: ', url);
-                                        
+
                                         if (library.loadedFiles.indexOf(url) < 0) {
                                             library.loadedFiles.push(url);
                                         }
@@ -487,11 +446,11 @@ angular.module('headwind-kiosk',
         }
     })
     .run(function ($rootScope, $state, $stateParams, authService, pluginService, $ocLazyLoad, localization, hintService,
-                   $window, $transitions, rebranding, Idle) {
+        $window, $transitions, rebranding, Idle) {
         $rootScope.$state = $state;
         $rootScope.$stateParams = $stateParams;
 
-        var initIdleLogout = function() {
+        var initIdleLogout = function () {
             var user = authService.getUser();
             if (user.idleLogout) {
                 Idle.setIdle(user.idleLogout);
@@ -522,7 +481,7 @@ angular.module('headwind-kiosk',
         });
 
         $window.document.title = localization.localize('app.title').replace('${appName}', "MDM");
-        rebranding.query(function(value) {
+        rebranding.query(function (value) {
             $window.document.title = localization.localize('app.title').replace('${appName}', value.appName);
         });
 
@@ -532,7 +491,7 @@ angular.module('headwind-kiosk',
 
         $rootScope.$on('aero_LOCALE_CHANGED', function () {
             $window.document.title = localization.localize('app.title').replace('${appName}', "MDM");
-            rebranding.query(function(value) {
+            rebranding.query(function (value) {
                 $window.document.title = localization.localize('app.title').replace('${appName}', value.appName);
             });
         });
@@ -551,7 +510,7 @@ angular.module('headwind-kiosk',
             console.log('$cssAdd:', a, b, c);
         });
 
-        $transitions.onStart({ }, function(trans) {
+        $transitions.onStart({}, function (trans) {
             hintService.onStateChangeStart();
 
             if (trans.to().name !== 'passwordRecovery' &&

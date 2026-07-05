@@ -1,0 +1,150 @@
+<!-- Validation errors -->
+<!-- <div class="alert alert-danger" ng-if="validationErrors.length">
+  <strong>Validation Errors:</strong>
+  <ul>
+    <li ng-repeat="e in validationErrors">{{e}}</li>
+  </ul>
+</div> -->
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">
+      <i class="glyphicon glyphicon-import"></i> Batch Device Import
+    </h3>
+  </div>
+  <div class="panel-body">
+    <div ng-controller="BatchDeviceController">
+      <!-- Download Template -->
+
+      <div ng-if="errorMsg!=''" class="alert alert-danger modal-header">
+        <div class="error"><span> Error: {{errorMsg}}</span></div>
+      </div>
+      <div class="form-group my-4">
+        <div class="col-sm-offset-4 col-sm-8">
+          <button
+            type="button"
+            class="btn btn-default"
+            ng-click="downloadTemplate()"
+          >
+            <i class="glyphicon glyphicon-download"></i>
+            Download Template
+          </button>
+        </div>
+      </div>
+      <!-- Upload -->
+      <div class="form-group">
+        <label class="col-sm-3 control-label"
+          ><span localized>Excel File</span>
+        </label>
+        <!-- <label class="control-label col-sm-3">Excel File</label> -->
+        <div class="col-sm-6">
+          <input
+            type="file"
+            class="form-control"
+            accept=".xlsx,.xls"
+            file-model="importFile"
+          />
+        </div>
+        <div class="col-sm-3">
+          <button
+            class="btn btn-primary"
+            ng-click="preview()"
+            ng-disabled="!importFile || loading"
+          >
+            <i class="glyphicon glyphicon-eye-open"></i> Preview
+          </button>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="form-group margin-top-10" ng-if="devicesPreview.length">
+        <h4 class="text-primary margin-top-10">
+          <i class="glyphicon glyphicon-list-alt"></i> Preview
+          ({{devicesPreview.length}} devicesPreview)
+        </h4>
+
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered">
+            <thead class="thead-dark">
+              <tr>
+                <th>Row Number</th>
+                <th>Device Name</th>
+                <th>Configuration</th>
+                <th>Group</th>
+                <th>Status</th>
+                <th>Validation</th>
+                <th ng-if="isImported">Import Status</th>
+                <th ng-if="isImported">Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="d in devicesPreview">
+                <td>{{d.rowNumber}}</td>
+                <td>{{d.deviceName}}</td>
+                <td>{{d.configurationValue}}</td>
+                <td>{{d.groupValue}}</td>
+                <td>
+                  <span
+                    ng-class="{
+                    'text-success':!d.error,
+                    'text-danger':d.error
+                  }"
+                  >
+                    <span ng-if="d.valid" class="label label-success">
+                      Valid
+                    </span>
+
+                    <span ng-if="!d.valid" class="label label-danger">
+                      Invalid
+                    </span>
+                  </span>
+                </td>
+                <td>{{d.validationMessage}}</td>
+                <td ng-if="isImported">
+                  <span
+                    ng-if="d.importSuccess === true"
+                    class="label label-success"
+                  >
+                    Imported
+                  </span>
+
+                  <span
+                    ng-if="d.importSuccess === false"
+                    class="label label-danger"
+                  >
+                    Failed
+                  </span>
+
+                  <span ng-if="d.importSuccess === undefined"> - </span>
+                </td>
+
+                <td ng-if="isImported">{{d.importMessage}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div
+        ng-if="devicesPreview.length"
+        class="form-group text-right padding-top-10"
+      >
+        <button
+          class="btn btn-success"
+          ng-click="import()"
+          ng-disabled="devicesPreview.length==0 || loading"
+        >
+          <i class="glyphicon glyphicon-upload"></i> Import
+        </button>
+        <button
+          class="btn btn-default"
+          ng-click="closeModal()"
+          ng-disabled="loading"
+        >
+          <i class="glyphicon glyphicon-remove"></i> Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
