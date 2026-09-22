@@ -444,78 +444,8 @@
   margin-top: 10px !important;
 }
 
-/* =========================================================
-   Top tab bar (Devices / Applications / ... / Settings / Functions)
-   ========================================================= */
-
-.tabset .nav-tabs {
-  border-bottom: 1px solid #e3e9f0;
-  padding: 0 4px;
-}
-
-.tabset .nav-tabs > li {
-  margin-bottom: -1px;
-  float: left;
-}
-
-.tabset .nav-tabs > li > a {
-  border: none !important;
-  background: transparent !important;
-  color: #64748b;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 15px 18px;
-  margin-right: 2px;
-  border-radius: 8px 8px 0 0;
-  box-shadow: inset 0 -2px 0 0 transparent;
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.tabset .nav-tabs > li > a:hover,
-.tabset .nav-tabs > li > a:focus {
-  background: #f1f5f9 !important;
-  color: #22303f;
-}
-
-.tabset .nav-tabs > li.active > a,
-.tabset .nav-tabs > li.active > a:hover,
-.tabset .nav-tabs > li.active > a:focus {
-  color: #2c4a5e;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: inset 0 -2px 0 0 #4c788c;
-}
-
-.tabset .nav-tabs > li.dropdown.active > a {
-  color: #4c788c;
-}
-
-.tabset .nav-tabs .caret {
-  border-top-color: #64748b;
-}
-
-.tabset .nav-tabs > li.dropdown.active .caret,
-.tabset .nav-tabs > li.dropdown > a:hover .caret {
-  border-top-color: #4c788c;
-}
-
-.tabset .dropdown-menu {
-  border: none;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
-  padding: 6px;
-  margin-top: 6px;
-}
-
-.tabset .dropdown-menu > li > a {
-  border-radius: 6px;
-  color: #33475b;
-}
-
-.tabset .dropdown-menu > li > a:hover {
-  background: #f1f5f9;
-  color: #22303f;
-}
+/* Top tab bar rules retired here — superseded by the dark chrome
+   navbar system in css/chrome.css (header redesign per design1.png). */
 
 /* =========================================================
    Shared "modern page" building blocks
