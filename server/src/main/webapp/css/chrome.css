@@ -21,8 +21,13 @@
 /* ---------- Top header (logo + user menu) ---------- */
 
 .app-chrome-header {
-  height: 64px;
-  background: var(--gradient-chrome);
+  height: 72px;
+  /* Flat, not the gradient - a gradient repeated independently on
+     this element AND the nav-tabs row below created a visible
+     light/dark/light/dark banding at the seam between them, which
+     read as "two bars" instead of one. Flat removes the banding so
+     both rows blend into a single continuous surface. */
+  background: var(--color-chrome-end);
   border-bottom: none;
   box-shadow: none;
   display: flex;
@@ -33,14 +38,15 @@
   margin-top: 0;
   padding-left: var(--space-6);
   font-family: var(--font-family-base);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
 }
 
 .app-chrome-header .logo-text a,
 .app-chrome-header .logo-text a:active {
   color: var(--color-chrome-text) !important;
-  font-size: var(--font-size-lg) !important;
+  font-size: var(--font-size-xl) !important;
+  letter-spacing: 0.2px;
   text-decoration: none;
   transition: color var(--duration-base) var(--ease-standard);
 }
@@ -84,10 +90,24 @@
   border-color: var(--color-chrome-text-muted);
 }
 
+/* Small circular avatar mark before the username, echoing the
+   avatar-then-pill treatment on the right side of design1.png. */
 .app-chrome-header .username-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--color-chrome-text) !important;
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-sm);
+}
+
+.app-chrome-header .username-label::before {
+  content: "";
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
 }
 
 .app-chrome-header .username-caret {
@@ -126,7 +146,7 @@
 /* ---------- App shell layout ---------- */
 
 .app-shell {
-  padding-top: 64px !important; /* offsets the fixed .app-chrome-header */
+  padding-top: 72px !important; /* offsets the fixed .app-chrome-header */
   margin: 0 !important;
   height: 100%;
 }
@@ -134,11 +154,12 @@
 .app-shell .tabset > div {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - 72px);
 }
 
 /* ---------- Horizontal nav-links row (the tabset's own nav-tabs) ----------
-   Sits directly under the header, same gradient, sticky so both stay
+   Sits directly under the header, same flat color (see the header
+   rule for why it's flat, not a gradient), sticky so both stay
    pinned together as one continuous dark strip while the page scrolls. */
 
 .app-shell .tabset .nav-tabs {
@@ -146,13 +167,13 @@
   flex-wrap: wrap;
   align-items: stretch;
   position: sticky;
-  top: 64px;
+  top: 72px;
   z-index: 10;
   margin: 0;
   padding: 0 var(--space-6);
-  background: var(--gradient-chrome);
+  background: var(--color-chrome-end);
   border: none;
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: none;
 }
 
 .app-shell .tabset .nav-tabs > li {
@@ -164,13 +185,13 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  height: 52px;
+  height: 56px;
   border: none !important;
   background: transparent !important;
   color: var(--color-chrome-text-muted);
   font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-sm);
-  padding: 0 var(--space-4);
+  font-size: var(--font-size-md);
+  padding: 0 var(--space-5);
   border-radius: 0;
   border-bottom: 3px solid transparent;
   transition: color var(--duration-base) var(--ease-standard),
@@ -178,7 +199,7 @@
 }
 
 .app-shell .tabset .nav-tabs > li > a .glyphicon {
-  font-size: 13px;
+  font-size: 14px;
   opacity: 0.85;
 }
 
