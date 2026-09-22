@@ -1,11 +1,11 @@
 <!-- Localization completed -->
-<div class="width-1000" ng-controller="PluginDeviceLogSettingsController">
+<div class="width-1000 modern-page" ng-controller="PluginDeviceLogSettingsController">
     <div class="text-center">
         <h4 localized>plugin.devicelog.settings.title</h4>
     </div>
 
     <div>
-        <form class='form-horizontal'>
+        <form class='form-horizontal modern-toolbar'>
             <div class='form-group'>
                 <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
             </div>
@@ -19,7 +19,7 @@
                     <input id="c0" ng-model='settings.logsPreservePeriod' type='number' min="1" class='form-control'/>
                 </div>
                 <div class='col-sm-7 padding-left'>
-                    <button type='submit' class='btn btn-default' ng-click='save()' localized>button.save</button>
+                    <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' localized>button.save</button>
                 </div>
             </div>
 
@@ -31,10 +31,11 @@
                 </div>
 
                 <div class='form-group text-right'>
-                    <button type='button' class='btn btn-default' ng-click='editRule({})' localized>button.add</button>
+                    <button type='button' class='btn btn-default btn-modern-primary' ng-click='editRule({})' localized>button.add</button>
                 </div>
 
-                <table ng-if='settings.rules && settings.rules.length > 0' class='table'>
+                <div class="modern-table-wrap" ng-if='settings.rules && settings.rules.length > 0'>
+                <table class='table'>
                     <thead>
                     <tr>
                         <th localized>plugin.devicelog.settings.rules.heading.name</th>
@@ -72,7 +73,8 @@
                     </tr>
                     </tbody>
                 </table>
-                
+                </div>
+
             </div>
 
         </form>

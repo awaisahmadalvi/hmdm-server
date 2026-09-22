@@ -8,6 +8,7 @@ document.localization ['de_DE'] = {
     'login.submit': 'Anmelden',
     'login.password.incorrect': 'Falscher Benutzername oder Passwort',
     'login.password.recovery': 'Passwort vergessen?',
+    'login.remember.me': 'Angemeldet bleiben',
     'recovery.password': 'Passwort wiederherstellen',
     'recovery.password.success': 'Anweisungen zur Passwortwiederherstellung wurden an Ihre E-Mail gesendet',
     'login.no.account': 'Noch kein Konto haben?',
@@ -108,6 +109,8 @@ document.localization ['de_DE'] = {
     'button.add.icon': 'Neues Symbol',
     'button.search': 'Suchen',
     'button.export': 'Export',
+    'button.export.excel': 'Nach Excel exportieren',
+    'button.export.pdf': 'Nach PDF exportieren',
     'button.change': 'Ändern',
     'button.copy': 'Kopieren',
     'button.qrcode': 'QR code',
@@ -539,6 +542,9 @@ document.localization ['de_DE'] = {
     'form.application.configurations.app': 'Anwendung',
     'form.application.configurations.configs': 'Konfigurationen',
 
+    'modal.configuration.title.copy': 'Konfiguration kopieren',
+    'modal.configuration.title.addApp': 'Anwendung hinzufügen',
+
     'form.configuration.copy.new.name': 'Neuer Name',
     'form.configuration.copy.new.name.placeholder': 'Geben Sie den neuen Konfigurationsnamen ein',
 
@@ -565,6 +571,9 @@ document.localization ['de_DE'] = {
     'form.customer.size.limit': 'Speicherlimit',
     'form.customer.size.limit.placeholder': 'Größe (MB)',
 
+    'modal.device.title.edit': 'Gerät bearbeiten',
+    'modal.device.title.add': 'Gerät hinzufügen',
+
     'form.device.number': 'Nummer',
     'form.device.number.locked': 'Die Nummer kann nicht geändert werden, da die vorherige Nummernänderung nicht abgeschlossen wurde.',
     'form.device.migration.warning': 'Die Gerätenummer wird geändert. Stellen Sie sicher, dass das Gerät eingeschaltet und online ist.',
@@ -582,6 +591,9 @@ document.localization ['de_DE'] = {
 
     'form.file.file': 'Datei',
     'form.file.name': 'Dateiname',
+    'modal.file.title.edit': 'Datei bearbeiten',
+    'modal.file.title.add': 'Datei hinzufügen',
+
     'form.file.description': 'Beschreibung (optional)',
     'form.file.external': 'Extern',
     'form.file.external.title': 'Anstatt die Datei hochzuladen, können Sie die URL auf einer externen Ressource angeben',

@@ -1,8 +1,16 @@
 <!-- Localization completed -->
+<div class="modern-modal-header">
+    <div class="modern-modal-icon">
+        <span class="glyphicon glyphicon-duplicate"></span>
+    </div>
+    <h4 class="modern-modal-title" localized>modal.configuration.title.copy</h4>
+    <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
+</div>
+
 <div ng-show='errorMessage' class='modal-header'>
     <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
 </div>
-<div class='modal-body'>
+<div class='modal-body modern-modal-body'>
     <form class='form-horizontal'>
 
         <div class='form-group'>
@@ -21,10 +29,10 @@
             </div>
         </div>
 
-        <div class='form-group'>
+        <div class='form-group modern-modal-actions'>
             <div class='col-sm-offset-3 col-sm-8'>
-                <button type='submit' class='btn btn-default' ng-click='save()' localized>button.save</button>
                 <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
+                <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' localized>button.save</button>
             </div>
         </div>
     </form>

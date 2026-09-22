@@ -7,8 +7,8 @@ angular.module('headwind-kiosk')
         }
 
         return {
-            login: function (login, password, successCallback) {
-                serverAuthService.login({login: login, password: password}, function (response) {
+            login: function (login, password, rememberMe, successCallback) {
+                serverAuthService.login({login: login, password: password, rememberMe: rememberMe}, function (response) {
                     if (response.status === "OK") {
                         user = response.data;
                         var userStr = JSON.stringify(user);

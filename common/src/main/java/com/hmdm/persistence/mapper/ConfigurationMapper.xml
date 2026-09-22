@@ -93,7 +93,7 @@
         CREATE TEMP TABLE ${tempTable} ON COMMIT DROP AS SELECT * FROM configurationApplications WHERE configurationApplications.configurationId = #{id};
         SELECT applications.id, applications.name, applications.pkg, applications.runAfterInstall, applications.runAtBoot,
                applications.type, applications.iconText, applications.iconId,
-               applicationVersions.version, applicationVersions.url,
+               applicationVersions.version, applicationVersions.versionCode, applicationVersions.url,
                applicationVersions.split, applicationVersions.urlArmeabi, applicationVersions.urlArm64,
                configurationApplications.applicationVersionId AS usedVersionId,
                applications.system, applications.customerId,

@@ -8,6 +8,7 @@ document.localization ['es_ES'] = {
     'login.submit': 'Ingresar',
     'login.password.incorrect': 'Usuario o contrseña invalidos.',
     'login.password.recovery': '¿Contraseña perdida?',
+    'login.remember.me': 'Recuérdame',
     'recovery.password': 'Recuperar contraseña',
     'recovery.password.success': 'Se han enviado instrucciones de recuperación de contraseña a su correo electrónico.',
     'login.no.account': '¿No tienes una cuenta?',
@@ -108,6 +109,8 @@ document.localization ['es_ES'] = {
     'button.add.icon': 'Nuevo Icono',
     'button.search': 'Buscar',
     'button.export': 'Exportar',
+    'button.export.excel': 'Exportar a Excel',
+    'button.export.pdf': 'Exportar a PDF',
     'button.change': 'Editar',
     'button.copy': 'Copiar',
     'button.qrcode': 'Codigo QR',
@@ -539,6 +542,9 @@ document.localization ['es_ES'] = {
     'form.application.configurations.app': 'Aplicacion',
     'form.application.configurations.configs': 'Configuración',
 
+    'modal.configuration.title.copy': 'Copiar configuración',
+    'modal.configuration.title.addApp': 'Agregar aplicación',
+
     'form.configuration.copy.new.name': 'Nuevo nombre',
     'form.configuration.copy.new.name.placeholder': 'Ingrese el nuevo nombre de configuración',
 
@@ -565,6 +571,9 @@ document.localization ['es_ES'] = {
     'form.customer.size.limit': 'Límite de almacenamiento',
     'form.customer.size.limit.placeholder': 'Tamaño (Mb)',
 
+    'modal.device.title.edit': 'Editar dispositivo',
+    'modal.device.title.add': 'Agregar dispositivo',
+
     'form.device.number': 'Número',
     'form.device.number.locked': 'No se puede cambiar el número porque no se completó el cambio de número anterior.',
     'form.device.migration.warning': 'Se cambiará el número de dispositivo. Asegúrese de que el dispositivo esté encendido y en línea.',
@@ -582,6 +591,9 @@ document.localization ['es_ES'] = {
 
     'form.file.file': 'Archivo',
     'form.file.name': 'Nombre del archivo',
+    'modal.file.title.edit': 'Editar archivo',
+    'modal.file.title.add': 'Agregar archivo',
+
     'form.file.description': 'Descripción (opcional)',
     'form.file.external': 'Externo',
     'form.file.external.title': 'En lugar de cargar el archivo, puede especificar la URL en un recurso externo',

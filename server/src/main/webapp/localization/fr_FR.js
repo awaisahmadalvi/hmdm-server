@@ -8,6 +8,7 @@ document.localization ['fr_FR'] = {
     'login.submit': 'S\'identifier',
     'login.password.incorrect': 'Identifiant ou mot de passe invalide',
     'login.password.recovery': 'Mot de passe perdu?',
+    'login.remember.me': 'Se souvenir de moi',
     'recovery.password': 'Récupérer mot de passe',
     'recovery.password.success': 'Les instructions de récupération de mot de passe ont été envoyées à votre adresse e-mail',
     'login.no.account': 'N\'avez pas de compte?',
@@ -108,6 +109,8 @@ document.localization ['fr_FR'] = {
     'button.add.icon': 'Nouvelle icône',
     'button.search': 'Rechercher',
     'button.export': 'Exporter',
+    'button.export.excel': 'Exporter vers Excel',
+    'button.export.pdf': 'Exporter vers PDF',
     'button.change': 'Modifier',
     'button.copy': 'Copier',
     'button.qrcode': 'Code QR',
@@ -539,6 +542,9 @@ document.localization ['fr_FR'] = {
      'form.application.configurations.app': 'Application',
      'form.application.configurations.configs': 'Configurations',
 
+     'modal.configuration.title.copy': 'Copier la configuration',
+     'modal.configuration.title.addApp': 'Ajouter une application',
+
      'form.configuration.copy.new.name': 'Nouveau nom',
      'form.configuration.copy.new.name.placeholder': 'Entrez le nouveau nom de configuration',
 
@@ -565,6 +571,9 @@ document.localization ['fr_FR'] = {
     'form.customer.size.limit': 'Limite de stockage',
     'form.customer.size.limit.placeholder': 'Taille (Mo)',
 
+    'modal.device.title.edit': 'Modifier l\'appareil',
+    'modal.device.title.add': 'Ajouter un appareil',
+
     'form.device.number': 'Numéro',
     'form.device.number.locked': 'Impossible de modifier le numéro car le changement de numéro précédent n\'a pas été effectué.',
     'form.device.migration.warning': 'Le numéro de l\'appareil sera modifié. Assurez-vous que l\'appareil est allumé et en ligne.',
@@ -582,6 +591,9 @@ document.localization ['fr_FR'] = {
 
     'form.file.file': 'Fichier',
     'form.file.name': 'Nom du fichier',
+    'modal.file.title.edit': 'Modifier le fichier',
+    'modal.file.title.add': 'Ajouter un fichier',
+
     'form.file.description': 'Description (facultatif)',
     'form.file.external': 'Externe',
     'form.file.external.title': 'Au lieu de télécharger le fichier, vous pouvez spécifier l\'URL sur une ressource externe',

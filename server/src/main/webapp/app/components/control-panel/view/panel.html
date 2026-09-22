@@ -194,7 +194,7 @@
                         <td ng-if="!application.commonApplication">{{application.customerName}}</td>
                         <td>{{application.pkg}}</td>
                         <td>{{application.name}}</td>
-                        <td>{{application.version}}</td>
+                        <td>{{application.version}}<span ng-if="application.versionCode"> ({{application.versionCode}})</span></td>
                         <td>{{application.url}}</td>
                         <td>{{application.showIcon ? '✓' : ''}}</td>
 

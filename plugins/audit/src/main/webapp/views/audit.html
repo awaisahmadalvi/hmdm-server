@@ -20,7 +20,7 @@
   -->
 
 <!-- Localization completed -->
-<div class="width-1000" ng-controller="PluginAuditTabController">
+<div class="width-1000 modern-page" ng-controller="PluginAuditTabController">
     <div class="text-center">
         <h4 localized>plugin.audit.tab.title</h4>
     </div>
@@ -30,6 +30,7 @@
             <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
         </div>
 
+        <div class="modern-toolbar">
         <div class="form-group">
             <div class="col-sm-3">
                 <input type="text"
@@ -76,13 +77,10 @@
             </div>
 
             <div class='col-sm-2 text-right'>
-                <button type='button' class='btn btn-default' ng-click='search()' localized>button.search</button>
+                <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
             </div>
         </div>
-
-        <br/>
-        <br/>
-        <br/>
+        </div>
 
         <div class="text-center" ng-if="paging.totalItems > paging.pageSize">
             <pagination
@@ -95,7 +93,8 @@
                     last-text='&raquo;'></pagination>
         </div>
 
-        <table ng-if='logs && logs.length > 0' class='table'>
+        <div class="modern-table-wrap" ng-if='logs && logs.length > 0'>
+        <table class='table'>
             <thead>
             <tr>
                 <th localized>table.heading.plugin.audit.dateTime</th>
@@ -121,6 +120,7 @@
             </tr>
             </tbody>
         </table>
+        </div>
 
         <div ng-if='logs && logs.length === 0' class='center' localized>notfound.common.plugin.audit.logs</div>
 

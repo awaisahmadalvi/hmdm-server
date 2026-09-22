@@ -20,7 +20,7 @@
   -->
 
 <!-- Localization completed -->
-<div class="width-1000" ng-controller="PluginsTabController">
+<div class="width-1000 modern-page" ng-controller="PluginsTabController">
     <div class="text-center">
         <h4 localized>form.settings.plugins.title</h4>
     </div>
@@ -34,7 +34,7 @@
         </div>
     </div>
 
-    <form class="form-horizontal margin-top-40" ng-if="plugins && pluginSelection">
+    <form class="form-horizontal margin-top-40 modern-toolbar" ng-if="plugins && pluginSelection">
         <div class="form-group" ng-repeat="plugin in plugins">
             <div class="col-sm-6 text-right">
                 <label for="pl{{plugin.id}}">{{plugin.localizedName}}</label>
@@ -47,7 +47,7 @@
 
         <div class="form-group">
             <div class="col-sm-offset-6">
-                <button class="btn btm-default" ng-click="save()" ng-disabled="loading"
+                <button class="btn btn-default btn-modern-primary" ng-click="save()" ng-disabled="loading"
                         localized>button.save</button>
             </div>
         </div>

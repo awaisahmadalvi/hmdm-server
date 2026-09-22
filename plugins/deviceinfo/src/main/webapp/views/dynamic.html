@@ -19,7 +19,7 @@
   ~
   -->
 
-<div class="content-wrapper width-1000">
+<div class="content-wrapper width-1000 modern-page">
 
     <div ncy-breadcrumb></div>
 
@@ -50,7 +50,7 @@
         </div>
     </sarsha-spinner>
 
-    <form class="form-horizontal margin-top" ng-show="!collapseState.main">
+    <form class="form-horizontal margin-top modern-toolbar" ng-show="!collapseState.main">
 
         <div class="row">
             <div class="col-sm-4">
@@ -101,7 +101,7 @@
             </div>
 
             <div class="col-sm-2 text-left">
-                <button type='button' class='btn btn-default' ng-click='search()' localized>button.search</button>
+                <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
             </div>
         </div>
 
@@ -241,7 +241,7 @@
     </form>
 
     <div class="text-left margin-top">
-        <button type='submit' class='btn btn-default' ng-click='doExport()' ng-disabled="loading"
+        <button type='submit' class='btn btn-default btn-modern-primary' ng-click='doExport()' ng-disabled="loading"
                 localized>button.plugin.deviceinfo.export</button>
     </div>
 
@@ -258,14 +258,17 @@
 
     <div ng-if="data" class="row margin-top-40">
         <div class="col-sm-12">
+            <div class="modern-table-wrap">
             <table class="table">
+                <thead>
                 <tr>
                     <th localized>plugin.deviceinfo.title.time</th>
                     <th ng-repeat="fieldName in allFields" ng-if="fieldsSelection[fieldName] === true">
                         {{('plugin.deviceinfo.title.group.' + fieldName) | localize}}
                     </th>
                 </tr>
-
+                </thead>
+                <tbody>
                 <tr ng-repeat="record in data" ng-init="item = parseDynamicInfoRecord(record)">
                     <td>{{record.latestUpdateTime | date:'dd.MM.yy HH:mm:ss'}}</td>
 
@@ -275,7 +278,9 @@
                         <span ng-if="!item[fieldName].isBoolean && !item[fieldName].isEnumerated">{{item[fieldName].value}}</span>
                     </td>
                 </tr>
+                </tbody>
             </table>
+            </div>
         </div>
     </div>
 

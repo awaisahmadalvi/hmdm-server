@@ -8,6 +8,7 @@ document.localization['en_US'] = {
     'login.submit': 'Login',
     'login.password.incorrect': 'Invalid username or password',
     'login.password.recovery': 'Lost password?',
+    'login.remember.me': 'Remember me',
     'recovery.password': 'Recover password',
     'recovery.password.success': 'Password recovery instructions have been sent to your email',
     'login.no.account': 'Don\'t have an account?',
@@ -110,6 +111,8 @@ document.localization['en_US'] = {
     'button.add.icon': 'New Icon',
     'button.search': 'Search',
     'button.export': 'Export',
+    'button.export.excel': 'Export to Excel',
+    'button.export.pdf': 'Export to PDF',
     'button.change': 'Edit',
     'button.copy': 'Copy',
     'button.qrcode': 'QR code',
@@ -541,6 +544,9 @@ document.localization['en_US'] = {
     'form.application.configurations.app': 'Application',
     'form.application.configurations.configs': 'Configurations',
 
+    'modal.configuration.title.copy': 'Copy configuration',
+    'modal.configuration.title.addApp': 'Add application',
+
     'form.configuration.copy.new.name': 'New name',
     'form.configuration.copy.new.name.placeholder': 'Enter the new configuration name',
 
@@ -567,6 +573,9 @@ document.localization['en_US'] = {
     'form.customer.size.limit': 'Storage limit',
     'form.customer.size.limit.placeholder': 'Size (Mb)',
 
+    'modal.device.title.edit': 'Edit device',
+    'modal.device.title.add': 'Add device',
+
     'form.device.number': 'Number',
     'form.device.number.locked': 'Cannot change the number because the previous number change was not completed.',
     'form.device.migration.warning': 'The device number will be changed. Make sure the device is switched on and online.',
@@ -584,6 +593,9 @@ document.localization['en_US'] = {
 
     'form.file.file': 'File',
     'form.file.name': 'File name',
+    'modal.file.title.edit': 'Edit file',
+    'modal.file.title.add': 'Add file',
+
     'form.file.description': 'Description (optional)',
     'form.file.external': 'External',
     'form.file.external.title': 'Instead of uploading the file, you can specify the URL on an external resource',

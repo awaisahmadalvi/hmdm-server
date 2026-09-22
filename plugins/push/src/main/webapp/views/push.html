@@ -1,5 +1,5 @@
 <!-- Localization completed -->
-<div>
+<div class="modern-page">
     <tabset class='tabset'>
 
         <!-- COMMON SETTINGS -->
@@ -15,6 +15,7 @@
                     <div ng-show='successMessage' class='success'><span>{{successMessage}}</span></div>
                 </div>
 
+                <div class="modern-toolbar">
                 <div class='form-group'>
                     <div class="col-sm-3">
                         <input type="text"
@@ -72,14 +73,11 @@
                     </div>
 
                     <div class='col-sm-3 text-right'>
-                        <button type='button' class='btn btn-default' ng-click='search()' localized>button.search</button>
-                        <button type='button' class='btn btn-default' ng-click='newMessage()' localized>plugin.push.button.newMessage</button>
+                        <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
+                        <button type='button' class='btn btn-default btn-modern-primary' ng-click='newMessage()' localized>plugin.push.button.newMessage</button>
                     </div>
                 </div>
-
-                <br/>
-                <br/>
-                <br/>
+                </div>
 
                 <div class="text-center" ng-if="paging.totalItems > paging.pageSize">
                     <pagination
@@ -92,7 +90,8 @@
                             last-text='&raquo;'></pagination>
                 </div>
 
-                <table ng-if='messages && messages.length > 0' class='table'>
+                <div class="modern-table-wrap" ng-if='messages && messages.length > 0'>
+                <table class='table'>
                     <thead>
                     <tr>
                         <th ng-click='sortByCreateTime()'>
@@ -118,6 +117,7 @@
                     </tr>
                     </tbody>
                 </table>
+                </div>
 
                 <div ng-if='messages && messages.length === 0' class='center' localized>notfound.common.plugin.push.messages</div>
 
@@ -148,6 +148,7 @@
                     <div ng-show='successMessage' class='success'><span>{{successMessage}}</span></div>
                 </div>
 
+                <div class="modern-toolbar">
                 <div class="form-group">
                     <div class="col-sm-6">
                         <input type="text"
@@ -158,14 +159,11 @@
                     </div>
 
                     <div class='col-sm-6'>
-                        <button type='button' class='btn btn-default' ng-click='search()' localized>button.search</button>
-                        <button type='button' class='btn btn-default' ng-click='editTask()' localized>plugin.push.button.new.task</button>
+                        <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
+                        <button type='button' class='btn btn-default btn-modern-primary' ng-click='editTask()' localized>plugin.push.button.new.task</button>
                     </div>
                 </div>
-
-                <br/>
-                <br/>
-                <br/>
+                </div>
 
                 <div class="text-center" ng-if="paging.totalItems > paging.pageSize">
                     <pagination
@@ -178,7 +176,8 @@
                             last-text='&raquo;'></pagination>
                 </div>
 
-                <table ng-if='tasks && tasks.length > 0' class='table'>
+                <div class="modern-table-wrap" ng-if='tasks && tasks.length > 0'>
+                <table class='table'>
                     <thead>
                     <tr>
                         <th localized>table.heading.plugin.push.messageType</th>
@@ -219,6 +218,7 @@
                     </tr>
                     </tbody>
                 </table>
+                </div>
 
                 <div ng-if='tasks && tasks.length === 0' class='center' localized>plugin.push.schedule.not.found</div>
 

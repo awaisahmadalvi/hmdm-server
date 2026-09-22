@@ -43,6 +43,9 @@ public class UserCredentials implements Serializable {
     @Deprecated
     private String email;
 
+    @ApiModelProperty("If true, the user's session should be kept across browser restarts")
+    private boolean rememberMe;
+
     public UserCredentials() {
     }
 
@@ -70,5 +73,13 @@ public class UserCredentials implements Serializable {
     @Deprecated
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public boolean isRememberMe() {
+        return this.rememberMe;
+    }
+
+    public void setRememberMe(boolean rememberMe) {
+        this.rememberMe = rememberMe;
     }
 }

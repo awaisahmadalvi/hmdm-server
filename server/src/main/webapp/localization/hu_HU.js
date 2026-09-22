@@ -8,6 +8,7 @@ document.localization ['hu_HU'] = {
     'login.submit': 'Bejelentkezés',
     'login.password.incorrect': 'Érvénytelen felhasználónév vagy jelszó',
     'login.password.recovery': 'Elfelejtetted a jelszavad?',
+    'login.remember.me': 'Emlékezz rám',
     'recovery.password': 'Jelszó helyreállítása',
     'recovery.password.success': 'A jelszó-helyreállítási útmutatót elküldtük e-mailben',
     'login.no.account': 'Nincs fiókja?',
@@ -108,6 +109,8 @@ document.localization ['hu_HU'] = {
     'button.add.icon': 'Új ikon',
     'button.search': 'Keresés',
     'button.export': 'Exportálás',
+    'button.export.excel': 'Exportálás Excelbe',
+    'button.export.pdf': 'Exportálás PDF-be',
     'button.change': 'Szerkesztés',
     'button.copy': 'Másolás',
     'button.qrcode': 'QR-kód',
@@ -539,6 +542,9 @@ document.localization ['hu_HU'] = {
     'form.application.configurations.app': 'Alkalmazás',
     'form.application.configurations.configs': 'Konfigurációk',
 
+    'modal.configuration.title.copy': 'Konfiguráció másolása',
+    'modal.configuration.title.addApp': 'Alkalmazás hozzáadása',
+
     'form.configuration.copy.new.name': 'Új név',
     'form.configuration.copy.new.name.placeholder': 'Adja meg az új konfiguráció nevét',
 
@@ -565,6 +571,9 @@ document.localization ['hu_HU'] = {
     'form.customer.size.limit': 'Tárolási korlát',
     'form.customer.size.limit.placeholder': 'Méret (Mb)',
 
+    'modal.device.title.edit': 'Eszköz szerkesztése',
+    'modal.device.title.add': 'Eszköz hozzáadása',
+
     'form.device.number': 'Szám',
     'form.device.number.locked': 'A szám nem módosítható, mert az előző számmódosítás nem fejeződött be.',
     'form.device.migration.warning': 'A készülék száma megváltozik. Győződjön meg arról, hogy a készülék be van kapcsolva és online.',
@@ -582,6 +591,9 @@ document.localization ['hu_HU'] = {
 
     'form.file.file': 'Fájl',
     'form.file.name': 'Fájlnév',
+    'modal.file.title.edit': 'Fájl szerkesztése',
+    'modal.file.title.add': 'Fájl hozzáadása',
+
     'form.file.description': 'Leírás (nem kötelező)',
     'form.file.external': 'Külső',
     'form.file.external.title': 'A fájl feltöltése helyett külső erőforrás URL-címét is megadhatja',

@@ -8,6 +8,7 @@ document.localization ['zh_TW'] = {
     'login.submit' : "登錄",
     'login.password.incorrect':"無效的用戶名或密碼",
     'login.password.recovery': '忘記密碼？',
+    'login.remember.me': '記住我',
     'recovery.password': '恢復密碼',
     'recovery.password.success': '密碼恢復說明已發送至您的郵箱',
     'login.no.account': '沒有帳戶？',
@@ -108,6 +109,8 @@ document.localization ['zh_TW'] = {
     'button.add.icon':"新圖示",
     'button.search' : "搜索",
     'button.export' : "出口",
+    'button.export.excel': '匯出為 Excel',
+    'button.export.pdf': '匯出為 PDF',
     'button.change' : "編輯",
     'button.copy' : "複製",
     'button.qrcode' : "二維碼",
@@ -539,6 +542,9 @@ document.localization ['zh_TW'] = {
     'form.application.configurations.app' : "應用程式",
     'form.application.configurations.configs':"配置",
 		
+    'modal.configuration.title.copy': '複製設定',
+    'modal.configuration.title.addApp': '新增應用程式',
+
     'form.configuration.copy.new.name' : "新名字",
     'form.configuration.copy.new.name.placeholder':"輸入新的配置名稱",
 		
@@ -565,6 +571,9 @@ document.localization ['zh_TW'] = {
     'form.customer.size.limit': '存儲限制',
     'form.customer.size.limit.placeholder': '大小 (Mb)',
 
+    'modal.device.title.edit': '編輯設備',
+    'modal.device.title.add': '新增設備',
+
     'form.device.number' : "編號",
     'form.device.number.locked': '由於之前的號碼更改尚未完成，因此無法更改號碼。',
     'form.device.migration.warning': '設備編號將被更改。 確保設備已打開並在線。',
@@ -582,6 +591,9 @@ document.localization ['zh_TW'] = {
 
     'form.file.file' : "文檔",
     'form.file.name': '檔名',
+    'modal.file.title.edit': '編輯檔案',
+    'modal.file.title.add': '新增檔案',
+
     'form.file.description': '描述（可選）',
     'form.file.external': '外部',
     'form.file.external.title': '您可以指定外部資源的 URL，而不是上傳文件',

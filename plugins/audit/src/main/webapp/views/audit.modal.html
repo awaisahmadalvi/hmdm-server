@@ -1,39 +1,39 @@
 <!-- Localization completed -->
-<div class="modal-body" id="modal-body" style="text-align: center">
-    <form class='form-horizontal'>
+<div class="modern-modal-header">
+    <div class="modern-modal-icon">
+        <span class="glyphicon glyphicon-search"></span>
+    </div>
+    <h4 class="modern-modal-title" localized>plugin.audit.button.details</h4>
+    <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
+</div>
 
-        <div class='form-group'>
-            <label class='col-sm-3 control-label' localized>table.heading.plugin.audit.dateTime</label>
-            <div class='col-sm-9 audit-info'>
-                {{log.createTime | date:createTimeFormat}}.{{("00000" + (log.createTime % 1000)).slice(-3) }}
-            </div>
-        </div>
+<div class="modal-body modern-modal-body" id="modal-body">
+    <div class="modern-proplist">
+        <table class="table">
+            <tr>
+                <th localized>table.heading.plugin.audit.dateTime</th>
+                <td>{{log.createTime | date:createTimeFormat}}.{{("00000" + (log.createTime % 1000)).slice(-3) }}</td>
+            </tr>
+            <tr>
+                <th localized>table.heading.plugin.audit.user</th>
+                <td>{{log.login}}</td>
+            </tr>
+            <tr>
+                <th localized>table.heading.plugin.audit.ipAddress</th>
+                <td>{{log.ipAddress}}</td>
+            </tr>
+            <tr>
+                <th localized>table.heading.plugin.audit.action</th>
+                <td>{{log.action | localize}}{{log.errorCode ? ('plugin.audit.error' | localize) : ''}}</td>
+            </tr>
+        </table>
+    </div>
 
-        <div class='form-group'>
-            <label class='col-sm-3 control-label' localized>table.heading.plugin.audit.user</label>
-            <div class='col-sm-9 audit-info'>{{log.login}}</div>
-        </div>
+    <div class="audit-info audit-payload">{{log.payload}}</div>
 
-        <div class='form-group'>
-            <label class='col-sm-3 control-label' localized>table.heading.plugin.audit.ipAddress</label>
-            <div class='col-sm-9 audit-info'>{{log.ipAddress}}</div>
-        </div>
-
-        <div class='form-group'>
-            <label class='col-sm-3 control-label' localized>table.heading.plugin.audit.action</label>
-            <div class='col-sm-9 audit-info'>{{log.action | localize}}{{log.errorCode ? ('plugin.audit.error' | localize) : ''}}</div>
-        </div>
-
-        <div class='form-group'>
-            <div class='col-sm-12 audit-info audit-payload'>{{log.payload}}</div>
-        </div>
-
-        <div class='form-group'>
-            <div class='col-sm-12'>
-                <button type='button' class='btn btn-default' ng-click='closeModal()'
-                        ng-disabled="loading"
-                        localized>button.close</button>
-            </div>
-        </div>
-    </form>
+    <div class='form-group modern-modal-actions text-center'>
+        <button type='button' class='btn btn-default btn-modern-primary' ng-click='closeModal()'
+                ng-disabled="loading"
+                localized>button.close</button>
+    </div>
 </div>

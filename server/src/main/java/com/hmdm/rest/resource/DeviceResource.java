@@ -21,6 +21,9 @@
 
 package com.hmdm.rest.resource;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -47,13 +50,16 @@ import com.hmdm.persistence.CommonDAO;
 import com.hmdm.persistence.ConfigurationDAO;
 import com.hmdm.persistence.ConfigurationFileDAO;
 import com.hmdm.persistence.DeviceDAO;
+import com.hmdm.persistence.GroupDAO;
 import com.hmdm.persistence.UnsecureDAO;
 import com.hmdm.persistence.domain.Application;
 import com.hmdm.persistence.domain.ApplicationSetting;
 import com.hmdm.persistence.domain.Configuration;
 import com.hmdm.persistence.domain.ConfigurationFile;
 import com.hmdm.persistence.domain.Device;
+import com.hmdm.persistence.domain.DeviceReportRequest;
 import com.hmdm.persistence.domain.DeviceSearchRequest;
+import com.hmdm.persistence.domain.Group;
 import com.hmdm.persistence.domain.Settings;
 import com.hmdm.rest.json.DeviceGroupBulkRequest;
 import com.hmdm.rest.json.DeviceLookupItem;
@@ -64,6 +70,7 @@ import com.hmdm.rest.json.view.devicelist.DeviceListView;
 import com.hmdm.rest.json.view.devicelist.DeviceView;
 import com.hmdm.security.SecurityContext;
 import com.hmdm.security.SecurityException;
+import com.hmdm.service.DeviceReportService;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -83,6 +90,8 @@ public class DeviceResource {
     private ConfigurationFileDAO configurationFileDAO;
     private CommonDAO commonDAO;
     private UnsecureDAO unsecureDAO;
+    private GroupDAO groupDAO;
+    private DeviceReportService deviceReportService;
 
     /**
      * <p>
@@ -98,13 +107,17 @@ public class DeviceResource {
             PushService pushService,
             ConfigurationFileDAO configurationFileDAO,
             CommonDAO commonDAO,
-            UnsecureDAO unsecureDAO) {
+            UnsecureDAO unsecureDAO,
+            GroupDAO groupDAO,
+            DeviceReportService deviceReportService) {
         this.deviceDAO = deviceDAO;
         this.configurationDAO = configurationDAO;
         this.pushService = pushService;
         this.configurationFileDAO = configurationFileDAO;
         this.commonDAO = commonDAO;
         this.unsecureDAO = unsecureDAO;
+        this.groupDAO = groupDAO;
+        this.deviceReportService = deviceReportService;
     }
 
     // =================================================================================================================
@@ -171,6 +184,102 @@ public class DeviceResource {
 
         return Response.OK(view);
 
+    }
+
+    // =================================================================================================================
+    @ApiOperation(value = "Export devices to Excel", notes = "Generates an Excel report of the devices matching the specified filter (group / configuration / search)")
+    @POST
+    @Path("/report/excel")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public javax.ws.rs.core.Response exportDevicesExcel(DeviceReportRequest request) {
+        try {
+            List<Device> devices = getAllDevicesForReport(request);
+            String filterSummary = buildFilterSummary(request);
+            String generatedBy = SecurityContext.get().getCurrentUserName();
+
+            byte[] fileBytes = deviceReportService.generateExcelReport(devices, request.getColumns(),
+                    request.getCustom1Label(), request.getCustom2Label(), request.getCustom3Label(),
+                    filterSummary, generatedBy);
+
+            String fileName = "devices-report-" + LocalDate.now().format(DateTimeFormatter.ISO_DATE) + ".xlsx";
+
+            return javax.ws.rs.core.Response.ok(fileBytes)
+                    .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
+                    .header("Content-Length", fileBytes.length)
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to generate the devices Excel report", e);
+            return javax.ws.rs.core.Response.serverError().build();
+        }
+    }
+
+    // =================================================================================================================
+    @ApiOperation(value = "Export devices to PDF", notes = "Generates a PDF report of the devices matching the specified filter (group / configuration / search)")
+    @POST
+    @Path("/report/pdf")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces("application/pdf")
+    public javax.ws.rs.core.Response exportDevicesPdf(DeviceReportRequest request) {
+        try {
+            List<Device> devices = getAllDevicesForReport(request);
+            String filterSummary = buildFilterSummary(request);
+            String generatedBy = SecurityContext.get().getCurrentUserName();
+
+            byte[] fileBytes = deviceReportService.generatePdfReport(devices, request.getColumns(),
+                    request.getCustom1Label(), request.getCustom2Label(), request.getCustom3Label(),
+                    filterSummary, generatedBy);
+
+            String fileName = "devices-report-" + LocalDate.now().format(DateTimeFormatter.ISO_DATE) + ".pdf";
+
+            return javax.ws.rs.core.Response.ok(fileBytes)
+                    .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
+                    .header("Content-Length", fileBytes.length)
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to generate the devices PDF report", e);
+            return javax.ws.rs.core.Response.serverError().build();
+        }
+    }
+
+    /**
+     * <p>
+     * Fetches every device matching the given filter (ignoring pagination) so
+     * the exported report reflects the same criteria as the on-screen list.
+     * </p>
+     */
+    private List<Device> getAllDevicesForReport(DeviceSearchRequest request) {
+        request.setPageNum(1);
+        request.setPageSize(Integer.MAX_VALUE);
+        return this.deviceDAO.getAllDevices(request).getItems();
+    }
+
+    /**
+     * <p>
+     * Builds a short human-readable summary of the applied filter, to be shown
+     * at the top of the exported report (e.g. "Group: Sales | Configuration:
+     * Managed Launcher").
+     * </p>
+     */
+    private String buildFilterSummary(DeviceSearchRequest request) {
+        List<String> parts = new ArrayList<>();
+
+        if (request.getGroupId() != null && request.getGroupId() > 0) {
+            Group group = this.groupDAO.getGroupById(request.getGroupId());
+            parts.add("Group: " + (group != null ? group.getName() : ("#" + request.getGroupId())));
+        }
+
+        if (request.getConfigurationId() != null && request.getConfigurationId() > 0) {
+            Configuration configuration = this.configurationDAO.getConfigurationById(request.getConfigurationId());
+            parts.add("Configuration: "
+                    + (configuration != null ? configuration.getName() : ("#" + request.getConfigurationId())));
+        }
+
+        if (request.getValue() != null && !request.getValue().trim().isEmpty()) {
+            parts.add("Search: " + request.getValue().replace("%", ""));
+        }
+
+        return parts.isEmpty() ? "All devices" : String.join("   |   ", parts);
     }
 
     // =================================================================================================================

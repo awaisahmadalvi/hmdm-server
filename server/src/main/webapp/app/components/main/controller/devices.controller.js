@@ -415,31 +415,8 @@ angular.module('headwind-kiosk')
 
         $scope.showSpinner = false;
         var searchIsRunning = false;
-        $scope.search = function (spinnerHidden, callback) {
-            if (searchIsRunning) {
-                console.log("Skipping device search since a previous search is pending", new Error());
-                return;
-            }
 
-            saveDeviceSearchParams();
-
-            $scope.errorMessage = undefined;
-
-            if ($scope.additionalParams.enabled) {
-                if ($scope.additionalParams.dateFrom && $scope.additionalParams.dateTo) {
-                    if ($scope.additionalParams.dateFrom > $scope.additionalParams.dateTo) {
-                        $scope.errorMessage = localization.localize('error.date.range.invalid');
-                        return;
-                    }
-                }
-            }
-
-            searchIsRunning = true;
-            $scope.showSpinner = !spinnerHidden;
-            if ($scope.showSpinner) {
-                spinnerService.show('spinner2');
-            }
-
+        var buildSearchRequest = function () {
             var request = {
                 value: $scope.searchParams.searchValue,
                 groupId: $scope.selection.groupId,
@@ -487,6 +464,36 @@ angular.module('headwind-kiosk')
                     request["imeiChanged"] = true;
                 }
             }
+
+            return request;
+        };
+
+        $scope.search = function (spinnerHidden, callback) {
+            if (searchIsRunning) {
+                console.log("Skipping device search since a previous search is pending", new Error());
+                return;
+            }
+
+            saveDeviceSearchParams();
+
+            $scope.errorMessage = undefined;
+
+            if ($scope.additionalParams.enabled) {
+                if ($scope.additionalParams.dateFrom && $scope.additionalParams.dateTo) {
+                    if ($scope.additionalParams.dateFrom > $scope.additionalParams.dateTo) {
+                        $scope.errorMessage = localization.localize('error.date.range.invalid');
+                        return;
+                    }
+                }
+            }
+
+            searchIsRunning = true;
+            $scope.showSpinner = !spinnerHidden;
+            if ($scope.showSpinner) {
+                spinnerService.show('spinner2');
+            }
+
+            var request = buildSearchRequest();
 
             deviceService.getAllDevices(request, function (response) {
                 $scope.selection.all = false;
@@ -549,6 +556,92 @@ angular.module('headwind-kiosk')
                 }
                 $scope.showSpinner = false;
             });
+        };
+
+        $scope.exportingReport = false;
+
+        // Mirrors the columns rendered in devices.html, in the same order, so the
+        // exported report always matches whatever columns are currently visible
+        // on screen (driven by the "Visible columns" role settings). Adding a new
+        // exportable column on screen only requires adding one entry here.
+        var REPORT_COLUMN_DEFINITIONS = [
+            {key: 'DeviceStatus', visible: function () { return $scope.settings.columnDisplayedDeviceStatus; }},
+            {key: 'DeviceDate', visible: function () { return $scope.settings.columnDisplayedDeviceDate; }},
+            {key: 'DeviceNumber', visible: function () { return $scope.settings.columnDisplayedDeviceNumber; }},
+            {key: 'DeviceImei', visible: function () { return $scope.settings.columnDisplayedDeviceImei; }},
+            {key: 'DevicePhone', visible: function () { return $scope.settings.columnDisplayedDevicePhone; }},
+            {key: 'DeviceModel', visible: function () { return $scope.settings.columnDisplayedDeviceModel; }},
+            {key: 'DevicePermissionsStatus', visible: function () { return $scope.settings.columnDisplayedDevicePermissionsStatus; }},
+            {key: 'DeviceAppInstallStatus', visible: function () { return $scope.settings.columnDisplayedDeviceAppInstallStatus; }},
+            {key: 'DeviceFilesStatus', visible: function () { return $scope.settings.columnDisplayedDeviceFilesStatus; }},
+            {key: 'DeviceConfiguration', visible: function () { return $scope.settings.columnDisplayedDeviceConfiguration; }},
+            {key: 'DeviceDesc', visible: function () { return $scope.settings.columnDisplayedDeviceDesc; }},
+            {key: 'DeviceGroup', visible: function () { return $scope.settings.columnDisplayedDeviceGroup; }},
+            {key: 'LauncherVersion', visible: function () { return $scope.settings.columnDisplayedLauncherVersion; }},
+            {key: 'BatteryLevel', visible: function () { return $scope.settings.columnDisplayedBatteryLevel; }},
+            {key: 'DefaultLauncher', visible: function () { return $scope.settings.columnDisplayedDefaultLauncher; }},
+            {key: 'MdmMode', visible: function () { return $scope.settings.columnDisplayedMdmMode; }},
+            {key: 'KioskMode', visible: function () { return $scope.settings.columnDisplayedKioskMode; }},
+            {key: 'AndroidVersion', visible: function () { return $scope.settings.columnDisplayedAndroidVersion; }},
+            {key: 'EnrollmentDate', visible: function () { return $scope.settings.columnDisplayedEnrollmentDate; }},
+            {key: 'Serial', visible: function () { return $scope.settings.columnDisplayedSerial; }},
+            {key: 'Mac', visible: function () { return $scope.settings.columnDisplayedSerial; }},
+            {key: 'PublicIp', visible: function () { return $scope.settings.columnDisplayedPublicIp; }},
+            {key: 'Custom1', visible: function () { return $scope.settings.columnDisplayedCustom1 && $scope.commonSettings.customPropertyName1; }},
+            {key: 'Custom2', visible: function () { return $scope.settings.columnDisplayedCustom2 && $scope.commonSettings.customPropertyName2; }},
+            {key: 'Custom3', visible: function () { return $scope.settings.columnDisplayedCustom3 && $scope.commonSettings.customPropertyName3; }}
+        ];
+
+        var buildVisibleReportColumns = function () {
+            if (!$scope.settings || !$scope.commonSettings) {
+                return [];
+            }
+            return REPORT_COLUMN_DEFINITIONS.filter(function (column) {
+                return !!column.visible();
+            }).map(function (column) {
+                return column.key;
+            });
+        };
+
+        var downloadDeviceReport = function (resourceAction, fileExtension) {
+            if ($scope.exportingReport) {
+                return;
+            }
+            $scope.exportingReport = true;
+
+            var request = buildSearchRequest();
+            request.columns = buildVisibleReportColumns();
+            if ($scope.commonSettings) {
+                request.custom1Label = $scope.commonSettings.customPropertyName1;
+                request.custom2Label = $scope.commonSettings.customPropertyName2;
+                request.custom3Label = $scope.commonSettings.customPropertyName3;
+            }
+
+            resourceAction(request, function (response) {
+                $scope.exportingReport = false;
+
+                var downloadableBlob = URL.createObjectURL(response.response);
+                var dateStr = $filter('date')(new Date(), 'yyyy-MM-dd');
+
+                var link = document.createElement('a');
+                link.href = downloadableBlob;
+                link.download = 'devices-report-' + dateStr + '.' + fileExtension;
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }, function () {
+                $scope.exportingReport = false;
+                alertService.onRequestFailure();
+            });
+        };
+
+        $scope.exportExcel = function () {
+            downloadDeviceReport(deviceService.exportDevicesExcel, 'xlsx');
+        };
+
+        $scope.exportPdf = function () {
+            downloadDeviceReport(deviceService.exportDevicesPdf, 'pdf');
         };
 
         $scope.showQrCode = function (device) {

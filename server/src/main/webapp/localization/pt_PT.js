@@ -8,6 +8,7 @@ document.localization ['pt_PT'] = {
     'login.submit': 'Login',
     'login.password.incorrect': 'Usuário ou senha inválidos',
     'login.password.recovery': 'Senha perdida?',
+    'login.remember.me': 'Lembrar-me',
     'recovery.password': 'Recuperar senha',
     'recovery.password.success': 'As instruções de recuperação de senha foram enviadas para seu e-mail',
     'login.no.account': 'Não tem uma conta?',
@@ -108,6 +109,8 @@ document.localization ['pt_PT'] = {
     'button.add.icon': 'Novo ícone',
     'button.search': 'Buscar',
     'button.export': 'Exportar',
+    'button.export.excel': 'Exportar para Excel',
+    'button.export.pdf': 'Exportar para PDF',
     'button.change': 'Editar',
     'button.copy': 'Copiar',
     'button.qrcode': 'QR code',
@@ -538,6 +541,9 @@ document.localization ['pt_PT'] = {
     'form.application.configurations.app': 'Aplicativo',
     'form.application.configurations.configs': 'Configurações',
 
+    'modal.configuration.title.copy': 'Copiar configuração',
+    'modal.configuration.title.addApp': 'Adicionar aplicativo',
+
     'form.configuration.copy.new.name': 'Novo nome',
     'form.configuration.copy.new.name.placeholder': 'Insira o novo nome da configuração',
 
@@ -564,6 +570,9 @@ document.localization ['pt_PT'] = {
     'form.customer.size.limit': 'Limite de armazenamento',
     'form.customer.size.limit.placeholder': 'Tamanho (Mb)',
 
+    'modal.device.title.edit': 'Editar dispositivo',
+    'modal.device.title.add': 'Adicionar dispositivo',
+
     'form.device.number': 'Número',
     'form.device.number.locked': 'Não é possível alterar o número, porque a alteração do número anterior não foi concluída.',
     'form.device.migration.warning': 'O número do dispositivo será alterado. Tenha certeza que o dispositivo está ligado e online.',
@@ -581,6 +590,9 @@ document.localization ['pt_PT'] = {
 
     'form.file.file': 'Arquivo',
     'form.file.name': 'Nome do ficheiro',
+    'modal.file.title.edit': 'Editar arquivo',
+    'modal.file.title.add': 'Adicionar arquivo',
+
     'form.file.description': 'Descrição (opcional)',
     'form.file.external': 'Externo',
     'form.file.external.title': 'Em vez de carregar o ficheiro, pode especificar o URL num recurso externo',

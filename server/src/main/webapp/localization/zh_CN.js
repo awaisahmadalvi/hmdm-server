@@ -8,6 +8,7 @@ document.localization ['zh_CN'] = {
     'login.submit' : "登录",
     'login.password.incorrect':"无效的用户名或密码",
     'login.password.recovery': '忘记密码？',
+    'login.remember.me': '记住我',
     'recovery.password': '恢复密码',
     'recovery.password.success': '密码恢复说明已发送至您的邮箱',
     'login.no.account': '没有帐户？',
@@ -108,6 +109,8 @@ document.localization ['zh_CN'] = {
     'button.add.icon':"新图示",
     'button.search' : "搜索",
     'button.export' : "导出",
+    'button.export.excel': '导出为 Excel',
+    'button.export.pdf': '导出为 PDF',
     'button.change' : "编辑",
     'button.copy' : "複製",
     'button.qrcode' : "二维码",
@@ -539,6 +542,9 @@ document.localization ['zh_CN'] = {
     'form.application.configurations.app' : "应用程式",
     'form.application.configurations.configs':"配置",
 		
+    'modal.configuration.title.copy': '复制配置',
+    'modal.configuration.title.addApp': '添加应用',
+
     'form.configuration.copy.new.name' : "新名字",
     'form.configuration.copy.new.name.placeholder':"输入新的配置名称",
 		
@@ -565,6 +571,9 @@ document.localization ['zh_CN'] = {
     'form.customer.size.limit': '存储限制',
     'form.customer.size.limit.placeholder': '大小 (Mb)',
 
+    'modal.device.title.edit': '编辑设备',
+    'modal.device.title.add': '添加设备',
+
     'form.device.number' : "编号",
     'form.device.number.locked': '由于之前的号码更改尚未完成，因此无法更改号码。',
     'form.device.migration.warning': '设备编号将被更改。 确保设备已打开并在线。',
@@ -582,6 +591,9 @@ document.localization ['zh_CN'] = {
 
     'form.file.file' : "文档",
     'form.file.name': '文件名',
+    'modal.file.title.edit': '编辑文件',
+    'modal.file.title.add': '添加文件',
+
     'form.file.description': '描述（可选）',
     'form.file.external': '外部',
     'form.file.external.title': '您可以指定外部资源的 URL，而不是上传文件',

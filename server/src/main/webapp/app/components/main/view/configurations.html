@@ -1,9 +1,9 @@
 <!-- Localization completed -->
-<div ng-controller="ConfigurationsTabController">
+<div ng-controller="ConfigurationsTabController" class="modern-page">
 
     <notification-message attr-name="configurationsMessage"></notification-message>
 
-    <div class='form-group'>
+    <div class='form-group modern-toolbar'>
         <input type='text'
                ng-enter='search()'
                ng-model='searchObj.searchValue'
@@ -12,7 +12,7 @@
                class='form-control configurations-search-input'>
 
         <div class='configurations-search-buttons'>
-            <button type='button' class='btn btn-default' ng-if="hasPermission('add_config')" ng-click='addConfiguration()' localized>button.add</button>
+            <button type='button' class='btn btn-default btn-modern-primary' ng-if="hasPermission('add_config')" ng-click='addConfiguration()' localized>button.add</button>
         </div>
     </div>
 
@@ -27,7 +27,8 @@
                 last-text='&raquo;'></pagination>
     </div>
 
-    <table ng-if='configurations && configurations.length > 0' class='table'>
+    <div class="modern-table-wrap" ng-if='configurations && configurations.length > 0'>
+    <table class='table'>
         <thead>
         <tr>
             <th localized>table.heading.configuration.name</th>
@@ -68,6 +69,7 @@
         </tr>
         </tbody>
     </table>
+    </div>
 
     <div ng-if='configurations && configurations.length == 0' class='center' localized>notfound.configurations</div>
 

@@ -1,5 +1,5 @@
 <!-- Localization completed -->
-<div class='content-wrapper width-1000'>
+<div class='content-wrapper width-1000 modern-page'>
     <div ncy-breadcrumb></div>
 
     <div ng-show='errorMessage'>
@@ -621,14 +621,14 @@
                                                 <td class="app-desc">{{application.name}}<span ng-if="pkgInfoVisible(application)"><br>{{application.pkg}}</span></td>
                                                 <td ng-if="pkgInfoVisible(application)">
                                                     <a ng-if="application.action == 1" class="action-link" ng-click="selectVersion(application)">
-                                                        {{application.version}}
+                                                        {{application.version}}<span ng-if="application.versionCode"> ({{application.versionCode}})</span>
                                                     </a>
                                                     <span class="glyphicon glyphicon-exclamation-sign" style="color:orange" ng-if="application.action == 1 && splitApkWarning(application)" title="{{splitApkWarning(application)}}"></span>
 
                                                     <span ng-if="application.outdated && application.action == 1 && !upgrading"><br>
                                                     <a class="version-management-link version-upgrade-link" ng-click="upgradeApp(application)" localized>button.upgrade</a></span>
 
-                                                    <span ng-if="application.action != 1">{{application.version}}</span>
+                                                    <span ng-if="application.action != 1">{{application.version}}<span ng-if="application.versionCode"> ({{application.versionCode}})</span></span>
                                                 </td>
                                                 <td ng-if="!pkgInfoVisible(application)"></td>
                                                 <td>

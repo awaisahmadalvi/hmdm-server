@@ -51,7 +51,7 @@ angular.module('headwind-kiosk')
                 encrypt.setPublicKey($scope.publicKey);
                 password = encrypt.encrypt($scope.login.password);
             }
-            authService.login($scope.login.username, password, loginHandler);
+            authService.login($scope.login.username, password, !!$scope.login.rememberMe, loginHandler);
         };
 
         $scope.recoverPassword = function() {

@@ -8,6 +8,7 @@ document.localization[ 'ru_RU' ] = {
     'login.submit': 'Войти',
     'login.password.incorrect': 'Неверные имя пользователя или пароль',
     'login.password.recovery': 'Забыли пароль?',
+    'login.remember.me': 'Запомнить меня',
     'recovery.password': 'Восстановить пароль',
     'recovery.password.success': 'Инструкция по восстановлению пароля отправлена на ваш email',
     'login.no.account': 'Нет учетной записи?',
@@ -108,6 +109,8 @@ document.localization[ 'ru_RU' ] = {
     'button.add.icon': 'Новая',
     'button.search': 'Поиск',
     'button.export': 'Экспорт',
+    'button.export.excel': 'Экспорт в Excel',
+    'button.export.pdf': 'Экспорт в PDF',
     'button.change': 'Изменить',
     'button.copy': 'Копировать',
     'button.qrcode': 'QR-код',
@@ -539,6 +542,9 @@ document.localization[ 'ru_RU' ] = {
     'form.application.configurations.app': 'Приложение',
     'form.application.configurations.configs': 'Конфигурации',
 
+    'modal.configuration.title.copy': 'Копирование конфигурации',
+    'modal.configuration.title.addApp': 'Добавить приложение',
+
     'form.configuration.copy.new.name': 'Новое название',
     'form.configuration.copy.new.name.placeholder': 'Введите новое название конфигурации',
 
@@ -565,6 +571,9 @@ document.localization[ 'ru_RU' ] = {
     'form.customer.size.limit': 'Лимит хранилища',
     'form.customer.size.limit.placeholder': 'Размер (Мб)',
 
+    'modal.device.title.edit': 'Редактирование устройства',
+    'modal.device.title.add': 'Добавление устройства',
+
     'form.device.number': 'Номер',
     'form.device.number.locked': 'Нельзя изменить номер, если устройство в процессе миграции.',
     'form.device.migration.warning': 'Устройство будет переключено на новый номер. Проверьте, что устройство включено - номер изменится, если устройство в сети.',
@@ -582,6 +591,9 @@ document.localization[ 'ru_RU' ] = {
 
     'form.file.file': 'Файл',
     'form.file.name': 'Имя файла',
+    'modal.file.title.edit': 'Редактирование файла',
+    'modal.file.title.add': 'Добавление файла',
+
     'form.file.description': 'Описание (необязательно)',
     'form.file.external': 'Внешний',
     'form.file.external.title': 'Вместо загрузки файла вы можете указать URL на внешнем ресурсе',

@@ -19,13 +19,13 @@
   ~
   -->
 
-<div class="width-1000" ng-controller="PluginDeviceInfoSettingsController">
+<div class="width-1000 modern-page" ng-controller="PluginDeviceInfoSettingsController">
     <div class="text-center">
         <h4 localized-change-tracking>plugin.deviceinfo.title</h4>
     </div>
 
     <div>
-        <form class='form-horizontal'>
+        <form class='form-horizontal modern-toolbar'>
             <div class='form-group'>
                 <div ng-show='successMessage' class='success'><span>{{successMessage}}</span></div>
                 <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
@@ -57,7 +57,7 @@
             
             <div class="form-group">
                 <div class='col-sm-offset-5 col-sm-5 padding-right'>
-                    <button type='submit' class='btn btn-default' ng-click='save()' localized-change-tracking>button.save</button>
+                    <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' localized-change-tracking>button.save</button>
                 </div>
             </div>
         </form>

@@ -8,6 +8,7 @@ document.localization ['ja_JP'] = {
     'login.submit': 'ログイン',
     'login.password.incorrect': 'ユーザー名またはパスワードが無効です',
     'login.password.recovery': 'パスワードを忘れましたか?',
+    'login.remember.me': 'ログイン状態を保持する',
     'recovery.password': 'パスワードの回復',
     'recovery.password.success': 'パスワードの回復手順をメールに送信しました',
     'login.no.account': 'アカウントがありませんか?',
@@ -108,6 +109,8 @@ document.localization ['ja_JP'] = {
     'button.add.icon': '新しいアイコン',
     'button.search': '検索',
     'button.export': 'エクスポート',
+    'button.export.excel': 'Excelにエクスポート',
+    'button.export.pdf': 'PDFにエクスポート',
     'button.change': '編集',
     'button.copy': 'コピー',
     'button.qrcode': 'QRコード',
@@ -539,6 +542,9 @@ document.localization ['ja_JP'] = {
     'form.application.configurations.app': 'アプリケーション',
     'form.application.configurations.configs': '設定',
 
+    'modal.configuration.title.copy': '構成をコピー',
+    'modal.configuration.title.addApp': 'アプリケーションを追加',
+
     'form.configuration.copy.new.name': '新しい名前',
     'form.configuration.copy.new.name.placeholder': '新しい設定名を入力してください',
 
@@ -565,6 +571,9 @@ document.localization ['ja_JP'] = {
     'form.customer.size.limit': '保管制限',
     'form.customer.size.limit.placeholder': 'サイズ (MB)',
 
+    'modal.device.title.edit': 'デバイスを編集',
+    'modal.device.title.add': 'デバイスを追加',
+
     'form.device.number': '番号',
     'form.device.number.locked': '前回の番号変更が完了していないため、番号を変更できません。',
     'form.device.migration.warning': 'デバイス番号が変更されます。 デバイスの電源が入っていてオンラインであることを確認してください。',
@@ -582,6 +591,9 @@ document.localization ['ja_JP'] = {
 
     'form.file.file': 'ファイル',
     'form.file.name': 'ファイル名',
+    'modal.file.title.edit': 'ファイルを編集',
+    'modal.file.title.add': 'ファイルを追加',
+
     'form.file.description': '説明（オプション）',
     'form.file.external': '外部',
     'form.file.external.title': 'ファイルをアップロードする代わりに、外部リソースのURLを指定することもできます。',

@@ -1,6 +1,6 @@
 <!-- Localization completed -->
-<div ng-controller="FilesTabController">
-    <div class='form-group'>
+<div ng-controller="FilesTabController" class="modern-page">
+    <div class='form-group modern-toolbar'>
         <input type='text'
                ng-enter='search()'
                ng-model='search.searchValue'
@@ -9,11 +9,11 @@
                class='form-control configurations-search-input'>
 
         <div class='configurations-search-buttons'>
-            <button ng-if="hasPermission('edit_files')" type='button' class='btn btn-default' ng-click='editFile({})' localized>button.add</button>
+            <button ng-if="hasPermission('edit_files')" type='button' class='btn btn-default btn-modern-primary' ng-click='editFile({})' localized>button.add</button>
         </div>
-    </div>
 
-    <div ng-if="availableSpace" class="field-hint">{{availableSpace}}</div>
+        <div ng-if="availableSpace" class="field-hint">{{availableSpace}}</div>
+    </div>
 
     <div class="text-center" ng-if="files.length > paging.pageSize">
         <pagination
@@ -26,7 +26,8 @@
                 last-text='&raquo;'></pagination>
     </div>
 
-    <table ng-if='files && files.length > 0' class='table'>
+    <div class="modern-table-wrap" ng-if='files && files.length > 0'>
+    <table class='table'>
         <thead>
         <tr>
             <th localized>table.heading.file.name</th>
@@ -80,6 +81,7 @@
         </tr>
         </tbody>
     </table>
+    </div>
 
     <div ng-if='files && files.length == 0' class='center' localized>notfound.files</div>
 

@@ -8,6 +8,7 @@ document.localization ['tr_TR'] = {
 	'login.submit': 'Giriş yap',
 	'login.password.incorrect': 'Geçersiz kullanıcı adı veya şifre',
 	'login.password.recovery': 'Şifrenizi mi unuttunuz?',
+	'login.remember.me': 'Beni hatırla',
 	'recovery.password': 'Şifreyi kurtar',
 	'recovery.password.success': 'Şifre kurtarma talimatları e-postanıza gönderildi',
 	'login.no.account': 'Hesabınız yok mu?',
@@ -108,6 +109,8 @@ document.localization ['tr_TR'] = {
 	'button.add.icon': 'Yeni Simge',
 	'button.search': 'Ara',
 	'button.export': 'Dışa Aktar',
+	'button.export.excel': 'Excel\'e Aktar',
+	'button.export.pdf': 'PDF\'e Aktar',
 	'button.change': 'Düzenle',
 	'button.copy': 'Kopyala',
 	'button.qrcode': 'QR kodu',
@@ -539,6 +542,9 @@ document.localization ['tr_TR'] = {
 	'form.application.configurations.app': 'Uygulama',
 	'form.application.configurations.configs': 'Yapılandırmalar',
 
+	'modal.configuration.title.copy': 'Konfigürasyonu kopyala',
+	'modal.configuration.title.addApp': 'Uygulama ekle',
+
 	'form.configuration.copy.new.name': 'Yeni ad',
 	'form.configuration.copy.new.name.placeholder': 'Yeni yapılandırma adını girin',
 
@@ -565,6 +571,9 @@ document.localization ['tr_TR'] = {
 	'form.customer.size.limit': 'Depolama sınırı',
 	'form.customer.size.limit.placeholder': 'Boyut (Mb)',
 
+	'modal.device.title.edit': 'Cihazı düzenle',
+	'modal.device.title.add': 'Cihaz ekle',
+
 	'form.device.number': 'Sayı',
 	'form.device.number.locked': 'Önceki numara değişikliği tamamlanmadığı için numara değiştirilemiyor.',
 	'form.device.migration.warning': 'Cihaz numarası değiştirilecek. Cihazın açık ve çevrimiçi olduğundan emin olun.',
@@ -582,6 +591,9 @@ document.localization ['tr_TR'] = {
 
 	'form.file.file': 'Dosya',
     'form.file.name': 'Dosya adı',
+    'modal.file.title.edit': 'Dosyayı düzenle',
+    'modal.file.title.add': 'Dosya ekle',
+
     'form.file.description': 'Açıklama (isteğe bağlı)',
     'form.file.external': 'Harici',
     'form.file.external.title': 'Dosyayı yüklemek yerine, harici bir kaynaktaki URL\'yi belirtebilirsiniz',

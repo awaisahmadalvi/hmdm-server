@@ -1,3 +1,11 @@
+<div class="modern-modal-header">
+    <div class="modern-modal-icon">
+        <span class="glyphicon glyphicon-plus"></span>
+    </div>
+    <h4 class="modern-modal-title" localized>modal.configuration.title.addApp</h4>
+    <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
+</div>
+
 <div ng-show='errorMessage' class='modal-header'>
     <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
 </div>
@@ -5,7 +13,7 @@
     <div ng-show='successMessage' class='success'><span>{{successMessage}}</span></div>
 </div>
 
-<div class='modal-body'>
+<div class='modal-body modern-modal-body'>
     <form class='form-horizontal'>
         <div class='form-group'>
             <label class='col-sm-12' localized>form.configuration.title</label>
@@ -79,13 +87,13 @@
 
 
 
-        <div class='form-group'>
+        <div class='form-group modern-modal-actions'>
             <div class='text-center'>
+                <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
                 <button ng-if="hasPermission('edit_applications')" type='submit' class='btn btn-default' ng-click='newApp()' localized>button.new.app</button>
-                <button type='submit' class='btn btn-default' ng-click='save()'
+                <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()'
                         ng-disabled="!(mainApp && mainApp.id > 0)"
                         localized>button.add</button>
-                <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
             </div>
         </div>
     </form>

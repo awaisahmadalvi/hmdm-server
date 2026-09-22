@@ -10,7 +10,29 @@ angular.module('headwind-kiosk')
             updateDeviceGroupBulk: {url: 'rest/private/devices/groupBulk', method: 'POST'},
             getDeviceApplicationSettings: {url: 'rest/private/devices/:id/applicationSettings', method: 'GET'},
             saveDeviceApplicationSettings: {url: 'rest/private/devices/:id/applicationSettings', method: 'POST'},
-            notifyDeviceOnAppSettingsUpdate: {url: 'rest/private/devices/:id/applicationSettings/notify', method: 'POST'}
+            notifyDeviceOnAppSettingsUpdate: {url: 'rest/private/devices/:id/applicationSettings/notify', method: 'POST'},
+            exportDevicesExcel: {
+                url: 'rest/private/devices/report/excel',
+                method: 'POST',
+                responseType: 'arraybuffer',
+                cache: false,
+                transformResponse: function (data) {
+                    return {
+                        response: new Blob([data], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
+                    };
+                }
+            },
+            exportDevicesPdf: {
+                url: 'rest/private/devices/report/pdf',
+                method: 'POST',
+                responseType: 'arraybuffer',
+                cache: false,
+                transformResponse: function (data) {
+                    return {
+                        response: new Blob([data], {type: 'application/pdf'})
+                    };
+                }
+            }
         });
     })
     .factory('configurationService', function ($resource) {

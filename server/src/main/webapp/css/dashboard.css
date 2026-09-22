@@ -1,0 +1,860 @@
+/* =========================================================
+   Modern header / top navigation
+   ========================================================= */
+
+.header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e3e9f0;
+  box-shadow: 0 1px 6px rgba(30, 60, 90, 0.06);
+}
+
+.header .logo-text {
+  color: #33475b;
+}
+
+.header .logo-text a,
+.header .logo-text a:active {
+  color: #2c4a5e !important;
+  font-weight: 700;
+}
+
+.header .logo-text a:hover {
+  color: #4c788c !important;
+}
+
+.header a {
+  color: #45596b !important;
+}
+
+.header .open a,
+.header .open .dropdown-menu {
+  background-color: #ffffff !important;
+}
+
+.header .dropdown-menu {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
+  padding: 6px;
+  margin-top: 10px;
+}
+
+.header .dropdown-menu > li > a {
+  border-radius: 6px;
+  padding: 8px 14px;
+  color: #33475b !important;
+}
+
+.header .selected,
+.header .open .dropdown-menu a:hover {
+  background: #f1f5f9;
+  font-weight: 600;
+}
+
+.navbar-nav .expiry-warning {
+  color: #a15c00 !important;
+  background: #fff3cd;
+  padding: 4px 12px !important;
+  border-radius: 12px;
+  font-weight: 600 !important;
+}
+
+#headerDateTime {
+  color: #8592a1;
+}
+
+.username-label {
+  color: #2c4a5e;
+  font-weight: 600;
+}
+
+.username-caret {
+  color: #8592a1;
+}
+
+/* =========================================================
+   Confirm dialog
+   ========================================================= */
+
+.confirm-dialog {
+  position: relative;
+  padding: 30px 28px 26px 28px !important;
+  text-align: center;
+}
+
+.confirm-dialog-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  color: #aab6c2;
+  cursor: pointer;
+}
+
+.confirm-dialog-close:hover {
+  color: #5c6b7a;
+}
+
+.confirm-dialog-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px auto;
+  border-radius: 50%;
+  background: #fff3cd;
+  color: #a15c00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.confirm-dialog-message {
+  color: #33475b;
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0 0 24px 0 !important;
+  display: block;
+}
+
+.confirm-dialog-message span {
+  display: inline !important;
+  margin: 0 !important;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.confirm-dialog-actions .btn {
+  min-width: 110px;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 9px 18px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.confirm-dialog-cancel {
+  background: #ffffff;
+  border: 1px solid #d7e0ea;
+  color: #45596b;
+}
+
+.confirm-dialog-cancel:hover {
+  background: #f1f5f9;
+  border-color: #c3d0dd;
+  color: #22303f;
+}
+
+.confirm-dialog-ok {
+  background: #4c788c;
+  border: 1px solid #4c788c;
+  color: #ffffff;
+}
+
+.confirm-dialog-ok:hover {
+  background: #3d6274;
+  border-color: #3d6274;
+  color: #ffffff;
+}
+
+/* =========================================================
+   Modern modal (entity edit dialogs, e.g. device.html)
+   ========================================================= */
+
+.modern-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.modern-modal-icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e8eef3;
+  color: #4c788c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.modern-modal-title {
+  flex: 1;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #22303f;
+}
+
+.modern-modal-close {
+  flex: none;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  color: #aab6c2;
+  cursor: pointer;
+}
+
+.modern-modal-close:hover {
+  color: #5c6b7a;
+}
+
+.modern-modal-body {
+  padding-top: 22px;
+}
+
+.modern-modal-body .form-control:not([type="checkbox"]):not([type="radio"]) {
+  border-radius: 8px;
+  border: 1px solid #d7e0ea;
+  box-shadow: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.modern-modal-body .form-control:not([type="checkbox"]):not([type="radio"]):focus {
+  border-color: #4c788c;
+  box-shadow: 0 0 0 3px rgba(76, 120, 140, 0.15);
+}
+
+.modern-modal-body input[type="checkbox"],
+.modern-modal-body input[type="checkbox"].form-control {
+  accent-color: #4c788c;
+  width: auto;
+  height: auto;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.modern-modal-body input[type="radio"] {
+  accent-color: #4c788c;
+}
+
+.modern-modal-body .control-label {
+  font-weight: 600;
+  color: #33475b;
+}
+
+.modern-modal-body .audit-payload {
+  margin: 18px 0;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #eef2f6;
+}
+
+.modern-modal-body .panel-default {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(30, 60, 90, 0.06);
+}
+
+.modern-modal-body .panel-default > .panel-heading {
+  background: #f8fafc;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.modern-modal-body .dropdown-menu {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
+  padding: 6px;
+}
+
+.modern-modal-body .dropdown-menu > li > a {
+  border-radius: 6px;
+}
+
+.modern-modal-actions {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+.modern-modal-actions .btn {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 8px 18px;
+  margin-right: 8px;
+}
+
+.modern-modal-actions .btn-default {
+  border: 1px solid #d7e0ea;
+  color: #45596b;
+}
+
+.modern-modal-actions .btn-default:hover {
+  background: #f1f5f9;
+  border-color: #c3d0dd;
+}
+
+.modern-modal-actions .btn-modern-primary {
+  background: #4c788c;
+  border-color: #4c788c;
+  color: #ffffff;
+}
+
+.modern-modal-actions .btn-modern-primary:hover {
+  background: #3d6274;
+  border-color: #3d6274;
+  color: #ffffff;
+}
+
+/* =========================================================
+   Batch device import modal
+   ========================================================= */
+
+.batch-upload-card {
+  padding: 20px 20px 20px 20px;
+}
+
+.batch-template-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.batch-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.batch-upload-row .control-label {
+  margin: 0;
+  font-weight: 600;
+  color: #33475b;
+  flex: none;
+}
+
+.batch-upload-row .form-control {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.batch-alert-danger {
+  border-radius: 10px;
+  border: 1px solid #f2c2c0;
+}
+
+.preview-title {
+  color: #22303f;
+}
+
+/* =========================================================
+   QR enrollment page
+   ========================================================= */
+
+.qr-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: linear-gradient(160deg, #eef3f9 0%, #dde8f2 100%);
+  padding: 40px 16px 60px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qr-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(30, 60, 90, 0.12);
+  padding: 24px;
+  margin-bottom: 24px;
+  display: inline-block;
+}
+
+.qr-image {
+  display: block;
+  width: auto;
+  max-width: min(480px, 100%);
+  height: auto !important;
+  border-radius: 8px;
+}
+
+.qr-options {
+  width: 100%;
+  max-width: 640px;
+}
+
+.qr-options .control-label {
+  text-align: left;
+}
+
+.qr-hint {
+  color: #8592a1;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.qr-checkbox {
+  accent-color: #4c788c;
+  width: 18px;
+  height: 18px;
+}
+
+.qr-json {
+  width: 100%;
+  height: 140px;
+  font-family: monospace;
+  font-size: 12px;
+  resize: vertical;
+}
+
+.qr-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.qr-help-wrapper {
+  max-width: 640px;
+  width: 100%;
+}
+
+.qr-help {
+  padding: 22px 26px;
+  text-align: left;
+}
+
+.qr-help-line {
+  color: #33475b;
+  font-size: 14px;
+}
+
+.qr-help-intro {
+  font-weight: 600;
+  color: #22303f;
+}
+
+.qr-help-outro {
+  color: #6b7a89;
+  font-size: 13px;
+  margin-top: 10px !important;
+}
+
+/* =========================================================
+   Top tab bar (Devices / Applications / ... / Settings / Functions)
+   ========================================================= */
+
+.tabset .nav-tabs {
+  border-bottom: 1px solid #e3e9f0;
+  padding: 0 4px;
+}
+
+.tabset .nav-tabs > li {
+  margin-bottom: -1px;
+  float: left;
+}
+
+.tabset .nav-tabs > li > a {
+  border: none !important;
+  background: transparent !important;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 15px 18px;
+  margin-right: 2px;
+  border-radius: 8px 8px 0 0;
+  box-shadow: inset 0 -2px 0 0 transparent;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tabset .nav-tabs > li > a:hover,
+.tabset .nav-tabs > li > a:focus {
+  background: #f1f5f9 !important;
+  color: #22303f;
+}
+
+.tabset .nav-tabs > li.active > a,
+.tabset .nav-tabs > li.active > a:hover,
+.tabset .nav-tabs > li.active > a:focus {
+  color: #2c4a5e;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: inset 0 -2px 0 0 #4c788c;
+}
+
+.tabset .nav-tabs > li.dropdown.active > a {
+  color: #4c788c;
+}
+
+.tabset .nav-tabs .caret {
+  border-top-color: #64748b;
+}
+
+.tabset .nav-tabs > li.dropdown.active .caret,
+.tabset .nav-tabs > li.dropdown > a:hover .caret {
+  border-top-color: #4c788c;
+}
+
+.tabset .dropdown-menu {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
+  padding: 6px;
+  margin-top: 6px;
+}
+
+.tabset .dropdown-menu > li > a {
+  border-radius: 6px;
+  color: #33475b;
+}
+
+.tabset .dropdown-menu > li > a:hover {
+  background: #f1f5f9;
+  color: #22303f;
+}
+
+/* =========================================================
+   Shared "modern page" building blocks
+   Applied via wrapper classes to individual tab views
+   (devices, applications, ...) without touching Angular
+   bindings/controllers - purely presentational.
+   ========================================================= */
+
+.modern-page {
+  padding: 4px 4px 10px 4px;
+}
+
+.modern-page h4 {
+  color: #22303f;
+  font-weight: 700;
+}
+
+.modern-page h5 {
+  color: #33475b;
+  font-weight: 600;
+}
+
+.modern-page h3 {
+  color: #22303f;
+  font-weight: 700;
+}
+
+.summary-card {
+  margin-bottom: 20px;
+  padding-top: 28px;
+  padding-bottom: 28px;
+}
+
+.summary-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #22303f;
+  margin-bottom: 10px;
+}
+
+.summary-legend {
+  font-size: 14px;
+  color: #556575;
+}
+
+.summary-legend strong {
+  font-size: 15px;
+}
+
+.modern-page .btn-promo {
+  background-color: #4c788c;
+}
+
+.modern-page .btn-promo:hover {
+  background-color: #3d6274;
+}
+
+/* Generic table styling for tables that aren't wrapped in .modern-table-wrap
+   (e.g. tables inside the configuration editor's tabs) */
+.modern-page table.table thead th {
+  background: #f8fafc;
+  color: #6b7a89;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid #e6ebf1;
+  border-top: none;
+}
+
+.modern-page table.table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.modern-page .panel-default {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(30, 60, 90, 0.06);
+}
+
+.modern-page .panel-default > .panel-heading {
+  background: #f8fafc;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.modern-page .config-save {
+  background: rgba(255, 255, 255, 0.97);
+  border-top: 1px solid #e3e9f0;
+  box-shadow: 0 -4px 20px rgba(30, 60, 90, 0.08);
+}
+
+.modern-page .config-save .btn {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 8px 20px;
+  margin: 0 4px;
+  border: 1px solid #d7e0ea;
+  color: #45596b;
+  background: #ffffff;
+}
+
+.modern-page .config-save .btn:hover {
+  background: #f1f5f9;
+  border-color: #c3d0dd;
+}
+
+.modern-page .config-save .btn-attention {
+  background: #fff3cd;
+  border-color: #f0dfa0;
+  color: #7a5c00;
+}
+
+.modern-page .config-save .btn-attention:hover {
+  background: #ffe9a8;
+  border-color: #e6cd7c;
+}
+
+.modern-page .modern-toolbar {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(30, 60, 90, 0.06);
+  padding: 18px 20px 6px 20px;
+  margin-bottom: 16px;
+}
+
+.modern-page .form-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  border-radius: 8px;
+  border: 1px solid #d7e0ea;
+  box-shadow: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.modern-page .form-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus {
+  border-color: #4c788c;
+  box-shadow: 0 0 0 3px rgba(76, 120, 140, 0.15);
+}
+
+.modern-page input[type="checkbox"],
+.modern-page input[type="checkbox"].form-control {
+  accent-color: #4c788c;
+  width: auto;
+  height: auto;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.modern-page input[type="radio"] {
+  accent-color: #4c788c;
+}
+
+.modern-page input[type="range"],
+.modern-page input[type="range"].form-control {
+  accent-color: #4c788c;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  height: auto;
+}
+
+.modern-page .btn-default {
+  border-radius: 8px;
+  border: 1px solid #d7e0ea;
+  background: #ffffff;
+  color: #33475b;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.modern-page .btn-default:hover {
+  background: #f1f5f9;
+  border-color: #c3d0dd;
+  color: #22303f;
+}
+
+.modern-page .btn-default:focus,
+.modern-page .btn-default.focus {
+  box-shadow: 0 0 0 3px rgba(76, 120, 140, 0.15);
+}
+
+.modern-page .btn-modern-primary {
+  background: #4c788c;
+  border-color: #4c788c;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.modern-page .btn-modern-primary:hover {
+  background: #3d6274;
+  border-color: #3d6274;
+  color: #ffffff;
+}
+
+.modern-page .collapse-control {
+  color: #4c788c;
+}
+
+.modern-page a.action-link {
+  color: #4c788c;
+}
+
+.modern-page a.action-link:hover,
+.modern-page a.action-link:focus {
+  color: #3d6274;
+}
+
+.modern-page .dropdown-menu {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
+  padding: 6px;
+}
+
+.modern-page .dropdown-menu > li > a {
+  border-radius: 6px;
+}
+
+.modern-page .modern-table-wrap {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(30, 60, 90, 0.06);
+}
+
+.modern-page .modern-table-wrap .table {
+  margin-bottom: 0;
+}
+
+.modern-page .modern-table-wrap thead th {
+  background: #f8fafc;
+  color: #6b7a89;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid #e6ebf1;
+  border-top: none;
+  white-space: nowrap;
+}
+
+.modern-page .modern-table-wrap thead tr:first-child th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.modern-page .modern-table-wrap thead tr:first-child th:last-child {
+  border-top-right-radius: 12px;
+}
+
+.modern-page .modern-table-wrap tbody td {
+  border-top: 1px solid #eef2f6;
+  vertical-align: middle;
+}
+
+.modern-page .modern-table-wrap tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.modern-page .deviceActions .btn-default,
+.modern-page td .btn-default {
+  border-radius: 6px;
+  padding: 5px 9px;
+}
+
+.modern-page .modern-proplist,
+.modern-proplist {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(30, 60, 90, 0.06);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.modern-proplist table.table {
+  margin-bottom: 0;
+}
+
+.modern-proplist table.table tr th,
+.modern-proplist table.table tr td {
+  padding: 10px 18px;
+  font-size: 13px;
+  border-top: 1px solid #eef2f6;
+  vertical-align: middle;
+}
+
+.modern-proplist table.table tr th {
+  background: transparent;
+  color: #647485;
+  font-weight: 600;
+  width: 42%;
+  white-space: nowrap;
+}
+
+.modern-proplist table.table tr td {
+  color: #1f2b38;
+}
+
+.modern-proplist table.table tr:first-child th,
+.modern-proplist table.table tr:first-child td {
+  border-top: none;
+}
+
+.modern-proplist table.table tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.modern-proplist table.table tr th[colspan] {
+  background: #eaf1f6;
+  color: #2c4a5e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: normal;
+}
+
+.modern-page .custom-pagination-wrapper {
+  margin-top: 14px;
+}
+
+.modern-page .pagination-label span {
+  color: #33475b;
+}
+
+.modern-page .pagination {
+  margin: 10px 0;
+}
+
+.modern-page .pagination > li > a,
+.modern-page .pagination > li > span {
+  border-radius: 6px !important;
+  margin: 0 2px;
+  border: 1px solid #d7e0ea;
+  color: #45596b;
+}
+
+.modern-page .pagination > .active > a,
+.modern-page .pagination > .active > a:hover,
+.modern-page .pagination > .active > span {
+  background-color: #4c788c;
+  border-color: #4c788c;
+  color: #ffffff;
+}

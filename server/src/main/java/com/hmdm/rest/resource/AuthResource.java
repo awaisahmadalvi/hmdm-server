@@ -28,6 +28,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -73,6 +74,11 @@ public class AuthResource {
     private RsaKeyService rsaKeyService;
     private boolean transmitPassword;
     private HmdmAuthInterface authEngine;
+
+    /**
+     * <p>How long the session should be kept alive (in seconds) when the user checks "Remember me" (30 days).</p>
+     */
+    private static final int REMEMBER_ME_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
     /**
      * <p>
@@ -126,7 +132,8 @@ public class AuthResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response login(UserCredentials credentials,
-            @Context HttpServletRequest req) throws InterruptedException {
+            @Context HttpServletRequest req,
+            @Context HttpServletResponse resp) throws InterruptedException {
         if (credentials.getLogin() == null || credentials.getPassword() == null) {
             return Response.ERROR();
         }
@@ -163,6 +170,23 @@ public class AuthResource {
 
             HttpSession userSession = req.getSession();
             userSession.setAttribute(AuthFilter.sessionCredentials, user);
+
+            if (credentials.isRememberMe()) {
+                userSession.setMaxInactiveInterval(REMEMBER_ME_MAX_AGE_SECONDS);
+
+                // The container issues the session cookie without an expiry (deleted when the browser closes).
+                // Re-issue it with an explicit Max-Age so it survives a browser restart.
+                String cookiePath = req.getContextPath().isEmpty() ? "/" : req.getContextPath();
+                StringBuilder cookieHeader = new StringBuilder();
+                cookieHeader.append("JSESSIONID=").append(userSession.getId())
+                        .append("; Path=").append(cookiePath)
+                        .append("; Max-Age=").append(REMEMBER_ME_MAX_AGE_SECONDS)
+                        .append("; HttpOnly");
+                if (req.isSecure()) {
+                    cookieHeader.append("; Secure");
+                }
+                resp.addHeader("Set-Cookie", cookieHeader.toString());
+            }
 
             Settings settings = settingsDAO.getSettings(user.getCustomerId());
             if (settings != null) {

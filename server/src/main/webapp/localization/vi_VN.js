@@ -8,6 +8,7 @@ document.localization ['vi_VN'] = {
     'login.submit': 'Đăng nhập',
     'login.password.incorrect': 'Tên đăng nhập hoặc mật khẩu không hợp lệ',
     'login.password.recovery': 'Quên mật khẩu?',
+    'login.remember.me': 'Ghi nhớ đăng nhập',
     'recovery.password': 'Khôi phục mật khẩu',
     'recovery.password.success': 'Hướng dẫn khôi phục mật khẩu đã được gửi tới email của bạn',
     'login.no.account': 'Chưa có tài khoản?',
@@ -103,6 +104,8 @@ document.localization ['vi_VN'] = {
     'button.add.icon': 'Biểu tượng mới',
     'button.search': 'Tìm kiếm',
     'button.export': 'Xuất',
+    'button.export.excel': 'Xuất ra Excel',
+    'button.export.pdf': 'Xuất ra PDF',
     'button.change': 'Sửa',
     'button.copy': 'Sao chép',
     'button.qrcode': 'Mã QR',
@@ -494,6 +497,9 @@ document.localization ['vi_VN'] = {
     
     'form.customer.type': 'Loại',
     
+    'modal.device.title.edit': 'Chỉnh sửa thiết bị',
+    'modal.device.title.add': 'Thêm thiết bị',
+
     'form.device.number': 'Số thiết bị',
     
     'form.device.desc': 'Mô tả',
@@ -602,6 +608,9 @@ document.localization ['vi_VN'] = {
     'form.application.configurations.app': 'Ứng dụng',
     'form.application.configurations.configs': 'Cấu hình',
 
+    'modal.configuration.title.copy': 'Sao chép cấu hình',
+    'modal.configuration.title.addApp': 'Thêm ứng dụng',
+
     'form.configuration.copy.new.name': 'Tên mới',
     'form.configuration.copy.new.name.placeholder': 'Nhập tên cấu hình mới',
 
@@ -630,6 +639,9 @@ document.localization ['vi_VN'] = {
     'form.update.device.action': 'Thao tác nhóm',
     'form.device.set.group': 'Thêm vào nhóm',
     'form.device.clear.group': 'Xóa khỏi nhóm',
+
+    'modal.file.title.edit': 'Chỉnh sửa tệp',
+    'modal.file.title.add': 'Thêm tệp',
 
     'form.file.description': 'Mô tả (tùy chọn)',
     'form.file.external': 'Bên ngoài',

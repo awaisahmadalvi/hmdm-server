@@ -8,6 +8,7 @@ document.localization ['ar_AE'] = {
     'login.submit': 'تسجيل الدخول',
     'login.password.incorrect': 'اسم المستخدم أو كلمة المرور غير صالحة',
     'login.password.recovery': 'كلمة مرور مفقودة؟',
+    'login.remember.me': 'تذكرني',
     'recovery.password': 'إستعادة كلمة المرور',
     'recovery.password.success': 'تم إرسال تعليمات استعادة كلمة المرور إلى بريدك الإلكتروني',
     'login.no.account': 'ليس لديك حساب؟',
@@ -108,6 +109,8 @@ document.localization ['ar_AE'] = {
     "button.add.icon": 'أيقونة جديدة',
     "button.search": 'بحث',
     "button.export": 'تصدير',
+    "button.export.excel": 'تصدير إلى Excel',
+    "button.export.pdf": 'تصدير إلى PDF',
     "button.change": 'تعديل',
     'button.copy': 'نسخ',
     "button.qrcode": 'QR رمز',
@@ -565,7 +568,13 @@ document.localization ['ar_AE'] = {
     'form.customer.size.limit': 'حد التخزين',
     'form.customer.size.limit.placeholder': 'الحجم (ميغا بايت)',
 
+    'modal.device.title.edit': 'تعديل الجهاز',
+    'modal.device.title.add': 'إضافة جهاز',
+
     'form.device.number': 'رقم',
+
+    'modal.configuration.title.copy': 'نسخ الإعداد',
+    'modal.configuration.title.addApp': 'إضافة تطبيق',
     'form.device.number.locked': 'لا يمكن تغيير الرقم لأنه لم يكتمل تغيير الرقم السابق.',
     'form.device.migration.warning': 'سيتم تغيير رقم الجهاز. تأكد من أن الجهاز قيد التشغيل ومتصل بالإنترنت.',
     "form.device.number.hint": 'لا تستخدم أحرفًا خاصة',
@@ -582,6 +591,9 @@ document.localization ['ar_AE'] = {
 
     'form.file.file': 'ملف',
     'form.file.name': 'اسم الملف',
+    'modal.file.title.edit': 'تعديل الملف',
+    'modal.file.title.add': 'إضافة ملف',
+
     'form.file.description': 'الوصف (اختياري)',
     'form.file.external': 'خارجي',
     'form.file.external.title': 'بدلاً من تحميل الملف، يمكنك تحديد عنوان URL على مورد خارجي',

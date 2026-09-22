@@ -1,18 +1,18 @@
 <!-- Localization completed -->
-<div class="width-1000" ng-controller="UsersTabController">
+<div class="width-1000 modern-page" ng-controller="UsersTabController">
     <div class="text-center">
         <h4 localized>form.settings.users.title</h4>
     </div>
 
     <div>
-        <div class='form-group'>
+        <div class='form-group modern-toolbar'>
             <input type='text' ng-model='search.searchValue' ng-enter='search()'
                    localized-placeholder='form.settings.users.search.placeholder'
                    class='form-control configurations-search-input'>
 
             <div class='configurations-search-buttons'>
-                <button type='button' class='btn btn-default' ng-click='search()' localized>button.search</button>
-                <button type='button' class='btn btn-default' ng-click='editUser( {} )' localized>button.add</button>
+                <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
+                <button type='button' class='btn btn-default btn-modern-primary' ng-click='editUser( {} )' localized>button.add</button>
             </div>
         </div>
 
@@ -27,7 +27,8 @@
                     last-text='&raquo;'></pagination>
         </div>
 
-        <table ng-if='users && users.length > 0' class='table'>
+        <div class="modern-table-wrap" ng-if='users && users.length > 0'>
+        <table class='table'>
             <thead>
             <tr>
                 <th localized>table.heading.users.login</th>
@@ -63,6 +64,7 @@
             </tr>
             </tbody>
         </table>
+        </div>
 
         <div ng-if='users && users.length === 0' class='center' localized>notfound.users</div>
 
