@@ -207,7 +207,11 @@
   box-shadow: var(--shadow-focus);
 }
 
-.login-input.ng-invalid.ng-touched {
+/* Only flag red after a real submit attempt while still invalid, or
+   once the user has typed something and it's invalid - not merely on
+   blur of an untouched-but-empty required field (too aggressive). */
+.login-form.ng-submitted .login-input.ng-invalid,
+.login-input.ng-invalid.ng-dirty {
   border-color: var(--color-danger);
 }
 
@@ -330,7 +334,17 @@
   text-decoration: underline;
 }
 
+/* .login-footer (main.css) is position:fixed/bottom:10px/width:100% by
+   default (a page-wide footer bar). In this split layout it needs to
+   flow inline below the signup line instead - override every property
+   main.css set so nothing fixed/full-width leaks through and overlaps
+   the form above it. */
 .login-footer-inline {
+  position: static;
+  bottom: auto;
+  width: auto;
+  border-top: none;
+  padding-top: 0;
   margin-top: var(--space-8);
   text-align: center;
   font-family: var(--font-family-base);
