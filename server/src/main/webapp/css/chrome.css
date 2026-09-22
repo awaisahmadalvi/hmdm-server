@@ -1,0 +1,260 @@
+/* =========================================================
+   APP CHROME — dark top navbar, per the marked region in
+   design1.png: logo left, horizontal nav links, avatar/user
+   menu right, lime underline for the active link. Header
+   (header.html) and the nav-links row (content.html's own
+   <tabset>) stack with no visual seam so they read as one
+   continuous dark strip, matching the reference's single bar.
+
+   Zero markup/logic changes: same <tab>/<uib-dropdown>
+   directives, same ng-click/ng-if/active bindings as before.
+   Only additions were: the "app-chrome-header" class on
+   header.html's <nav>, the "app-shell" class on content.html's
+   wrapper <div>, and decorative <span class="glyphicon ...">
+   icons inside existing tab-heading / dropdown-toggle labels.
+   ========================================================= */
+
+.tabset {
+  display: block;
+}
+
+/* ---------- Top header (logo + user menu) ---------- */
+
+.app-chrome-header {
+  height: 64px;
+  background: var(--gradient-chrome);
+  border-bottom: none;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+}
+
+.app-chrome-header .logo-text {
+  margin-top: 0;
+  padding-left: var(--space-6);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.app-chrome-header .logo-text a,
+.app-chrome-header .logo-text a:active {
+  color: var(--color-chrome-text) !important;
+  font-size: var(--font-size-lg) !important;
+  text-decoration: none;
+  transition: color var(--duration-base) var(--ease-standard);
+}
+
+.app-chrome-header .logo-text a:hover {
+  color: var(--color-accent) !important;
+  text-decoration: none;
+}
+
+.app-chrome-header a {
+  color: var(--color-chrome-text-muted) !important;
+}
+
+.app-chrome-header #headerDateTime {
+  color: var(--color-chrome-text-muted) !important;
+  font-size: var(--font-size-sm);
+}
+
+.app-chrome-header .expiry-warning {
+  color: var(--color-warning) !important;
+  font-weight: var(--font-weight-semibold) !important;
+}
+
+/* User menu styled as a rounded pill, echoing the avatar+CTA
+   treatment on the right side of design1.png's header. */
+.app-chrome-header .dropdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4) !important;
+  margin-right: var(--space-4);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-chrome-border);
+  transition: background var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard);
+}
+
+.app-chrome-header .dropdown-toggle:hover,
+.app-chrome-header .open .dropdown-toggle {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--color-chrome-text-muted);
+}
+
+.app-chrome-header .username-label {
+  color: var(--color-chrome-text) !important;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+}
+
+.app-chrome-header .username-caret {
+  border-top-color: var(--color-chrome-text-muted) !important;
+}
+
+/* User-menu flyout: light card, same tokens as the rest of the
+   light canvas regardless of the dark trigger it hangs off. */
+.app-chrome-header .open .dropdown-menu {
+  background: var(--color-surface) !important;
+}
+
+.app-chrome-header .dropdown-menu {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-2);
+  margin-top: var(--space-2);
+  min-width: 180px;
+  top: auto;
+}
+
+.app-chrome-header .dropdown-menu > li > a {
+  color: var(--color-text-primary) !important;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.app-chrome-header .dropdown-menu > li > a:hover {
+  background: var(--color-surface-muted) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* ---------- App shell layout ---------- */
+
+.app-shell {
+  padding-top: 64px !important; /* offsets the fixed .app-chrome-header */
+  margin: 0 !important;
+  height: 100%;
+}
+
+.app-shell .tabset > div {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px);
+}
+
+/* ---------- Horizontal nav-links row (the tabset's own nav-tabs) ----------
+   Sits directly under the header, same gradient, sticky so both stay
+   pinned together as one continuous dark strip while the page scrolls. */
+
+.app-shell .tabset .nav-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  position: sticky;
+  top: 64px;
+  z-index: 10;
+  margin: 0;
+  padding: 0 var(--space-6);
+  background: var(--gradient-chrome);
+  border: none;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.app-shell .tabset .nav-tabs > li {
+  float: none;
+  margin: 0;
+}
+
+.app-shell .tabset .nav-tabs > li > a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 52px;
+  border: none !important;
+  background: transparent !important;
+  color: var(--color-chrome-text-muted);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  padding: 0 var(--space-4);
+  border-radius: 0;
+  border-bottom: 3px solid transparent;
+  transition: color var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard);
+}
+
+.app-shell .tabset .nav-tabs > li > a .glyphicon {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.app-shell .tabset .nav-tabs > li > a:hover,
+.app-shell .tabset .nav-tabs > li > a:focus {
+  background: transparent !important;
+  color: var(--color-chrome-text);
+}
+
+.app-shell .tabset .nav-tabs > li.active > a,
+.app-shell .tabset .nav-tabs > li.active > a:hover,
+.app-shell .tabset .nav-tabs > li.active > a:focus {
+  color: var(--color-chrome-text);
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 3px solid var(--color-accent-lime);
+}
+
+.app-shell .tabset .nav-tabs > li.dropdown.active > a {
+  color: var(--color-accent-lime);
+}
+
+.app-shell .tabset .nav-tabs .caret {
+  border-top-color: var(--color-chrome-text-muted);
+  transition: border-top-color var(--duration-base) var(--ease-standard);
+}
+
+.app-shell .tabset .nav-tabs > li.dropdown.active .caret,
+.app-shell .tabset .nav-tabs > li.dropdown > a:hover .caret {
+  border-top-color: var(--color-accent-lime);
+}
+
+/* Settings / Functions submenus: standard downward flyout, light card. */
+.app-shell .tabset .dropdown-menu {
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-2);
+  margin-top: 0;
+  min-width: 200px;
+}
+
+.app-shell .tabset .dropdown-menu > li > a {
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.app-shell .tabset .dropdown-menu > li > a:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+}
+
+/* ---------- Main content canvas ---------- */
+
+.app-shell .tabset .tab-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--color-surface-muted);
+  padding: var(--space-6);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .app-chrome-header .logo-text {
+    padding-left: var(--space-4);
+  }
+  .app-shell .tabset .nav-tabs {
+    padding: 0 var(--space-2);
+    overflow-x: auto;
+  }
+  .app-shell .tabset .nav-tabs > li > a span:not(.glyphicon) {
+    display: none;
+  }
+  .app-shell .tabset .tab-content {
+    padding: var(--space-4);
+  }
+}
