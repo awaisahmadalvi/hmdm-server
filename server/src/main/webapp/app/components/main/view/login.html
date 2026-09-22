@@ -1,43 +1,67 @@
 <!-- Localization completed -->
 <div class="login-page">
-    <div class="login-page-content" ng-if="!isIE">
-        <div class="login-logo" ng-if="rebranding"><img src="rest/public/logo"><span class="logo">{{rebranding.appName}}</span></div>
+    <div class="login-split" ng-if="!isIE">
 
-        <div class="login-card">
-            <div class="login-card-message login-card-message-error" ng-if="errorMessage">{{errorMessage}}</div>
-            <div class="login-card-message login-card-message-success" ng-if="successMessage">{{successMessage}}</div>
-
-            <form name='loginForm' ng-submit='onLogin()' class="login-form" novalidate>
-                <div class='login-field'>
-                    <label for='username' localized>login.username</label>
-                    <input type='text' id='username'
-                           ng-model='login.username' localized-placeholder="login.username.placeholder"
-                           autofocus required/>
+        <div class="login-visual" aria-hidden="true">
+            <div class="login-visual-fallback"></div>
+            <video class="login-visual-video" autoplay muted loop playsinline preload="metadata">
+                <source media="(prefers-color-scheme: dark)" src="media/login-bg-dark.mp4" type="video/mp4">
+                <source src="media/login-bg-light.mp4" type="video/mp4">
+            </video>
+            <div class="login-visual-overlay"></div>
+            <div class="login-visual-copy" ng-if="rebranding">
+                <div class="login-visual-brand">
+                    <img src="rest/public/logo" alt="">
+                    <span>{{rebranding.appName}}</span>
                 </div>
-                <div class='login-field'>
-                    <label for='password' localized>login.password</label>
-                    <input type='password' id='password'
-                           ng-model='login.password' localized-placeholder='login.password.placeholder'
-                           required/>
-                </div>
-
-                <div class="login-options">
-                    <label class="login-remember">
-                        <input type='checkbox' ng-model='login.rememberMe'> <span localized>login.remember.me</span>
-                    </label>
-                    <a class="login-link" ng-if="canRecover" ng-click="recoverPassword()" localized>login.password.recovery</a>
-                </div>
-
-                <button type='submit' class='login-submit' ng-disabled='loginForm.$invalid' localized>login.submit</button>
-
-                <div class="login-signup" ng-if="rebranding.signupLink"><span localized>login.no.account</span> <a href="{{rebranding.signupLink}}" localized>login.signup</a></div>
-                <div class="login-signup" ng-if="!rebranding.signupLink && canSignup"><span localized>login.no.account</span> <a ng-click="signup()" localized>login.signup</a></div>
-            </form>
+                <p class="login-visual-tagline" localized>app.description</p>
+            </div>
         </div>
 
-        <div class="login-footer" ng-if="rebranding">
-            <span>{{rebranding.appName}}</span> <span localized>app.description</span>. (c) {{rebranding.year}} <a href="{{rebranding.vendorLink}}">{{rebranding.vendorName}}</a>
+        <div class="login-form-panel">
+            <div class="login-form-inner">
+                <div class="login-logo login-logo-compact" ng-if="rebranding">
+                    <img src="rest/public/logo"><span class="logo">{{rebranding.appName}}</span>
+                </div>
+
+                <h1 class="login-heading" localized>login.submit</h1>
+
+                <div class="login-card-message login-card-message-error" ng-if="errorMessage">{{errorMessage}}</div>
+                <div class="login-card-message login-card-message-success" ng-if="successMessage">{{successMessage}}</div>
+
+                <form name='loginForm' ng-submit='onLogin()' class="login-form" novalidate>
+                    <div class='login-field-float' ng-class="{'is-filled': login.username}">
+                        <input type='text' id='username' name='username'
+                               ng-model='login.username' localized-placeholder="login.username.placeholder"
+                               class="login-input" autofocus required/>
+                        <label for='username' class="login-float-label" localized>login.username</label>
+                    </div>
+                    <div class='login-field-float' ng-class="{'is-filled': login.password}">
+                        <input type='password' id='password' name='password'
+                               ng-model='login.password' localized-placeholder='login.password.placeholder'
+                               class="login-input" required/>
+                        <label for='password' class="login-float-label" localized>login.password</label>
+                    </div>
+
+                    <div class="login-options">
+                        <label class="login-remember">
+                            <input type='checkbox' ng-model='login.rememberMe'> <span localized>login.remember.me</span>
+                        </label>
+                        <a class="login-link" ng-if="canRecover" ng-click="recoverPassword()" localized>login.password.recovery</a>
+                    </div>
+
+                    <button type='submit' class='login-submit' ng-disabled='loginForm.$invalid' localized>login.submit</button>
+
+                    <div class="login-signup" ng-if="rebranding.signupLink"><span localized>login.no.account</span> <a href="{{rebranding.signupLink}}" localized>login.signup</a></div>
+                    <div class="login-signup" ng-if="!rebranding.signupLink && canSignup"><span localized>login.no.account</span> <a ng-click="signup()" localized>login.signup</a></div>
+                </form>
+
+                <div class="login-footer login-footer-inline" ng-if="rebranding">
+                    <span>{{rebranding.appName}}</span> <span localized>app.description</span>. (c) {{rebranding.year}} <a href="{{rebranding.vendorLink}}">{{rebranding.vendorName}}</a>
+                </div>
+            </div>
         </div>
+
     </div>
 
     <div class='content-wrapper width-1000' ng-if="isIE">
