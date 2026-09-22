@@ -7,11 +7,11 @@
    Scope: the ENTIRE app, including the login page. Every
    stylesheet consumes these tokens instead of hardcoded hex.
 
-   Dark mode: activates automatically via `prefers-color-scheme`
-   (no visible toggle yet - that is a separate, not-yet-approved
-   task). The `[data-theme="light"]` / `[data-theme="dark"]`
-   attribute hooks below are inert today but let a future toggle
-   switch themes with zero CSS changes.
+   Dark mode: manual-only, via a `[data-theme="dark"]` attribute
+   on <html>. Nothing sets that attribute yet (no toggle exists),
+   so the block is fully inert today - the app is always the light
+   canvas defined below, with the header/nav chrome unconditionally
+   dark by design regardless of theme.
    ========================================================= */
 
 :root {
@@ -149,73 +149,21 @@
 
 /* =========================================================
    DARK THEME
-   Same variable names, dark values. Two activation paths:
-   1) prefers-color-scheme (live today)
-   2) [data-theme="dark"] attribute (inert today - reserved
-      for the future manual toggle, not yet built)
+   Same variable names, dark values. Activation is manual-only:
+   [data-theme="dark"] attribute on <html>, set by an explicit
+   toggle. That toggle does not exist yet - this block is inert
+   today (nothing sets the attribute).
+
+   NOT activated by `prefers-color-scheme`: the header/nav chrome
+   is deliberately, unconditionally dark by design (design1.png),
+   independent of the visitor's OS/browser theme preference. Tying
+   the whole app's light canvas to prefers-color-scheme flipped
+   every surface/text/table dark for anyone whose OS prefers dark -
+   that's a real bug (see issue.png), not a dark-mode feature
+   anyone asked for. Fixed by removing that auto-activation path.
    ========================================================= */
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-accent: #6366f1;
-    --color-accent-soft: rgba(99, 102, 241, 0.16);
-    --color-accent-glow: rgba(99, 102, 241, 0.35);
-
-    /* In dark mode indigo-500 has better boundary contrast against
-       the dark canvas (4.00:1) than indigo-600 does (2.84:1), so the
-       fill shifts a step brighter; hover moves lighter still, which
-       is the expected direction in dark UIs. */
-    --color-accent-strong: #6366f1;
-    --color-accent-strong-hover: #818cf8;
-    --color-accent-strong-active: #a5b4fc;
-
-    --color-accent-lime: #aacd02;
-    --color-accent-lime-glow: rgba(170, 205, 2, 0.4);
-
-    --color-canvas: #0f172a;
-    --color-surface: #1e293b;
-    --color-surface-muted: #0f172a;
-    --color-surface-hover: #273347;
-
-    --color-chrome-start: #0f172a;
-    --color-chrome-end: #020617;
-    --color-chrome-text: #f1f5f9;
-    --color-chrome-text-muted: #94a3b8;
-    --color-chrome-border: #1e293b;
-
-    --color-border-subtle: #1e293b;
-    --color-border: #334155;
-    --color-border-strong: #475569;
-
-    --color-text-primary: #f1f5f9; /* 16.30:1 on canvas */
-    --color-text-secondary: #cbd5e1; /* 12.02:1 on canvas */
-    --color-text-tertiary: #94a3b8; /* 6.96:1 on canvas */
-    --color-text-disabled: #64748b;
-    --color-text-on-accent: #ffffff;
-
-    --color-success: #4ade80; /* 10.25:1 on canvas */
-    --color-success-text: #4ade80;
-    --color-success-bg: rgba(74, 222, 128, 0.12);
-    --color-warning: #fbbf24; /* 10.69:1 on canvas */
-    --color-warning-text: #fbbf24;
-    --color-warning-bg: rgba(251, 191, 36, 0.12);
-    --color-danger: #f87171; /* 6.45:1 on canvas */
-    --color-danger-bg: rgba(248, 113, 113, 0.12);
-    --color-info: #818cf8; /* 5.98:1 on canvas */
-    --color-info-bg: rgba(129, 140, 248, 0.12);
-
-    --gradient-surface: linear-gradient(180deg, #1e293b 0%, #17212f 100%);
-    --gradient-login-overlay: linear-gradient(160deg, rgba(2, 6, 23, 0.7) 0%, rgba(99, 102, 241, 0.3) 55%, rgba(2, 6, 23, 0.88) 100%);
-
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 16px rgba(0, 0, 0, 0.35);
-    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3), 0 12px 28px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4), 0 24px 48px rgba(0, 0, 0, 0.5);
-  }
-}
-
-/* Manual override hook for a future toggle (not active until
-   something sets data-theme on <html> - nothing does yet). */
+:root[data-theme="dark"] {
 :root[data-theme="dark"] {
   --color-accent: #6366f1;
   --color-accent-soft: rgba(99, 102, 241, 0.16);
