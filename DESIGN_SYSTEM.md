@@ -3,12 +3,9 @@
 Single source of truth for the internal admin UI's visual language.
 Token implementation: `server/src/main/webapp/css/tokens.css`.
 
-**Scope note:** this covers the entire app, including the login page.
-The login page gets its own distinct *composition* per the project brief
-(split layout, video background panel, full-bleed gradient — see Step 3),
-but it consumes the exact same color/type/spacing/radius/shadow/motion
-tokens as everything else. `login.css` imports `tokens.css` and contains
-zero hardcoded hex values, same as every other stylesheet.
+**Scope note:** this covers the internal admin UI only. The login page
+(`login.css`) has its own separate treatment per the project brief and is
+not themed from these tokens.
 
 **Stack note:** this app is AngularJS 1.x + Bootstrap 3 + plain CSS, no
 build pipeline for the frontend. "Tokens" here means CSS custom properties

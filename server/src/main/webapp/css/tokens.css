@@ -4,10 +4,9 @@
    system. See DESIGN_SYSTEM.md for full rationale and the
    WCAG contrast evidence behind every color pairing below.
 
-   Scope: the ENTIRE app, including the login page. login.css
-   gets its own distinct composition (split layout, video panel,
-   full-bleed gradient) but consumes these same tokens - no
-   hardcoded hex there either.
+   Scope: internal admin UI only. The login page has its own
+   separate visual treatment (see login.css) and is not
+   themed from these tokens.
 
    Dark mode: activates automatically via `prefers-color-scheme`
    (no visible toggle yet - that is a separate, not-yet-approved

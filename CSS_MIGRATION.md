@@ -17,15 +17,7 @@ Update this file every step, immediately after removing rules.
 | `dashboard.css` | 861 | 16,474 bytes | (built this session, pre-redesign — will itself be superseded screen-by-screen) |
 | `login.css` | — | 2,684 bytes | Out of scope — login gets its own new treatment in Step 3, separate from this tracker |
 | `alert.css` | — | 3,683 bytes | Not yet addressed — global toast/alert styling is a later "Global" step |
-| `tokens.css` | 263 | new | Step 1 — token definitions only, no component rules |
-| `chrome.css` | new | new | Step 2 — header + sidebar shell, loads last (see cascade note below) |
-
-## Cascade order (confirmed, Step 2)
-
-`bootstrap.css` → `tokens.css` → `main.css` → `alert.css` → `login.css` →
-`dashboard.css` → `chrome.css` (last — this is the override layer that wins
-over everything above it, per the stack rule "restyle via an override layer
-that loads after Bootstrap").
+| `tokens.css` | 232 | new | Step 1 — token definitions only, no component rules |
 
 ## Status by screen
 
@@ -34,7 +26,7 @@ Legend: ⬜ not started · 🟨 in progress · ✅ retired from main.css
 | Screen / state | Status | main.css selectors removed this step | Notes |
 |---|---|---|---|
 | Design tokens (foundation) | ✅ | 0 (tokens.css is new, additive) | Step 1 |
-| App shell (header/sidebar) | ✅ | 70 (dashboard.css horizontal top-tab-bar block, fully superseded by chrome.css) | Step 2 — header.html/content.html got 1 new class each + decorative icon spans only; no ng-* attrs touched |
+| App shell (header/sidebar) | ⬜ | — | Step 2 |
 | Login (`login`) | ⬜ | — | Step 3. Has its own login.css already; not tracked against main.css the same way |
 | Device list (`main`) | ⬜ | — | |
 | Dashboard (`summary`) | ⬜ | — | |
