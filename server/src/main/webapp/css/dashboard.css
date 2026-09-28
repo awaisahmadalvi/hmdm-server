@@ -1029,6 +1029,18 @@
   animation: summary-card-in 0.5s ease both;
 }
 
+/* Pre-existing bug, surfaced while verifying the redesign: this card's only
+   children are floated Bootstrap columns (.col-sm-4/.col-sm-8), and the card
+   itself is never given Bootstrap's ".row" class, so nothing clears those
+   floats. Without this, the card's own background/shadow collapses to
+   ~0 content height (just its top/bottom padding) while the floated chart
+   columns visually spill out below/past it, uncontained. Standard clearfix. */
+.summary-card::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
 /* summary.html's 3 chart cards are the 3rd/4th/5th <div> children of
    .modern-page (after the error-message div and the KPI row div) - :nth-of-type
    counts by tag+position among siblings, not by class, so it has to match
