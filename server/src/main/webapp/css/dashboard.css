@@ -116,13 +116,21 @@
   left: 0;
   width: 480px;
   height: 50px;
+  /* Visually confirmed (screenshot) the long 5-stop fade produced a
+     wide, muddy grey band - inherent to alpha-blending a dark,
+     low-saturation navy (#0f172a) over white: linear interpolation
+     between a near-black color and white necessarily passes through
+     desaturated grey-blue midtones, no matter which alpha values are
+     chosen. A long fade just means spending more pixels in that
+     worst-looking part of the blend. Fix is a much SHORTER, steeper
+     fade (solid until 55%/264px, fully transparent by 78%/374px - an
+     ~110px transition instead of the previous ~336px) so the grey
+     zone is compressed to a narrow strip instead of a visible band. */
   background: linear-gradient(
     90deg,
     rgba(var(--brand-dark-rgb), 1) 0%,
-    rgba(var(--brand-dark-rgb), 1) 30%,
-    rgba(var(--brand-dark-rgb), 0.75) 50%,
-    rgba(var(--brand-dark-rgb), 0.35) 70%,
-    rgba(var(--brand-dark-rgb), 0) 100%
+    rgba(var(--brand-dark-rgb), 1) 55%,
+    rgba(var(--brand-dark-rgb), 0) 78%
   );
   clip-path: path(
     "M0,0 H330 C400,0 400,50 460,50 H0 Z"
