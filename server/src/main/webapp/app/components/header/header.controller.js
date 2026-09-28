@@ -81,6 +81,9 @@ angular.module( 'headwind-kiosk' )
     $scope.$watch(function () { return $scope.isAuth(); }, function (isNowAuthed, wasAuthed) {
         if (isNowAuthed && !wasAuthed) {
             $scope.playBrandIntro = true;
+            $timeout(function () {
+                $scope.playBrandIntro = false;
+            }, 1100);
         }
     });
 

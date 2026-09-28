@@ -69,6 +69,14 @@
 }
 
 .header::before {
+  /* Bootstrap's own clearfix rule (.navbar:before { display: table;
+     content: " "; }) also targets this element, since .header carries
+     the "navbar" class - equal specificity to this selector, and since
+     it never set display itself here before, Bootstrap's display:table
+     survived and broke the absolutely-positioned badge (a table-display
+     positioned box does not render/size the way a plain block does).
+     Overriding both properties explicitly fixes it. */
+  display: block;
   content: "";
   position: absolute;
   top: 0;
