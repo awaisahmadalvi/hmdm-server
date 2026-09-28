@@ -40,7 +40,9 @@ angular.module('headwind-kiosk')
             slateText: '#94a3b8',
             emerald: '#10b981',
             amber: '#f59e0b',
-            rose: '#f43f5e'
+            rose: '#f43f5e',
+            sky: '#38bdf8',
+            track: '#e2e8f0'
         };
 
         $scope.enrollmentLabels = [
@@ -69,11 +71,6 @@ angular.module('headwind-kiosk')
             localization.localize('summary.devices.installation.completed')
         ];
         $scope.installColors = $scope.statusColors;
-
-        $scope.monthlyEnrollColors = [];
-        for (var i = 0; i < 12; i++) {
-            $scope.monthlyEnrollColors.push(palette.navy);
-        }
 
         $scope.statusByConfigSeries = [
             localization.localize('summary.devices.offline'),
@@ -137,9 +134,70 @@ angular.module('headwind-kiosk')
             }
         });
 
+        // Smooth gradient-filled area chart (design.png's "Live Feeds" style)
+        // for monthly enrollment, in place of the old flat bar chart - same
+        // axis/tooltip treatment as barOptionsSimple, plus a bezier curve and
+        // hidden points (dots only appear on hover) instead of straight
+        // bar-to-bar segments.
+        $scope.lineOptions = angular.merge({}, $scope.barOptionsSimple, {
+            elements: {
+                line: { tension: 0.4, borderWidth: 2, fill: true },
+                point: { radius: 0, hoverRadius: 5, hitRadius: 10 }
+            }
+        });
+
+        // Single flat fill/line color for the area chart - passed via
+        // chart-dataset-override instead of chart-colors, because
+        // angular-chart's default single-series color handling assigns one
+        // color PER DATA POINT (meant for bar charts), which Chart.js's line
+        // controller can't use as a fill color. This bypasses that entirely.
+        $scope.monthlyEnrollDatasetOverride = {
+            backgroundColor: 'rgba(15, 23, 42, 0.12)',
+            hoverBackgroundColor: 'rgba(15, 23, 42, 0.12)',
+            borderColor: palette.navy,
+            pointBackgroundColor: palette.navy,
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: palette.navy,
+            fill: true,
+            lineTension: 0.4,
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 5
+        };
+
+        // Circular "rate" gauges (design.png's Server-load/Disk-space style
+        // widgets, minus the fabricated sparkline trend - there's no real
+        // historical data behind these percentages to plot a trend from).
+        // Each gauge is a 2-slice doughnut: [value%, 100-value%], with the
+        // remainder always the same neutral track color.
+        $scope.gaugeOptions = {
+            cutoutPercentage: 80,
+            legend: { display: false },
+            tooltips: { enabled: false },
+            animation: { animateScale: true, duration: 900, easing: 'easeOutQuart' }
+        };
+
+        $scope.activeRateColors = [palette.emerald, palette.track];
+        $scope.offlineRateColors = [palette.rose, palette.track];
+        $scope.enrollRateColors = [palette.sky, palette.track];
+        $scope.installRateColors = [palette.navy, palette.track];
+
+        function pct(numerator, denominator) {
+            if (!denominator) {
+                return 0;
+            }
+            return Math.round((numerator / denominator) * 100);
+        }
+
         function withCenterText(totalText) {
             return angular.merge({}, $scope.doughnutOptions, {
                 elements: { center: { text: totalText, color: palette.navy } }
+            });
+        }
+
+        function withGaugeCenter(percent, color) {
+            return angular.merge({}, $scope.gaugeOptions, {
+                elements: { center: { text: percent + '%', color: color } }
             });
         }
 
@@ -260,6 +318,19 @@ angular.module('headwind-kiosk')
             $scope.monthlyEnrollData = view.monthlyEnrollData;
             $scope.enrollmentOptions = withCenterText(String(view.enrollmentData[0] + view.enrollmentData[1]));
             $scope.statusOptions = withCenterText(String(view.statusData[0] + view.statusData[1] + view.statusData[2]));
+
+            var statusTotal = view.statusData[0] + view.statusData[1] + view.statusData[2];
+            var activePct = pct(view.statusData[2], statusTotal);
+            var offlinePct = pct(view.statusData[0], statusTotal);
+            $scope.activeRateData = [activePct, 100 - activePct];
+            $scope.activeRateOptions = withGaugeCenter(activePct, palette.emerald);
+            $scope.offlineRateData = [offlinePct, 100 - offlinePct];
+            $scope.offlineRateOptions = withGaugeCenter(offlinePct, palette.rose);
+
+            var enrollTotal = view.enrollmentData[0] + view.enrollmentData[1];
+            var enrollPct = pct(view.enrollmentData[1], enrollTotal);
+            $scope.enrollRateData = [enrollPct, 100 - enrollPct];
+            $scope.enrollRateOptions = withGaugeCenter(enrollPct, palette.sky);
         }
 
         $scope.applyFilter = function () {
@@ -325,6 +396,11 @@ angular.module('headwind-kiosk')
             });
 
             $scope.installOptions = withCenterText(String($scope.installData[0] + $scope.installData[1] + $scope.installData[2]));
+
+            var installTotal = $scope.installData[0] + $scope.installData[1] + $scope.installData[2];
+            var installPct = pct($scope.installData[2], installTotal);
+            $scope.installRateData = [installPct, 100 - installPct];
+            $scope.installRateOptions = withGaugeCenter(installPct, palette.navy);
 
             $scope.statusByConfigLabels = response.data.topConfigs;
             $scope.statusByConfigData = [];
