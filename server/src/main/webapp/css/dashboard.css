@@ -952,7 +952,20 @@
 /* Group/Configuration filter bar - reuses .modern-toolbar's card chrome
    (same as the Devices page filter row) so it reads as part of the same
    design language. Only the Enrollment/Device-status sections respect this
-   filter (see summary.controller.js for why Application status can't). */
+   filter (see summary.controller.js for why Application status can't).
+
+   Same missing-clearfix bug as .summary-card below: its only children are
+   floated .col-sm-4 selects, and nothing clears them - confirmed live, the
+   bar's own box collapsed to 24px tall, and the KPI row (next sibling)
+   flowed UP alongside the still-floating <select> elements instead of
+   below them, getting squeezed into whatever narrow strip was left to
+   their right and wrapping its 4 cards into a vertical column there. */
+.summary-filter-bar::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
 .summary-filter-hint {
   display: flex;
   align-items: center;

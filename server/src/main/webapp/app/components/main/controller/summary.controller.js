@@ -173,6 +173,13 @@ angular.module('headwind-kiosk')
         // remainder always the same neutral track color.
         $scope.gaugeOptions = {
             cutoutPercentage: 80,
+            // Verified live: without an explicit aspectRatio, Chart.js sized
+            // this canvas 64x32 (a 2:1 ratio - its ordinary chart default)
+            // instead of the 1:1 square its doughnut-type default should
+            // give, inside the flex-row .summary-gauge-ring wrapper. Forcing
+            // it here sidesteps whatever timing/layout quirk caused that.
+            aspectRatio: 1,
+            maintainAspectRatio: true,
             legend: { display: false },
             tooltips: { enabled: false },
             animation: { animateScale: true, duration: 900, easing: 'easeOutQuart' }
