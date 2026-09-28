@@ -101,7 +101,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 600px;
+  width: 700px;
   height: 50px; /* matches .header's fixed height exactly - see note above */
   overflow: hidden;
   pointer-events: none;
@@ -114,27 +114,24 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 600px;
+  width: 700px;
   height: 50px;
-  /* Visually confirmed (screenshot) the long 5-stop fade produced a
-     wide, muddy grey band - inherent to alpha-blending a dark,
-     low-saturation navy (#0f172a) over white: linear interpolation
-     between a near-black color and white necessarily passes through
-     desaturated grey-blue midtones, no matter which alpha values are
-     chosen. A long fade just means spending more pixels in that
-     worst-looking part of the blend. Fade is short and steep (solid
-     until 65%/390px, fully transparent by 85%/510px - a ~120px
-     transition) so the grey zone stays a narrow strip. Widened and
-     pushed further right per instruction - badge 480px->600px, curve
-     330-460 -> 420-580, fade proportionally later. */
+  /* Fading a dark, low-saturation navy (#0f172a) to transparent over
+     white inherently passes through desaturated grey-blue midtones -
+     a longer fade spends more pixels there, a shorter one less, but
+     none of them can fully avoid it. Widened to ~200px (from ~120px)
+     for a visibly smoother "melt" per instruction, while staying far
+     short of the original ~336px fade that read as a muddy band.
+     Badge pushed further right again: 600px->700px, curve
+     420-580 -> 500-660. */
   background: linear-gradient(
     90deg,
     rgba(var(--brand-dark-rgb), 1) 0%,
-    rgba(var(--brand-dark-rgb), 1) 65%,
-    rgba(var(--brand-dark-rgb), 0) 85%
+    rgba(var(--brand-dark-rgb), 1) 60%,
+    rgba(var(--brand-dark-rgb), 0) 88%
   );
   clip-path: path(
-    "M0,0 H420 C490,0 490,50 580,50 H0 Z"
+    "M0,0 H500 C570,0 570,50 660,50 H0 Z"
   );
   transform: translateX(0);
 }
@@ -172,6 +169,19 @@
 
 .header .logo-text a:hover {
   color: #eef2ff !important;
+}
+
+/* Same logo image the login page uses (rest/public/logo) - whatever
+   its native colors are, filter:brightness(0) invert(1) forces it to
+   a pure-white silhouette (preserving its own alpha/transparency),
+   so it reads correctly against the dark badge without needing a
+   separate white-colored asset. */
+.header-brand-logo {
+  height: 22px;
+  width: auto;
+  margin-right: 8px;
+  vertical-align: middle;
+  filter: brightness(0) invert(1);
 }
 
 /* Everything else in header.html's own DOM (date/time, admin
@@ -664,7 +674,7 @@
 .app-shell .tabset .nav-tabs {
   position: fixed;
   top: 0;
-  left: 620px; /* clears the 600px-wide .header-brand-badge */
+  left: 720px; /* clears the 700px-wide .header-brand-badge */
   right: 300px; /* reserves the date/time + admin-dropdown cluster's width */
   height: 50px;
   /* Must be ABOVE .navbar-fixed-top's z-index (1030, Bootstrap default) -
