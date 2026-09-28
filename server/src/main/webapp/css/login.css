@@ -5,7 +5,34 @@
    untouched in login.controller.js / login.html.
    ========================================================= */
 
+/* Login page is permanently dark (matches login.png exactly - sampled
+   pixel colors: panel #0F172A, input fill #273347, muted text ~#94A3B8),
+   independent of the visitor's OS/browser theme preference. This is NOT
+   the same mechanism as the app-wide prefers-color-scheme auto-dark-mode
+   that was removed elsewhere for causing an unintended-dark-page bug -
+   this is a deliberate, always-on override scoped to just this page,
+   reusing the same already-contrast-checked dark token values via CSS
+   custom property overrides. Everything below already references
+   var(--color-*) throughout, so overriding the values here is enough -
+   no other rule in this file needs to change. */
 .login-page {
+  --color-canvas: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-hover: #273347;
+  --color-surface-muted: #0f172a;
+  --color-border: #334155;
+  --color-border-subtle: #1e293b;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #cbd5e1;
+  --color-text-tertiary: #94a3b8;
+  --color-text-disabled: #64748b;
+  --color-accent-strong: #6366f1;
+  --color-accent-strong-hover: #818cf8;
+  --color-danger-bg: rgba(248, 113, 113, 0.12);
+  --color-danger: #f87171;
+  --color-success-bg: rgba(74, 222, 128, 0.12);
+  --color-success-text: #4ade80;
+
   min-height: 100vh;
   box-sizing: border-box;
   background: var(--color-canvas);
