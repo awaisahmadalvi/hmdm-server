@@ -43,21 +43,22 @@
    Modern header / top navigation
    ========================================================= */
 
-/* Same indigo gradient as the login page's submit button
-   (var(--gradient-primary), tokens.css: #6366f1 -> #4f46e5, 135deg),
-   plus a soft diagonal sheen layered on top (per gradient.webp's
-   reference style: a light diagonal streak crossing the bar). */
+/* Purple badge behind the logo (login page's exact gradient,
+   #6366f1 -> #4f46e5), fading to white left-to-right so it reads as
+   an accent anchored at "PITB MDM" rather than a full-width color
+   change. Pixel-based stops (not %) so the fade always completes
+   well before the nav row starts at left:220px, regardless of
+   viewport width - see the nav-tabs left offset below. */
 .header {
-  background-color: #4f46e5;
+  background-color: #ffffff;
   background-image: linear-gradient(
-      100deg,
-      rgba(255, 255, 255, 0) 40%,
-      rgba(255, 255, 255, 0.16) 50%,
-      rgba(255, 255, 255, 0) 60%
-    ),
-    var(--gradient-primary);
-  border-bottom: none;
-  box-shadow: 0 2px 10px rgba(79, 70, 229, 0.25);
+    90deg,
+    #6366f1 0px,
+    #4f46e5 70px,
+    #ffffff 200px
+  );
+  border-bottom: 1px solid #e3e9f0;
+  box-shadow: 0 1px 6px rgba(30, 60, 90, 0.06);
 }
 
 .header .logo-text {
@@ -74,25 +75,25 @@
   color: #eef2ff !important;
 }
 
+/* Everything else in header.html's own DOM (date/time, admin
+   dropdown) sits in the white part of the fade, so it keeps the
+   original dark palette - only the logo (on the purple badge) is
+   white. */
 .header a {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: #45596b !important;
 }
 
 .header .open a,
 .header .open .dropdown-menu {
-  background-color: rgba(255, 255, 255, 0.14) !important;
+  background-color: #ffffff !important;
 }
 
-/* The flyout menu itself stays a light card - readable regardless of
-   the dark/gradient trigger it hangs off, same as every other
-   dropdown in this app. */
 .header .dropdown-menu {
   border: none;
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
   padding: 6px;
   margin-top: 10px;
-  background-color: #ffffff;
 }
 
 .header .dropdown-menu > li > a {
@@ -108,24 +109,24 @@
 }
 
 .navbar-nav .expiry-warning {
-  color: #7a5c00 !important;
-  background: #ffe9a8;
+  color: #a15c00 !important;
+  background: #fff3cd;
   padding: 4px 12px !important;
   border-radius: 12px;
   font-weight: 600 !important;
 }
 
 #headerDateTime {
-  color: rgba(255, 255, 255, 0.75);
+  color: #8592a1;
 }
 
 .username-label {
-  color: #ffffff;
+  color: #2c4a5e;
   font-weight: 600;
 }
 
 .username-caret {
-  color: rgba(255, 255, 255, 0.75);
+  color: #8592a1;
 }
 
 /* =========================================================
@@ -537,14 +538,14 @@
   align-items: center;
   margin-left: auto;
   padding-left: 20px;
-  border-left: 1px solid rgba(255, 255, 255, 0.25);
+  border-left: 1px solid #e3e9f0;
 }
 
 .app-header-merged .mobile-nav-toggle {
   display: none;
   border: none;
   background: transparent;
-  color: #ffffff;
+  color: #45596b;
   font-size: 18px;
   padding: 8px;
   margin-left: auto;
@@ -607,7 +608,7 @@
      of declaration order, even against a more specific longhand. */
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.78);
+  color: #64748b;
   font-weight: 500;
   font-size: 14px;
   padding: 0;
@@ -618,31 +619,35 @@
 
 .app-shell .tabset .nav-tabs > li > a:hover,
 .app-shell .tabset .nav-tabs > li > a:focus {
-  color: #ffffff;
-  border-bottom-color: rgba(255, 255, 255, 0.45);
+  color: #22303f;
+  border-bottom-color: #cbd5e1;
 }
 
+/* Active-tab underline uses the login page's indigo (#4f46e5) instead
+   of the old teal #4c788c, so the accent still echoes the login
+   theme even though this part of the header sits on white, not the
+   purple badge. */
 .app-shell .tabset .nav-tabs > li.active > a,
 .app-shell .tabset .nav-tabs > li.active > a:hover,
 .app-shell .tabset .nav-tabs > li.active > a:focus {
-  color: #ffffff;
+  color: #2c4a5e;
   background: transparent;
   border: none;
-  border-bottom: 2px solid #ffffff;
+  border-bottom: 2px solid #4f46e5;
   outline: none;
 }
 
 .app-shell .tabset .nav-tabs > li.dropdown.active > a {
-  color: #ffffff;
+  color: #4f46e5;
 }
 
 .app-shell .tabset .nav-tabs .caret {
-  border-top-color: rgba(255, 255, 255, 0.78);
+  border-top-color: #64748b;
 }
 
 .app-shell .tabset .nav-tabs > li.dropdown.active .caret,
 .app-shell .tabset .nav-tabs > li.dropdown > a:hover .caret {
-  border-top-color: #ffffff;
+  border-top-color: #4f46e5;
 }
 
 .app-shell .tabset .dropdown-menu {
@@ -701,29 +706,21 @@
     width: 100%;
   }
 
-  /* This collapsed panel has its own white background (see .nav-tabs
-     above), unlike the indigo-gradient header it drops down from -
-     same convention as every dropdown-menu in this app (light flyout
-     regardless of a dark trigger), so nav-link colors are reset back
-     to dark text here for readability against that white panel. */
   .app-shell .tabset .nav-tabs > li > a {
     height: auto;
     padding: 12px 20px;
-    color: #64748b;
     border-bottom: none;
     border-left: 3px solid transparent;
   }
 
   .app-shell .tabset .nav-tabs > li > a:hover,
   .app-shell .tabset .nav-tabs > li > a:focus {
-    color: #22303f;
     border-bottom-color: transparent;
   }
 
   .app-shell .tabset .nav-tabs > li.active > a,
   .app-shell .tabset .nav-tabs > li.active > a:hover,
   .app-shell .tabset .nav-tabs > li.active > a:focus {
-    color: #2c4a5e;
     border-bottom: none;
     border-left-color: #4f46e5;
     background: #f8fafc !important;
