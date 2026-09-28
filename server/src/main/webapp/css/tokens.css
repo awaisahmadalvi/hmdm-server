@@ -16,6 +16,12 @@
 
 :root {
   /* ---------- Brand ---------- */
+  /* The login page's exact dark-panel color (login.css reuses this
+     same variable for --color-canvas there), and now also the header
+     brand-badge gradient's start color, so both stay in sync from
+     one definition instead of two hardcoded copies of #0f172a. */
+  --brand-dark: #0f172a;
+
   /* Literal value from design.png. Used for icons, borders,
      focus rings, chart lines, and other >=3:1 (non-text) uses. */
   --color-accent: #6366f1;

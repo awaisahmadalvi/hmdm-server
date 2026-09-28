@@ -70,6 +70,20 @@ angular.module( 'headwind-kiosk' )
         return $state.current.name === 'qr' || $state.current.name === 'passwordReset';
     };
 
+    // Presentational-only: drives a one-time CSS entry animation on the
+    // header brand badge (dashboard.css .brand-intro-play). Watches for
+    // isAuth() going from false to true - a genuine login - so it plays
+    // once per login, never on a page refresh (isAuth() is already true
+    // on the watch's initial call in that case, so newVal===oldVal and
+    // this never fires) or on ordinary route changes (isAuth() doesn't
+    // change value between tabs). No auth/business logic touched.
+    $scope.playBrandIntro = false;
+    $scope.$watch(function () { return $scope.isAuth(); }, function (isNowAuthed, wasAuthed) {
+        if (isNowAuthed && !wasAuthed) {
+            $scope.playBrandIntro = true;
+        }
+    });
+
     $scope.isSuperAdmin = function() {
         return authService.isSuperAdmin();
     };

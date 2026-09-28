@@ -16,7 +16,7 @@
    var(--color-*) throughout, so overriding the values here is enough -
    no other rule in this file needs to change. */
 .login-page {
-  --color-canvas: #0f172a;
+  --color-canvas: var(--brand-dark);
   --color-surface: #1e293b;
   --color-surface-hover: #273347;
   --color-surface-muted: #0f172a;
