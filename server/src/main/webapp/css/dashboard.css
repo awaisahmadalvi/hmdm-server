@@ -542,13 +542,21 @@
   display: flex;
   align-items: center;
   height: 50px;
-  border: none !important;
-  background: transparent !important;
+  /* No !important needed - this selector (4 classes + combinators) is
+     already more specific than Bootstrap's own .nav-tabs > li > a (2
+     classes), so it wins naturally. The previous version stacked
+     "border: none !important" above a non-important "border-bottom",
+     which meant the !important on the shorthand silently blocked the
+     underline from ever showing - !important always wins regardless
+     of declaration order, even against a more specific longhand. */
+  border: none;
+  background: transparent;
   color: #64748b;
   font-weight: 500;
   font-size: 14px;
   padding: 0;
   border-bottom: 2px solid transparent;
+  outline: none; /* replaced by the border-bottom color change below on :focus, so focus is still visibly indicated */
   transition: color 0.15s ease, border-color 0.15s ease;
 }
 
@@ -562,9 +570,10 @@
 .app-shell .tabset .nav-tabs > li.active > a:hover,
 .app-shell .tabset .nav-tabs > li.active > a:focus {
   color: #2c4a5e;
-  background: transparent !important;
-  border: none !important;
+  background: transparent;
+  border: none;
   border-bottom: 2px solid #4c788c;
+  outline: none;
 }
 
 .app-shell .tabset .nav-tabs > li.dropdown.active > a {
