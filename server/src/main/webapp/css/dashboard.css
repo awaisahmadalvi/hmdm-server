@@ -511,7 +511,13 @@
   left: 220px; /* clears the "PITB MDM" wordmark */
   right: 300px; /* reserves the date/time + admin-dropdown cluster's width */
   height: 50px;
-  z-index: 1029; /* just under .navbar-fixed-top (1030), so the header's own right cluster always wins if space ever got tight */
+  /* Must be ABOVE .navbar-fixed-top's z-index (1030, Bootstrap default) -
+     both occupy the exact same fixed rectangle (top:0, height:50px), and
+     the header nav has an opaque white background, so a lower z-index
+     here made it paint over the nav links, hiding them completely. The
+     reserved left/right offsets (above) already keep this row clear of
+     the header's own logo and right cluster, so painting on top is safe. */
+  z-index: 1031;
   display: flex;
   align-items: stretch;
   justify-content: flex-end;
