@@ -43,43 +43,65 @@
    Modern header / top navigation
    ========================================================= */
 
-/* Brand badge behind the logo - var(--brand-dark), the exact same
-   variable the login page's dark panel uses (tokens.css), so the two
-   can never drift out of sync.
+/* Brand badge behind the logo - var(--brand-dark) / var(--brand-dark-rgb),
+   the exact same variables the login page's dark panel uses (tokens.css),
+   so the two can never drift out of sync.
 
    This is a DEDICATED sibling element (.header-brand-badge, added in
-   header.html), not a ::before on .header itself - the earlier
-   ::before approach fought with Bootstrap's own .navbar:before
-   clearfix rule (.header also carries the "navbar" class) at equal
-   specificity, and needing overflow:hidden on .header to contain the
-   curve would have clipped .header .dropdown-menu (which opens below
-   the header's own box). A separate, empty, decorative div sidesteps
-   both problems entirely: it can have its own overflow:hidden with
-   zero effect on the dropdown menu, which is a sibling, not a
-   descendant of this badge.
+   header.html), not a ::before on .header itself - a ::before there
+   fights with Bootstrap's own .navbar:before clearfix rule (.header
+   also carries the "navbar" class) at equal specificity. A separate,
+   empty, decorative div sidesteps that entirely: it can have its own
+   overflow:hidden with zero effect on .header .dropdown-menu, which is
+   a sibling, not a descendant, of this badge.
 
-   Curve: a single S-shaped path (top edge extends to x=230, bottom
-   edge to x=282 - the right boundary leans further right as it goes
-   down, not a symmetric bulge), applied via clip-path: path() in the
-   element's own pixel coordinate space (vector, so crisp at any DPI).
-   Authored for the header's fixed 50px height (main.css .header) -
-   if that height ever changes this path needs re-authoring to match.
-   The gradient's fade-to-transparent completes at 88% (~264px) of the
-   300px box, i.e. *before* the clip-path's hard edge at x~230-282, so
-   the cut always lands on already-near-transparent pixels - no
-   abrupt/grey-looking seam. */
+   ROOT CAUSE FOUND for the reported gap-under-header and horizontal-
+   scroll bugs (confirmed via live Playwright inspection, not guessed):
+   .header used to also set `position: relative` here, purely so this
+   badge's `position: absolute` had a containing block. That selector
+   has the exact same specificity as Bootstrap's own
+   `.navbar-fixed-top { position: fixed; }`, and since this file loads
+   after bootstrap.css, `position: relative` silently won the cascade -
+   demoting .header from a fixed, viewport-anchored overlay to a normal
+   in-flow block. That produced BOTH bugs at once: the header now
+   occupied real document flow (its own 50px height, PLUS Bootstrap's
+   own `.navbar { margin-bottom: 20px }`, invisible/inert on a fixed
+   navbar but very real on a static one) = the exact 70px gap measured
+   above the content; and a static block is subject to different
+   scrollbar-width layout math than a `left:0;right:0` fixed element,
+   which produced the ~15px horizontal overflow measured on
+   `.navbar-right`. Fix: removed `position: relative` - .header's
+   EXISTING `position: fixed` (from Bootstrap) is already a perfectly
+   valid containing block for this badge; nothing else was needed.
+   overflow-x:hidden below is now just a defensive belt-and-braces
+   measure, not the actual fix.
+
+   Curve: a single S-shaped path (top edge extends to x=330, bottom
+   edge to x=460 - the right boundary leans further right as it goes
+   down, one direction, not a symmetric bulge), via clip-path: path()
+   in the element's own pixel coordinate space (vector, crisp at any
+   DPI). Authored for the header's fixed 50px height (main.css
+   .header) - if that height ever changes this path needs
+   re-authoring to match. Gradient stops are the brand color at
+   varying alpha only (rgba(var(--brand-dark-rgb), N)) - no grey/white
+   hex anywhere - richer and longer than before so real color still
+   reaches the curve: ~38% opacity at the curve's top (x=330) fading
+   to fully transparent by the curve's bottom-right tip (x=480), so
+   the curve itself stays visible as a shape while the very end of the
+   fade still lands on transparent pixels (no abrupt cut). */
 .header {
   background-color: #ffffff;
   border-bottom: 1px solid #e3e9f0;
   box-shadow: 0 1px 6px rgba(30, 60, 90, 0.06);
-  position: relative;
+  overflow-x: hidden;
+  overflow-y: visible; /* explicit - overflow-x alone would force overflow-y to auto/clipped, cutting off .header .dropdown-menu below */
 }
 
 .header-brand-badge {
   position: absolute;
   top: 0;
   left: 0;
-  width: 300px;
+  width: 480px;
   height: 50px; /* matches .header's fixed height exactly - see note above */
   overflow: hidden;
   pointer-events: none;
@@ -92,16 +114,18 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 300px;
+  width: 480px;
   height: 50px;
   background: linear-gradient(
     90deg,
-    var(--brand-dark) 0%,
-    var(--brand-dark) 55%,
-    rgba(15, 23, 42, 0) 88%
+    rgba(var(--brand-dark-rgb), 1) 0%,
+    rgba(var(--brand-dark-rgb), 1) 30%,
+    rgba(var(--brand-dark-rgb), 0.75) 50%,
+    rgba(var(--brand-dark-rgb), 0.35) 70%,
+    rgba(var(--brand-dark-rgb), 0) 100%
   );
   clip-path: path(
-    "M0,0 H230 C262,0 250,50 282,50 H0 Z"
+    "M0,0 H330 C400,0 400,50 460,50 H0 Z"
   );
   transform: translateX(0);
 }
@@ -631,7 +655,7 @@
 .app-shell .tabset .nav-tabs {
   position: fixed;
   top: 0;
-  left: 320px; /* clears the 300px-wide .header-brand-badge */
+  left: 500px; /* clears the 480px-wide .header-brand-badge */
   right: 300px; /* reserves the date/time + admin-dropdown cluster's width */
   height: 50px;
   /* Must be ABOVE .navbar-fixed-top's z-index (1030, Bootstrap default) -
