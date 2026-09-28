@@ -45,58 +45,69 @@
 
 /* Brand badge behind the logo - var(--brand-dark), the exact same
    variable the login page's dark panel uses (tokens.css), so the two
-   can never drift out of sync. A ::before pseudo-element rather than
-   .header's own background, for two reasons:
-   1) Curved right edge: elliptical border-radius on the top-right/
-      bottom-right corners only, so the boundary's x-position changes
-      continuously from top to bottom (a soft arc) instead of a
-      straight vertical cut. Pure CSS geometry, crisp at any DPI.
-   2) One-time entry animation, gated by the .brand-intro-play class
-      (see header.html/header.controller.js) - only added right when
-      isAuth() transitions false -> true, i.e. a genuine login, not a
-      refresh or ordinary route change. transform (not width) so the
-      curved shape's geometry never distorts mid-animation. */
+   can never drift out of sync.
+
+   This is a DEDICATED sibling element (.header-brand-badge, added in
+   header.html), not a ::before on .header itself - the earlier
+   ::before approach fought with Bootstrap's own .navbar:before
+   clearfix rule (.header also carries the "navbar" class) at equal
+   specificity, and needing overflow:hidden on .header to contain the
+   curve would have clipped .header .dropdown-menu (which opens below
+   the header's own box). A separate, empty, decorative div sidesteps
+   both problems entirely: it can have its own overflow:hidden with
+   zero effect on the dropdown menu, which is a sibling, not a
+   descendant of this badge.
+
+   Curve: a single S-shaped path (top edge extends to x=230, bottom
+   edge to x=282 - the right boundary leans further right as it goes
+   down, not a symmetric bulge), applied via clip-path: path() in the
+   element's own pixel coordinate space (vector, so crisp at any DPI).
+   Authored for the header's fixed 50px height (main.css .header) -
+   if that height ever changes this path needs re-authoring to match.
+   The gradient's fade-to-transparent completes at 88% (~264px) of the
+   300px box, i.e. *before* the clip-path's hard edge at x~230-282, so
+   the cut always lands on already-near-transparent pixels - no
+   abrupt/grey-looking seam. */
 .header {
   background-color: #ffffff;
   border-bottom: 1px solid #e3e9f0;
   box-shadow: 0 1px 6px rgba(30, 60, 90, 0.06);
   position: relative;
-  /* No overflow:hidden here - it would clip .header .dropdown-menu
-     (Settings/Functions-equivalent user-menu flyout), which opens
-     below the header's own 50px box. The ::before badge's own
-     border-radius already defines its visible shape without needing
-     an overflow-clipping ancestor. */
 }
 
-.header::before {
-  /* Bootstrap's own clearfix rule (.navbar:before { display: table;
-     content: " "; }) also targets this element, since .header carries
-     the "navbar" class - equal specificity to this selector, and since
-     it never set display itself here before, Bootstrap's display:table
-     survived and broke the absolutely-positioned badge (a table-display
-     positioned box does not render/size the way a plain block does).
-     Overriding both properties explicitly fixes it. */
-  display: block;
-  content: "";
+.header-brand-badge {
   position: absolute;
   top: 0;
   left: 0;
-  bottom: 0;
-  width: 260px;
-  background: linear-gradient(
-    100deg,
-    var(--brand-dark) 0%,
-    var(--brand-dark) 45%,
-    rgba(15, 23, 42, 0) 100%
-  );
-  border-radius: 0 140px 140px 0 / 0 60% 60% 0;
+  width: 300px;
+  height: 50px; /* matches .header's fixed height exactly - see note above */
+  overflow: hidden;
   pointer-events: none;
   z-index: 0;
+}
+
+.header-brand-badge::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 50px;
+  background: linear-gradient(
+    90deg,
+    var(--brand-dark) 0%,
+    var(--brand-dark) 55%,
+    rgba(15, 23, 42, 0) 88%
+  );
+  clip-path: path(
+    "M0,0 H230 C262,0 250,50 282,50 H0 Z"
+  );
   transform: translateX(0);
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .header.brand-intro-play::before {
+  .header.brand-intro-play .header-brand-badge::before {
     animation: header-badge-sweep 1s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }
@@ -104,18 +115,16 @@
 @keyframes header-badge-sweep {
   from {
     transform: translateX(-100%);
-    opacity: 0.85;
   }
   to {
     transform: translateX(0);
-    opacity: 1;
   }
 }
 
 .header .logo-text,
 .app-header-merged .navbar-right {
   position: relative;
-  z-index: 1; /* paint above .header::before - positioned descendants with z-index:auto/0 otherwise paint over static in-flow content regardless of DOM order */
+  z-index: 1; /* paint above .header-brand-badge - explicit and deterministic regardless of flex-item stacking nuances */
 }
 
 .header .logo-text {
@@ -622,7 +631,7 @@
 .app-shell .tabset .nav-tabs {
   position: fixed;
   top: 0;
-  left: 220px; /* clears the "PITB MDM" wordmark */
+  left: 320px; /* clears the 300px-wide .header-brand-badge */
   right: 300px; /* reserves the date/time + admin-dropdown cluster's width */
   height: 50px;
   /* Must be ABOVE .navbar-fixed-top's z-index (1030, Bootstrap default) -
