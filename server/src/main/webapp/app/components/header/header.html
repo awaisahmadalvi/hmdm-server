@@ -1,6 +1,9 @@
 <!-- Localization completed -->
-<nav class='navbar navbar-default navbar-fixed-top header'>
+<nav class='navbar navbar-default navbar-fixed-top header app-header-merged'>
     <div class='nav navbar-nav navbar-left logo-text'><a ng-click='mainPanel()'>{{appName}}</a></div>
+    <button type='button' class='mobile-nav-toggle' ng-click='$root.mobileNavOpen = !$root.mobileNavOpen' ng-class="{open: $root.mobileNavOpen}" aria-label="Toggle navigation">
+        <span class='glyphicon glyphicon-menu-hamburger'></span>
+    </button>
     <ul class='nav navbar-nav navbar-right'>
         <li ng-if="expiryWarning"><a id='headerExpiryWarning' class="expiry-warning" localized-change-tracking>account.expired.short</a></li>
         <li class='hide-on-small-screen'>

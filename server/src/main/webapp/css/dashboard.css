@@ -445,61 +445,137 @@
 }
 
 /* =========================================================
-   Top tab bar (Devices / Applications / ... / Settings / Functions)
+   Single-row header: nav links (Summary/Devices/Applications/
+   Configurations/Files/Settings/Functions) merged into the
+   same bar as the "PITB MDM" brand, right-aligned. Same colors
+   as the previous two-row version (no palette change) - only
+   the layout changed.
+
+   Why an overlay instead of literally moving the <tab> markup:
+   uib-tabset couples each tab's heading to its content pane in
+   the same element, and the tabset lives in a different
+   template/controller (TabController, content.html) than the
+   header (HeaderController, header.html). Moving the tabs into
+   header.html would drag page-content rendering with them,
+   requiring TabController's routing/state logic to move too -
+   out of scope for a visual-only change. Instead the nav-tabs
+   row is fixed-positioned into the header's own 50px band.
    ========================================================= */
 
-.tabset .nav-tabs {
-  border-bottom: 1px solid #e3e9f0;
-  padding: 0 4px;
+.app-header-merged {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
-.tabset .nav-tabs > li {
-  margin-bottom: -1px;
-  float: left;
+.app-header-merged .navbar-left.logo-text {
+  flex: 0 0 auto;
 }
 
-.tabset .nav-tabs > li > a {
+/* float:right (Bootstrap's own mechanism) has no effect once the
+   header is display:flex, so margin-left:auto takes over pushing
+   date/time + admin dropdown to the far right. The left border is
+   the "small divider" separating nav links from this cluster. */
+.app-header-merged .navbar-right {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 20px;
+  border-left: 1px solid #e3e9f0;
+}
+
+.app-header-merged .mobile-nav-toggle {
+  display: none;
+  border: none;
+  background: transparent;
+  color: #45596b;
+  font-size: 18px;
+  padding: 8px;
+  margin-left: auto;
+  cursor: pointer;
+}
+
+.app-shell {
+  padding-top: 50px !important; /* header height only - no more second-row reservation */
+  margin: 0 !important;
+  height: 100%;
+}
+
+.app-shell .tabset > div {
+  display: block;
+}
+
+.app-shell .tabset .nav-tabs {
+  position: fixed;
+  top: 0;
+  left: 220px; /* clears the "PITB MDM" wordmark */
+  right: 300px; /* reserves the date/time + admin-dropdown cluster's width */
+  height: 50px;
+  z-index: 1029; /* just under .navbar-fixed-top (1030), so the header's own right cluster always wins if space ever got tight */
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  overflow: visible; /* dropdown-menu children must never be clipped */
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.app-shell .tabset .nav-tabs > li {
+  float: none;
+  margin: 0 14px; /* ~28px gap between items */
+}
+
+.app-shell .tabset .nav-tabs > li:last-child {
+  margin-right: 0;
+}
+
+.app-shell .tabset .nav-tabs > li > a {
+  display: flex;
+  align-items: center;
+  height: 50px;
   border: none !important;
   background: transparent !important;
   color: #64748b;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
-  padding: 15px 18px;
-  margin-right: 2px;
-  border-radius: 8px 8px 0 0;
-  box-shadow: inset 0 -2px 0 0 transparent;
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  padding: 0;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
-.tabset .nav-tabs > li > a:hover,
-.tabset .nav-tabs > li > a:focus {
-  background: #f1f5f9 !important;
+.app-shell .tabset .nav-tabs > li > a:hover,
+.app-shell .tabset .nav-tabs > li > a:focus {
   color: #22303f;
+  border-bottom-color: #cbd5e1;
 }
 
-.tabset .nav-tabs > li.active > a,
-.tabset .nav-tabs > li.active > a:hover,
-.tabset .nav-tabs > li.active > a:focus {
+.app-shell .tabset .nav-tabs > li.active > a,
+.app-shell .tabset .nav-tabs > li.active > a:hover,
+.app-shell .tabset .nav-tabs > li.active > a:focus {
   color: #2c4a5e;
   background: transparent !important;
   border: none !important;
-  box-shadow: inset 0 -2px 0 0 #4c788c;
+  border-bottom: 2px solid #4c788c;
 }
 
-.tabset .nav-tabs > li.dropdown.active > a {
+.app-shell .tabset .nav-tabs > li.dropdown.active > a {
   color: #4c788c;
 }
 
-.tabset .nav-tabs .caret {
+.app-shell .tabset .nav-tabs .caret {
   border-top-color: #64748b;
 }
 
-.tabset .nav-tabs > li.dropdown.active .caret,
-.tabset .nav-tabs > li.dropdown > a:hover .caret {
+.app-shell .tabset .nav-tabs > li.dropdown.active .caret,
+.app-shell .tabset .nav-tabs > li.dropdown > a:hover .caret {
   border-top-color: #4c788c;
 }
 
-.tabset .dropdown-menu {
+.app-shell .tabset .dropdown-menu {
+  z-index: 1035; /* above the fixed header, so it's never clipped/hidden behind it */
   border: none;
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
@@ -507,14 +583,73 @@
   margin-top: 6px;
 }
 
-.tabset .dropdown-menu > li > a {
+.app-shell .tabset .dropdown-menu > li > a {
   border-radius: 6px;
   color: #33475b;
 }
 
-.tabset .dropdown-menu > li > a:hover {
+.app-shell .tabset .dropdown-menu > li > a:hover {
   background: #f1f5f9;
   color: #22303f;
+}
+
+/* ---------- Responsive: hamburger collapse below 992px ----------
+   ul.nav-tabs is generated by the tabset directive itself (not
+   markup this project authors), so it can't carry its own ng-class -
+   the "mobile-nav-open" class is toggled on <tabset> instead (which
+   IS authored markup) and this selector reaches the generated nav
+   list as a descendant. */
+@media (max-width: 991px) {
+  .app-header-merged .mobile-nav-toggle {
+    display: block;
+  }
+
+  .app-shell .tabset .nav-tabs {
+    display: none;
+    position: fixed;
+    top: 50px;
+    left: 0;
+    right: 0;
+    height: auto;
+    max-height: calc(100vh - 50px);
+    overflow-y: auto;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(30, 60, 90, 0.12);
+    padding: 8px 0;
+  }
+
+  .app-shell .tabset.mobile-nav-open .nav-tabs {
+    display: flex;
+  }
+
+  .app-shell .tabset .nav-tabs > li {
+    margin: 0;
+    width: 100%;
+  }
+
+  .app-shell .tabset .nav-tabs > li > a {
+    height: auto;
+    padding: 12px 20px;
+    border-bottom: none;
+    border-left: 3px solid transparent;
+  }
+
+  .app-shell .tabset .nav-tabs > li.active > a {
+    border-bottom: none;
+    border-left-color: #4c788c;
+    background: #f8fafc !important;
+  }
+
+  .app-shell .tabset .dropdown-menu {
+    position: static;
+    box-shadow: none;
+    border-radius: 0;
+    margin-top: 0;
+    padding-left: 12px;
+  }
 }
 
 /* =========================================================
