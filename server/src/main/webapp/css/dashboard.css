@@ -159,12 +159,17 @@
 
 .header .logo-text {
   color: #ffffff;
+  margin-top: 0; /* main.css sets margin-top:10px for the old pre-flex header, which pushed this ~5px below true vertical center once .header became display:flex/align-items:center */
+  display: flex;
+  align-items: center;
 }
 
 .header .logo-text a,
 .header .logo-text a:active {
   color: #ffffff !important;
   font-weight: 700;
+  display: flex;
+  align-items: center;
 }
 
 .header .logo-text a:hover {
@@ -180,7 +185,6 @@
   height: 22px;
   width: auto;
   margin-right: 8px;
-  vertical-align: middle;
   filter: brightness(0) invert(1);
 }
 
@@ -648,6 +652,24 @@
   margin-left: auto;
   padding-left: 20px;
   border-left: 1px solid #e3e9f0;
+}
+
+.app-header-merged .navbar-right > li {
+  display: flex;
+  align-items: center;
+}
+
+/* Bootstrap's default padding-top:15px combined with main.css's
+   .navbar-nav > li > a { padding-bottom: 0px !important } creates
+   asymmetric top/bottom padding, pushing the link's own content (the
+   username label + caret) below true vertical center even though the
+   <li> itself is correctly flex-centered. Overriding both to 0 and
+   centering via flex on the <a> itself removes the asymmetry. */
+.app-header-merged .navbar-right > li > a {
+  display: flex;
+  align-items: center;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 
 .app-header-merged .mobile-nav-toggle {
