@@ -1,4 +1,45 @@
 /* =========================================================
+   Route-transition fade — mitigates the nav-row "blink"
+   ========================================================= */
+/* ui-router's ui-view uses Angular's own $animate.enter()/leave()
+   (confirmed in lib/angular-ui-router/angular-ui-router.js), and
+   ngAnimate is already a loaded app module dependency (app.js) - so
+   this CSS on the standard ng-enter/ng-leave classes makes Angular
+   actually run and wait for a real transition, not just a guess.
+
+   Root cause of the blink: Summary/Devices/Applications/
+   Configurations/Files are separate ui-router states that all share
+   content.html + TabController. Every click between them destroys
+   and rebuilds that whole template - including the nav row - which
+   pre-dates this redesign but was invisible when the nav row sat in
+   normal page flow (the whole page visibly refreshed anyway). Now
+   that the nav row is fixed-position, overlaid onto the always-
+   static header, that rebuild reads as the nav briefly vanishing
+   and reappearing. This can't be fixed by changing routing/state
+   config (out of scope) - this fade is a presentational mitigation:
+   turns the abrupt pop into a quick, intentional-looking crossfade. */
+[ui-view].ng-enter,
+[ui-view].ng-leave {
+  transition: opacity 0.15s ease;
+}
+
+[ui-view].ng-enter {
+  opacity: 0;
+}
+
+[ui-view].ng-enter.ng-enter-active {
+  opacity: 1;
+}
+
+[ui-view].ng-leave {
+  opacity: 1;
+}
+
+[ui-view].ng-leave.ng-leave-active {
+  opacity: 0;
+}
+
+/* =========================================================
    Modern header / top navigation
    ========================================================= */
 
