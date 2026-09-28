@@ -243,18 +243,22 @@ angular.module('headwind-kiosk')
             }
         ];
 
-        // Group/Configuration filter above the charts. There is no
-        // server-side "summary by group" or "filtered summary" endpoint
-        // (/rest/private/summary/devices takes no params at all), so this
-        // is implemented entirely client-side: fetch the matching devices
-        // via the same rest/private/devices/search endpoint the Devices
-        // page uses (it already supports groupId/configurationId) and
-        // recompute the Enrollment/Device-status numbers from that list.
-        // The Application-status card and the "by configuration" bars stay
-        // on the unfiltered, server-aggregated numbers always - per-device
-        // app install status isn't part of the device list response, so
-        // there's no cheap way to filter that dimension without a new
-        // backend endpoint.
+        // Enrollment + Device-status are ALWAYS computed client-side from the
+        // live device list (rest/private/devices/search, the same endpoint
+        // the Devices page uses), whether or not a group/configuration
+        // filter is applied - not just an implementation choice, a
+        // correctness fix: verified live that the server's own aggregate
+        // (/rest/private/summary/devices - statusSummary) disagreed with
+        // reality. All 3 test devices have statusCode "red", but that
+        // endpoint reported red/yellow/green as 0/0/0, so with no filter
+        // selected ("All groups"/"All configurations") the page showed
+        // nothing despite devices existing. Per-device statusCode (used
+        // here) is what the Devices page's own status dot renders, so it's
+        // the trustworthy source. The Application-status card and the "by
+        // configuration" bars still use that summary endpoint (installData/
+        // topConfigs/etc.) - per-device app install status isn't part of
+        // the device list response, so there's no client-side alternative
+        // for that dimension, buggy aggregate or not.
         $scope.selection = { groupId: -1, configurationId: -1 };
         $scope.filterActive = false;
         $scope.filterLoading = false;
@@ -345,15 +349,7 @@ angular.module('headwind-kiosk')
             var groupId = $scope.selection.groupId === -1 ? null : $scope.selection.groupId;
             var configurationId = $scope.selection.configurationId === -1 ? null : $scope.selection.configurationId;
 
-            if (groupId === null && configurationId === null) {
-                $scope.filterActive = false;
-                if ($scope.globalView) {
-                    applyView($scope.globalView);
-                }
-                return;
-            }
-
-            $scope.filterActive = true;
+            $scope.filterActive = groupId !== null || configurationId !== null;
             $scope.filterLoading = true;
 
             deviceService.getAllDevices({
@@ -375,23 +371,10 @@ angular.module('headwind-kiosk')
             });
         };
 
-        summaryService.getDeviceStat(function (response) {
-            var devicesEnrolledEarlier = response.data.devicesEnrolled - response.data.devicesEnrolledLastMonth;
-            if (devicesEnrolledEarlier < 0) {
-                devicesEnrolledEarlier = 0;
-            }
-            var statusData = [0, 0, 0];
-            $scope.installData = [0, 0, 0];
+        $scope.applyFilter();
 
-            response.data.statusSummary.forEach(function (item, index) {
-                if (item.stringAttr === 'red') {
-                    statusData[0] = item.number;
-                } else if (item.stringAttr === 'yellow') {
-                    statusData[1] = item.number;
-                } else if (item.stringAttr === 'green') {
-                    statusData[2] = item.number;
-                }
-            });
+        summaryService.getDeviceStat(function (response) {
+            $scope.installData = [0, 0, 0];
 
             response.data.installSummary.forEach(function (item, index) {
                 if (item.stringAttr === 'FAILURE') {
@@ -421,21 +404,6 @@ angular.module('headwind-kiosk')
             $scope.installByConfigData.push(response.data.appFailureByConfig);
             $scope.installByConfigData.push(response.data.appMismatchByConfig);
             $scope.installByConfigData.push(response.data.appSuccessByConfig);
-
-            var monthlyEnrollLabels = [];
-            var monthlyEnrollData = [];
-            response.data.devicesEnrolledMonthly.forEach(function (item, index) {
-                monthlyEnrollLabels.push(item.stringAttr);
-                monthlyEnrollData.push(item.number);
-            });
-
-            $scope.globalView = {
-                enrollmentData: [devicesEnrolledEarlier, response.data.devicesEnrolledLastMonth],
-                statusData: statusData,
-                monthlyEnrollLabels: monthlyEnrollLabels,
-                monthlyEnrollData: monthlyEnrollData
-            };
-            applyView($scope.globalView);
 
         }, function () {
             $scope.errorMessage = localization.localize('error.internal.server');
