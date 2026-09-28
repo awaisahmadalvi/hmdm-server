@@ -1045,14 +1045,15 @@
 }
 
 .summary-gauge-card {
-  flex: 1 1 180px;
+  flex: 1 1 220px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  gap: 14px;
   background: var(--color-surface);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
-  padding: 18px 16px;
+  padding: 16px 18px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   animation: summary-card-in 0.5s ease both;
 }
@@ -1068,16 +1069,18 @@
 .summary-gauge-card:nth-child(4) { animation-delay: 0.32s; }
 
 .summary-gauge-canvas {
-  width: 96px !important;
-  height: 96px !important;
+  flex: 0 0 auto;
+  width: 64px !important;
+  height: 64px !important;
 }
 
 .summary-gauge-label {
-  margin-top: 10px;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--color-text-secondary);
-  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
 }
 
 .summary-card {
@@ -1114,6 +1117,13 @@
   font-weight: 700;
   color: var(--color-text-primary);
   margin-bottom: 10px;
+}
+
+/* design.png's "Live Feeds" chart reads as prominent/tall, not a small
+   default-aspect-ratio chart - maintainAspectRatio:false in lineOptions
+   (summary.controller.js) hands sizing entirely to this fixed height. */
+.summary-area-canvas {
+  height: 300px !important;
 }
 
 .summary-legend {

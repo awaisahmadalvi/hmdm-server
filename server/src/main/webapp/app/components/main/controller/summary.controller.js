@@ -140,6 +140,7 @@ angular.module('headwind-kiosk')
         // hidden points (dots only appear on hover) instead of straight
         // bar-to-bar segments.
         $scope.lineOptions = angular.merge({}, $scope.barOptionsSimple, {
+            maintainAspectRatio: false,
             elements: {
                 line: { tension: 0.4, borderWidth: 2, fill: true },
                 point: { radius: 0, hoverRadius: 5, hitRadius: 10 }
@@ -152,8 +153,8 @@ angular.module('headwind-kiosk')
         // color PER DATA POINT (meant for bar charts), which Chart.js's line
         // controller can't use as a fill color. This bypasses that entirely.
         $scope.monthlyEnrollDatasetOverride = {
-            backgroundColor: 'rgba(15, 23, 42, 0.12)',
-            hoverBackgroundColor: 'rgba(15, 23, 42, 0.12)',
+            backgroundColor: 'rgba(15, 23, 42, 0.18)',
+            hoverBackgroundColor: 'rgba(15, 23, 42, 0.18)',
             borderColor: palette.navy,
             pointBackgroundColor: palette.navy,
             pointBorderColor: '#fff',
