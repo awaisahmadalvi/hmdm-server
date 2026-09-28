@@ -45,14 +45,6 @@
 
 .header {
   background-color: #ffffff;
-  /* Self-hosted abstract network/circuit texture (images/header-network-bg.svg) -
-     generated locally, no external image/licensing dependency. Low-opacity
-     nodes+lines already baked into the SVG itself, so it reads as a subtle
-     texture behind the logo/nav text rather than a competing graphic. */
-  background-image: url("../images/header-network-bg.svg");
-  background-repeat: no-repeat;
-  background-position: right center;
-  background-size: cover;
   border-bottom: 1px solid #e3e9f0;
   box-shadow: 0 1px 6px rgba(30, 60, 90, 0.06);
 }
