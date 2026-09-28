@@ -71,27 +71,35 @@
 
     <div class="summary-gauge-row">
         <div class="summary-gauge-card">
-            <canvas class="chart chart-doughnut summary-gauge-canvas"
-                    chart-data="activeRateData" chart-colors="activeRateColors" chart-options="activeRateOptions">
-            </canvas>
+            <div class="summary-gauge-ring">
+                <canvas class="chart chart-doughnut"
+                        chart-data="activeRateData" chart-colors="activeRateColors" chart-options="activeRateOptions">
+                </canvas>
+            </div>
             <div class="summary-gauge-label" localized>summary.devices.active</div>
         </div>
         <div class="summary-gauge-card">
-            <canvas class="chart chart-doughnut summary-gauge-canvas"
-                    chart-data="offlineRateData" chart-colors="offlineRateColors" chart-options="offlineRateOptions">
-            </canvas>
+            <div class="summary-gauge-ring">
+                <canvas class="chart chart-doughnut"
+                        chart-data="offlineRateData" chart-colors="offlineRateColors" chart-options="offlineRateOptions">
+                </canvas>
+            </div>
             <div class="summary-gauge-label" localized>summary.devices.offline</div>
         </div>
         <div class="summary-gauge-card">
-            <canvas class="chart chart-doughnut summary-gauge-canvas"
-                    chart-data="enrollRateData" chart-colors="enrollRateColors" chart-options="enrollRateOptions">
-            </canvas>
+            <div class="summary-gauge-ring">
+                <canvas class="chart chart-doughnut"
+                        chart-data="enrollRateData" chart-colors="enrollRateColors" chart-options="enrollRateOptions">
+                </canvas>
+            </div>
             <div class="summary-gauge-label" localized>summary.devices.enrolled.monthly</div>
         </div>
         <div class="summary-gauge-card">
-            <canvas class="chart chart-doughnut summary-gauge-canvas"
-                    chart-data="installRateData" chart-colors="installRateColors" chart-options="installRateOptions">
-            </canvas>
+            <div class="summary-gauge-ring">
+                <canvas class="chart chart-doughnut"
+                        chart-data="installRateData" chart-colors="installRateColors" chart-options="installRateOptions">
+                </canvas>
+            </div>
             <div class="summary-gauge-label" localized>summary.devices.installation.completed</div>
         </div>
     </div>

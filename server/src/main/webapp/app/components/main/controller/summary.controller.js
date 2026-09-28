@@ -19,7 +19,7 @@ if (typeof Chart !== 'undefined' && Chart.pluginService && !Chart.pluginService.
             ctx.save();
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
-            ctx.font = '700 ' + Math.round(height * 0.16) + 'px "Helvetica Neue", Arial, sans-serif';
+            ctx.font = '700 ' + Math.max(11, Math.round(height * 0.18)) + 'px "Helvetica Neue", Arial, sans-serif';
             ctx.fillStyle = center.color || '#0f172a';
             ctx.fillText(center.text, width / 2, height / 2);
             ctx.restore();

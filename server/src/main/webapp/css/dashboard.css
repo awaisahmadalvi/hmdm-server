@@ -1068,10 +1068,23 @@
 .summary-gauge-card:nth-child(3) { animation-delay: 0.26s; }
 .summary-gauge-card:nth-child(4) { animation-delay: 0.32s; }
 
-.summary-gauge-canvas {
+/* Chart.js v2's responsive resize reads its IMMEDIATE parent's box to size
+   the canvas's actual pixel buffer, then fills it via inline style - not
+   the canvas's own CSS width/height. Forcing those directly (previous
+   version of this rule, width/height !important on the canvas itself)
+   fought that resize logic: the buffer ended up sized for the canvas's
+   pre-override box while the !important rule then stretched/squashed the
+   DISPLAYED element to 64x64 on top of it, rendering the ring as a
+   squashed oval with illegible, wrongly-scaled center text. Fix: give the
+   PARENT a fixed square, positioned box (position:relative is required -
+   Chart.js's resize detection attaches to the nearest positioned
+   ancestor) and leave the canvas itself unstyled so Chart.js's own
+   inline sizing is the only thing touching it. */
+.summary-gauge-ring {
+  position: relative;
   flex: 0 0 auto;
-  width: 64px !important;
-  height: 64px !important;
+  width: 64px;
+  height: 64px;
 }
 
 .summary-gauge-label {
