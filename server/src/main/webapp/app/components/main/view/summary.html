@@ -5,6 +5,27 @@
         <div class='error'><span>{{errorMessage}}</span></div>
     </div>
 
+    <div class="form-group modern-toolbar summary-filter-bar">
+        <div class="col-sm-4 margin-bottom">
+            <select class='form-control'
+                    ng-model='selection.groupId'
+                    ng-change='applyFilter()'
+                    ng-options="group.id as group.name for group in groups">
+            </select>
+        </div>
+        <div class="col-sm-4 margin-bottom">
+            <select class='form-control'
+                    ng-model='selection.configurationId'
+                    ng-change='applyFilter()'
+                    ng-options="config.id as config.name for config in configurations">
+            </select>
+        </div>
+        <div class="col-sm-4 margin-bottom summary-filter-hint" ng-if="filterActive">
+            <span class="glyphicon glyphicon-filter"></span>
+            <span localized>summary.devices.enrollment</span> &amp; <span localized>summary.devices.status</span>
+        </div>
+    </div>
+
     <div class="summary-kpi-row">
         <div class="summary-kpi-card" ng-repeat="card in kpiCards">
             <div class="summary-kpi-icon" style="color: {{card.color}}; background: {{card.bg}}">

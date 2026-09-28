@@ -949,6 +949,19 @@
   font-weight: 700;
 }
 
+/* Group/Configuration filter bar - reuses .modern-toolbar's card chrome
+   (same as the Devices page filter row) so it reads as part of the same
+   design language. Only the Enrollment/Device-status sections respect this
+   filter (see summary.controller.js for why Application status can't). */
+.summary-filter-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  padding-top: 6px;
+}
+
 /* KPI hero row - 4 at-a-glance stat cards above the charts. Values/colors
    come from $scope.kpiCards (summary.controller.js); this is purely the
    card chrome. Same fade-in-up + hover-lift treatment as .summary-card
@@ -1041,13 +1054,13 @@
   clear: both;
 }
 
-/* summary.html's 3 chart cards are the 3rd/4th/5th <div> children of
-   .modern-page (after the error-message div and the KPI row div) - :nth-of-type
-   counts by tag+position among siblings, not by class, so it has to match
-   those actual positions rather than 1/2/3. */
-.summary-card:nth-of-type(3) { animation-delay: 0.1s; }
-.summary-card:nth-of-type(4) { animation-delay: 0.18s; }
-.summary-card:nth-of-type(5) { animation-delay: 0.26s; }
+/* summary.html's 3 chart cards are the 4th/5th/6th <div> children of
+   .modern-page (after the error-message div, the filter-bar div, and the
+   KPI row div) - :nth-of-type counts by tag+position among siblings, not
+   by class, so it has to match those actual positions rather than 1/2/3. */
+.summary-card:nth-of-type(4) { animation-delay: 0.1s; }
+.summary-card:nth-of-type(5) { animation-delay: 0.18s; }
+.summary-card:nth-of-type(6) { animation-delay: 0.26s; }
 
 .summary-card h3 {
   font-size: 16px;

@@ -28,7 +28,7 @@ if (typeof Chart !== 'undefined' && Chart.pluginService && !Chart.pluginService.
 }
 
 angular.module('headwind-kiosk')
-    .controller('SummaryTabController', function ($scope, localization, summaryService) {
+    .controller('SummaryTabController', function ($scope, localization, summaryService, groupService, configurationService, deviceService) {
         $scope.stat = undefined;
         $scope.errorMessage = undefined;
 
@@ -177,22 +177,140 @@ angular.module('headwind-kiosk')
             }
         ];
 
+        // Group/Configuration filter above the charts. There is no
+        // server-side "summary by group" or "filtered summary" endpoint
+        // (/rest/private/summary/devices takes no params at all), so this
+        // is implemented entirely client-side: fetch the matching devices
+        // via the same rest/private/devices/search endpoint the Devices
+        // page uses (it already supports groupId/configurationId) and
+        // recompute the Enrollment/Device-status numbers from that list.
+        // The Application-status card and the "by configuration" bars stay
+        // on the unfiltered, server-aggregated numbers always - per-device
+        // app install status isn't part of the device list response, so
+        // there's no cheap way to filter that dimension without a new
+        // backend endpoint.
+        $scope.selection = { groupId: -1, configurationId: -1 };
+        $scope.filterActive = false;
+        $scope.filterLoading = false;
+
+        groupService.getAllGroups(function (response) {
+            $scope.groups = response.data;
+            $scope.groups.unshift({ id: -1, name: localization.localize('devices.group.options.all') });
+        });
+
+        configurationService.getAllConfigNames(function (response) {
+            $scope.configurations = response.data;
+            $scope.configurations.unshift({ id: -1, name: localization.localize('devices.configuration.options.all') });
+        });
+
+        function monthBuckets() {
+            var now = new Date();
+            var keys = [];
+            var labels = [];
+            for (var m = 11; m >= 0; m--) {
+                var d = new Date(now.getFullYear(), now.getMonth() - m, 1);
+                keys.push(d.getFullYear() + '-' + d.getMonth());
+                labels.push((d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(2));
+            }
+            return { keys: keys, labels: labels, counts: labels.map(function () { return 0; }) };
+        }
+
+        function computeFromDevices(devices) {
+            var now = Date.now();
+            var thirtyDaysAgo = now - 30 * 86400 * 1000;
+            var buckets = monthBuckets();
+            var statusCounts = { red: 0, yellow: 0, green: 0 };
+            var enrolledTotal = 0;
+            var enrolledLastMonth = 0;
+
+            devices.forEach(function (device) {
+                if (statusCounts.hasOwnProperty(device.statusCode)) {
+                    statusCounts[device.statusCode]++;
+                }
+                if (device.enrollTime > 0) {
+                    enrolledTotal++;
+                    if (device.enrollTime >= thirtyDaysAgo) {
+                        enrolledLastMonth++;
+                    }
+                    var ed = new Date(device.enrollTime);
+                    var idx = buckets.keys.indexOf(ed.getFullYear() + '-' + ed.getMonth());
+                    if (idx >= 0) {
+                        buckets.counts[idx]++;
+                    }
+                }
+            });
+
+            var earlier = enrolledTotal - enrolledLastMonth;
+            if (earlier < 0) {
+                earlier = 0;
+            }
+
+            return {
+                enrollmentData: [earlier, enrolledLastMonth],
+                statusData: [statusCounts.red, statusCounts.yellow, statusCounts.green],
+                monthlyEnrollLabels: buckets.labels,
+                monthlyEnrollData: buckets.counts
+            };
+        }
+
+        function applyView(view) {
+            $scope.enrollmentData = view.enrollmentData;
+            $scope.statusData = view.statusData;
+            $scope.monthlyEnrollLabels = view.monthlyEnrollLabels;
+            $scope.monthlyEnrollData = view.monthlyEnrollData;
+            $scope.enrollmentOptions = withCenterText(String(view.enrollmentData[0] + view.enrollmentData[1]));
+            $scope.statusOptions = withCenterText(String(view.statusData[0] + view.statusData[1] + view.statusData[2]));
+        }
+
+        $scope.applyFilter = function () {
+            var groupId = $scope.selection.groupId === -1 ? null : $scope.selection.groupId;
+            var configurationId = $scope.selection.configurationId === -1 ? null : $scope.selection.configurationId;
+
+            if (groupId === null && configurationId === null) {
+                $scope.filterActive = false;
+                if ($scope.globalView) {
+                    applyView($scope.globalView);
+                }
+                return;
+            }
+
+            $scope.filterActive = true;
+            $scope.filterLoading = true;
+
+            deviceService.getAllDevices({
+                value: '',
+                groupId: groupId,
+                configurationId: configurationId,
+                pageNum: 1,
+                pageSize: 10000,
+                sortBy: 'NUMBER',
+                sortDir: 'ASC',
+                fastSearch: false
+            }, function (response) {
+                $scope.filterLoading = false;
+                var devices = (response.data && response.data.devices && response.data.devices.items) || [];
+                applyView(computeFromDevices(devices));
+            }, function () {
+                $scope.filterLoading = false;
+                $scope.errorMessage = localization.localize('error.internal.server');
+            });
+        };
+
         summaryService.getDeviceStat(function (response) {
             var devicesEnrolledEarlier = response.data.devicesEnrolled - response.data.devicesEnrolledLastMonth;
             if (devicesEnrolledEarlier < 0) {
                 devicesEnrolledEarlier = 0;
             }
-            $scope.enrollmentData = [devicesEnrolledEarlier, response.data.devicesEnrolledLastMonth];
-            $scope.statusData = [0, 0, 0];
+            var statusData = [0, 0, 0];
             $scope.installData = [0, 0, 0];
 
             response.data.statusSummary.forEach(function (item, index) {
                 if (item.stringAttr === 'red') {
-                    $scope.statusData[0] = item.number;
+                    statusData[0] = item.number;
                 } else if (item.stringAttr === 'yellow') {
-                    $scope.statusData[1] = item.number;
+                    statusData[1] = item.number;
                 } else if (item.stringAttr === 'green') {
-                    $scope.statusData[2] = item.number;
+                    statusData[2] = item.number;
                 }
             });
 
@@ -206,8 +324,6 @@ angular.module('headwind-kiosk')
                 }
             });
 
-            $scope.enrollmentOptions = withCenterText(String($scope.enrollmentData[0] + $scope.enrollmentData[1]));
-            $scope.statusOptions = withCenterText(String($scope.statusData[0] + $scope.statusData[1] + $scope.statusData[2]));
             $scope.installOptions = withCenterText(String($scope.installData[0] + $scope.installData[1] + $scope.installData[2]));
 
             $scope.statusByConfigLabels = response.data.topConfigs;
@@ -222,12 +338,20 @@ angular.module('headwind-kiosk')
             $scope.installByConfigData.push(response.data.appMismatchByConfig);
             $scope.installByConfigData.push(response.data.appSuccessByConfig);
 
-            $scope.monthlyEnrollLabels = [];
-            $scope.monthlyEnrollData = [];
+            var monthlyEnrollLabels = [];
+            var monthlyEnrollData = [];
             response.data.devicesEnrolledMonthly.forEach(function (item, index) {
-                $scope.monthlyEnrollLabels.push(item.stringAttr);
-                $scope.monthlyEnrollData.push(item.number);
+                monthlyEnrollLabels.push(item.stringAttr);
+                monthlyEnrollData.push(item.number);
             });
+
+            $scope.globalView = {
+                enrollmentData: [devicesEnrolledEarlier, response.data.devicesEnrolledLastMonth],
+                statusData: statusData,
+                monthlyEnrollLabels: monthlyEnrollLabels,
+                monthlyEnrollData: monthlyEnrollData
+            };
+            applyView($scope.globalView);
 
         }, function () {
             $scope.errorMessage = localization.localize('error.internal.server');
