@@ -1,43 +1,25 @@
 /* =========================================================
-   Route-transition fade — mitigates the nav-row "blink"
+   Route-transition fade — REMOVED (see news.png)
    ========================================================= */
-/* ui-router's ui-view uses Angular's own $animate.enter()/leave()
-   (confirmed in lib/angular-ui-router/angular-ui-router.js), and
-   ngAnimate is already a loaded app module dependency (app.js) - so
-   this CSS on the standard ng-enter/ng-leave classes makes Angular
-   actually run and wait for a real transition, not just a guess.
+/* This used to fade [ui-view] via ng-enter/ng-leave opacity to
+   soften the nav-row "blink" on route changes (Summary/Devices/
+   Applications/etc. are separate states that all share content.html,
+   so every switch destroys and rebuilds the whole template,
+   including the fixed-position nav row).
 
-   Root cause of the blink: Summary/Devices/Applications/
-   Configurations/Files are separate ui-router states that all share
-   content.html + TabController. Every click between them destroys
-   and rebuilds that whole template - including the nav row - which
-   pre-dates this redesign but was invisible when the nav row sat in
-   normal page flow (the whole page visibly refreshed anyway). Now
-   that the nav row is fixed-position, overlaid onto the always-
-   static header, that rebuild reads as the nav briefly vanishing
-   and reappearing. This can't be fixed by changing routing/state
-   config (out of scope) - this fade is a presentational mitigation:
-   turns the abrupt pop into a quick, intentional-looking crossfade. */
-[ui-view].ng-enter,
-[ui-view].ng-leave {
-  transition: opacity 0.15s ease;
-}
-
-[ui-view].ng-enter {
-  opacity: 0;
-}
-
-[ui-view].ng-enter.ng-enter-active {
-  opacity: 1;
-}
-
-[ui-view].ng-leave {
-  opacity: 1;
-}
-
-[ui-view].ng-leave.ng-leave-active {
-  opacity: 0;
-}
+   Removed: nav-tabs lives INSIDE content.html, i.e. inside the exact
+   element this opacity was applied to. CSS opacity on a parent
+   compounds for every descendant with no way to opt a child back out
+   - there's no CSS escape hatch, since doing so would require moving
+   nav-tabs outside the ui-view-swapped subtree (a template/routing
+   restructure, out of scope). So during the 150ms transition window,
+   nav-tabs itself was fading/rendering inconsistently - confirmed
+   live (Playwright) as a blank gap mid-transition, and news.png's
+   garbled overlapping nav text is almost certainly the same
+   mechanism caught at a different moment (old and new content
+   partially rendered at once). That's a worse glitch than the
+   abrupt blink it was meant to soften, so it's gone - back to the
+   plain instant swap. */
 
 /* =========================================================
    Modern header / top navigation
@@ -93,8 +75,18 @@
   background-color: var(--color-surface);
   border-bottom: 1px solid var(--color-border-subtle);
   box-shadow: 0 1px 6px rgba(15, 23, 42, 0.06);
-  overflow-x: hidden;
-  overflow-y: visible; /* explicit - overflow-x alone would force overflow-y to auto/clipped, cutting off .header .dropdown-menu below */
+  /* No overflow here at all - not even overflow-x:hidden. Confirmed
+     via live testing this was a real bug: CSS forces overflow-y to
+     compute as auto/clipped whenever overflow-x is non-visible on the
+     same element (they can't independently be hidden/visible), which
+     silently clipped .navbar-right .dropdown-menu (the admin/user
+     menu, a true DOM descendant of .header that extends below its
+     50px box) to nothing - reported as "admin dropdown options not
+     visible". This overflow-x:hidden was only ever a defensive
+     safety net; the actual horizontal-scroll fix is .header's
+     position:fixed (restored earlier) constraining its width to the
+     true viewport - verified sufficient on its own before this rule
+     was even added. */
 }
 
 .header-brand-badge {
