@@ -101,7 +101,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 480px;
+  width: 600px;
   height: 50px; /* matches .header's fixed height exactly - see note above */
   overflow: hidden;
   pointer-events: none;
@@ -114,7 +114,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 480px;
+  width: 600px;
   height: 50px;
   /* Visually confirmed (screenshot) the long 5-stop fade produced a
      wide, muddy grey band - inherent to alpha-blending a dark,
@@ -122,18 +122,19 @@
      between a near-black color and white necessarily passes through
      desaturated grey-blue midtones, no matter which alpha values are
      chosen. A long fade just means spending more pixels in that
-     worst-looking part of the blend. Fix is a much SHORTER, steeper
-     fade (solid until 55%/264px, fully transparent by 78%/374px - an
-     ~110px transition instead of the previous ~336px) so the grey
-     zone is compressed to a narrow strip instead of a visible band. */
+     worst-looking part of the blend. Fade is short and steep (solid
+     until 65%/390px, fully transparent by 85%/510px - a ~120px
+     transition) so the grey zone stays a narrow strip. Widened and
+     pushed further right per instruction - badge 480px->600px, curve
+     330-460 -> 420-580, fade proportionally later. */
   background: linear-gradient(
     90deg,
     rgba(var(--brand-dark-rgb), 1) 0%,
-    rgba(var(--brand-dark-rgb), 1) 55%,
-    rgba(var(--brand-dark-rgb), 0) 78%
+    rgba(var(--brand-dark-rgb), 1) 65%,
+    rgba(var(--brand-dark-rgb), 0) 85%
   );
   clip-path: path(
-    "M0,0 H330 C400,0 400,50 460,50 H0 Z"
+    "M0,0 H420 C490,0 490,50 580,50 H0 Z"
   );
   transform: translateX(0);
 }
@@ -663,7 +664,7 @@
 .app-shell .tabset .nav-tabs {
   position: fixed;
   top: 0;
-  left: 500px; /* clears the 480px-wide .header-brand-badge */
+  left: 620px; /* clears the 600px-wide .header-brand-badge */
   right: 300px; /* reserves the date/time + admin-dropdown cluster's width */
   height: 50px;
   /* Must be ABOVE .navbar-fixed-top's z-index (1030, Bootstrap default) -
