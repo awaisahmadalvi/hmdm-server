@@ -681,11 +681,11 @@
   height: 100%;
 }
 
-.app-shell .tabset > div {
+.app-shell > .tabset > div {
   display: block;
 }
 
-.app-shell .tabset .nav-tabs {
+.app-shell > .tabset .nav-tabs {
   position: fixed;
   top: 0;
   left: 720px; /* clears the 700px-wide .header-brand-badge */
@@ -709,16 +709,16 @@
   padding: 0;
 }
 
-.app-shell .tabset .nav-tabs > li {
+.app-shell > .tabset .nav-tabs > li {
   float: none;
   margin: 0 14px; /* ~28px gap between items */
 }
 
-.app-shell .tabset .nav-tabs > li:last-child {
+.app-shell > .tabset .nav-tabs > li:last-child {
   margin-right: 0;
 }
 
-.app-shell .tabset .nav-tabs > li > a {
+.app-shell > .tabset .nav-tabs > li > a {
   display: flex;
   align-items: center;
   height: 50px;
@@ -740,8 +740,8 @@
   transition: color 0.15s ease, border-color 0.15s ease;
 }
 
-.app-shell .tabset .nav-tabs > li > a:hover,
-.app-shell .tabset .nav-tabs > li > a:focus {
+.app-shell > .tabset .nav-tabs > li > a:hover,
+.app-shell > .tabset .nav-tabs > li > a:focus {
   color: var(--color-text-primary);
   border-bottom-color: var(--color-border);
 }
@@ -750,9 +750,9 @@
    of the old teal var(--brand-dark), so the accent still echoes the login
    theme even though this part of the header sits on white, not the
    purple badge. */
-.app-shell .tabset .nav-tabs > li.active > a,
-.app-shell .tabset .nav-tabs > li.active > a:hover,
-.app-shell .tabset .nav-tabs > li.active > a:focus {
+.app-shell > .tabset .nav-tabs > li.active > a,
+.app-shell > .tabset .nav-tabs > li.active > a:hover,
+.app-shell > .tabset .nav-tabs > li.active > a:focus {
   color: var(--color-text-primary);
   background: transparent;
   border: none;
@@ -760,20 +760,20 @@
   outline: none;
 }
 
-.app-shell .tabset .nav-tabs > li.dropdown.active > a {
+.app-shell > .tabset .nav-tabs > li.dropdown.active > a {
   color: var(--brand-dark);
 }
 
-.app-shell .tabset .nav-tabs .caret {
+.app-shell > .tabset .nav-tabs .caret {
   border-top-color: var(--color-text-tertiary);
 }
 
-.app-shell .tabset .nav-tabs > li.dropdown.active .caret,
-.app-shell .tabset .nav-tabs > li.dropdown > a:hover .caret {
+.app-shell > .tabset .nav-tabs > li.dropdown.active .caret,
+.app-shell > .tabset .nav-tabs > li.dropdown > a:hover .caret {
   border-top-color: var(--brand-dark);
 }
 
-.app-shell .tabset .dropdown-menu {
+.app-shell > .tabset .dropdown-menu {
   z-index: 1035; /* above the fixed header, so it's never clipped/hidden behind it */
   border: none;
   border-radius: 10px;
@@ -782,12 +782,12 @@
   margin-top: 6px;
 }
 
-.app-shell .tabset .dropdown-menu > li > a {
+.app-shell > .tabset .dropdown-menu > li > a {
   border-radius: 6px;
   color: var(--color-text-secondary);
 }
 
-.app-shell .tabset .dropdown-menu > li > a:hover {
+.app-shell > .tabset .dropdown-menu > li > a:hover {
   background: var(--color-surface-muted);
   color: var(--color-text-primary);
 }
@@ -812,7 +812,7 @@
     display: block;
   }
 
-  .app-shell .tabset .nav-tabs {
+  .app-shell > .tabset .nav-tabs {
     display: none;
     position: fixed;
     top: 50px;
@@ -829,36 +829,36 @@
     padding: 8px 0;
   }
 
-  .app-shell .tabset.mobile-nav-open .nav-tabs {
+  .app-shell > .tabset.mobile-nav-open .nav-tabs {
     display: flex;
   }
 
-  .app-shell .tabset .nav-tabs > li {
+  .app-shell > .tabset .nav-tabs > li {
     margin: 0;
     width: 100%;
   }
 
-  .app-shell .tabset .nav-tabs > li > a {
+  .app-shell > .tabset .nav-tabs > li > a {
     height: auto;
     padding: 12px 20px;
     border-bottom: none;
     border-left: 3px solid transparent;
   }
 
-  .app-shell .tabset .nav-tabs > li > a:hover,
-  .app-shell .tabset .nav-tabs > li > a:focus {
+  .app-shell > .tabset .nav-tabs > li > a:hover,
+  .app-shell > .tabset .nav-tabs > li > a:focus {
     border-bottom-color: transparent;
   }
 
-  .app-shell .tabset .nav-tabs > li.active > a,
-  .app-shell .tabset .nav-tabs > li.active > a:hover,
-  .app-shell .tabset .nav-tabs > li.active > a:focus {
+  .app-shell > .tabset .nav-tabs > li.active > a,
+  .app-shell > .tabset .nav-tabs > li.active > a:hover,
+  .app-shell > .tabset .nav-tabs > li.active > a:focus {
     border-bottom: none;
     border-left-color: var(--brand-dark);
     background: var(--color-surface-hover) !important;
   }
 
-  .app-shell .tabset .dropdown-menu {
+  .app-shell > .tabset .dropdown-menu {
     position: static;
     box-shadow: none;
     border-radius: 0;
