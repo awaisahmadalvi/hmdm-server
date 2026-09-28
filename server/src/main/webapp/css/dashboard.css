@@ -90,9 +90,9 @@
    the curve itself stays visible as a shape while the very end of the
    fade still lands on transparent pixels (no abrupt cut). */
 .header {
-  background-color: #ffffff;
-  border-bottom: 1px solid #e3e9f0;
-  box-shadow: 0 1px 6px rgba(30, 60, 90, 0.06);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-subtle);
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.06);
   overflow-x: hidden;
   overflow-y: visible; /* explicit - overflow-x alone would force overflow-y to auto/clipped, cutting off .header .dropdown-menu below */
 }
@@ -158,7 +158,7 @@
 }
 
 .header .logo-text {
-  color: #ffffff;
+  color: var(--color-surface);
   margin-top: 0; /* main.css sets margin-top:10px for the old pre-flex header, which pushed this ~5px below true vertical center once .header became display:flex/align-items:center */
   display: flex;
   align-items: center;
@@ -166,14 +166,14 @@
 
 .header .logo-text a,
 .header .logo-text a:active {
-  color: #ffffff !important;
+  color: var(--color-surface) !important;
   font-weight: 700;
   display: flex;
   align-items: center;
 }
 
 .header .logo-text a:hover {
-  color: #eef2ff !important;
+  color: var(--color-accent-soft) !important;
 }
 
 /* Same logo image the login page uses (rest/public/logo) - whatever
@@ -193,18 +193,18 @@
    original dark palette - only the logo (on the purple badge) is
    white. */
 .header a {
-  color: #45596b !important;
+  color: var(--color-text-secondary) !important;
 }
 
 .header .open a,
 .header .open .dropdown-menu {
-  background-color: #ffffff !important;
+  background-color: var(--color-surface) !important;
 }
 
 .header .dropdown-menu {
   border: none;
   border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
   padding: 6px;
   margin-top: 10px;
 }
@@ -212,34 +212,34 @@
 .header .dropdown-menu > li > a {
   border-radius: 6px;
   padding: 8px 14px;
-  color: #33475b !important;
+  color: var(--color-text-secondary) !important;
 }
 
 .header .selected,
 .header .open .dropdown-menu a:hover {
-  background: #f1f5f9;
+  background: var(--color-surface-muted);
   font-weight: 600;
 }
 
 .navbar-nav .expiry-warning {
-  color: #a15c00 !important;
-  background: #fff3cd;
+  color: var(--color-warning-text) !important;
+  background: var(--color-warning-bg);
   padding: 4px 12px !important;
   border-radius: 12px;
   font-weight: 600 !important;
 }
 
 #headerDateTime {
-  color: #8592a1;
+  color: var(--color-text-tertiary);
 }
 
 .username-label {
-  color: #2c4a5e;
+  color: var(--color-text-primary);
   font-weight: 600;
 }
 
 .username-caret {
-  color: #8592a1;
+  color: var(--color-text-tertiary);
 }
 
 /* =========================================================
@@ -260,12 +260,12 @@
   background: transparent;
   font-size: 22px;
   line-height: 1;
-  color: #aab6c2;
+  color: var(--color-border-strong);
   cursor: pointer;
 }
 
 .confirm-dialog-close:hover {
-  color: #5c6b7a;
+  color: var(--color-text-secondary);
 }
 
 .confirm-dialog-icon {
@@ -273,8 +273,8 @@
   height: 56px;
   margin: 0 auto 16px auto;
   border-radius: 50%;
-  background: #fff3cd;
-  color: #a15c00;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -282,7 +282,7 @@
 }
 
 .confirm-dialog-message {
-  color: #33475b;
+  color: var(--color-text-secondary);
   font-size: 15px;
   line-height: 1.5;
   margin: 0 0 24px 0 !important;
@@ -309,27 +309,27 @@
 }
 
 .confirm-dialog-cancel {
-  background: #ffffff;
-  border: 1px solid #d7e0ea;
-  color: #45596b;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
 }
 
 .confirm-dialog-cancel:hover {
-  background: #f1f5f9;
-  border-color: #c3d0dd;
-  color: #22303f;
+  background: var(--color-surface-muted);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
 }
 
 .confirm-dialog-ok {
-  background: #4c788c;
-  border: 1px solid #4c788c;
-  color: #ffffff;
+  background: var(--color-accent-strong);
+  border: 1px solid var(--color-accent-strong);
+  color: var(--color-surface);
 }
 
 .confirm-dialog-ok:hover {
-  background: #3d6274;
-  border-color: #3d6274;
-  color: #ffffff;
+  background: var(--color-accent-strong-hover);
+  border-color: var(--color-accent-strong-hover);
+  color: var(--color-surface);
 }
 
 /* =========================================================
@@ -341,7 +341,7 @@
   align-items: center;
   gap: 14px;
   padding: 20px 24px;
-  border-bottom: 1px solid #eef2f6;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .modern-modal-icon {
@@ -349,8 +349,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #e8eef3;
-  color: #4c788c;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -362,7 +362,7 @@
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #22303f;
+  color: var(--color-text-primary);
 }
 
 .modern-modal-close {
@@ -371,12 +371,12 @@
   background: transparent;
   font-size: 22px;
   line-height: 1;
-  color: #aab6c2;
+  color: var(--color-border-strong);
   cursor: pointer;
 }
 
 .modern-modal-close:hover {
-  color: #5c6b7a;
+  color: var(--color-text-secondary);
 }
 
 .modern-modal-body {
@@ -385,19 +385,19 @@
 
 .modern-modal-body .form-control:not([type="checkbox"]):not([type="radio"]) {
   border-radius: 8px;
-  border: 1px solid #d7e0ea;
+  border: 1px solid var(--color-border);
   box-shadow: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .modern-modal-body .form-control:not([type="checkbox"]):not([type="radio"]):focus {
-  border-color: #4c788c;
-  box-shadow: 0 0 0 3px rgba(76, 120, 140, 0.15);
+  border-color: var(--color-accent-strong);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .modern-modal-body input[type="checkbox"],
 .modern-modal-body input[type="checkbox"].form-control {
-  accent-color: #4c788c;
+  accent-color: var(--color-accent-strong);
   width: auto;
   height: auto;
   border: none;
@@ -406,38 +406,38 @@
 }
 
 .modern-modal-body input[type="radio"] {
-  accent-color: #4c788c;
+  accent-color: var(--color-accent-strong);
 }
 
 .modern-modal-body .control-label {
   font-weight: 600;
-  color: #33475b;
+  color: var(--color-text-secondary);
 }
 
 .modern-modal-body .audit-payload {
   margin: 18px 0;
   padding: 12px 14px;
-  background: #f8fafc;
+  background: var(--color-surface-hover);
   border-radius: 8px;
-  border: 1px solid #eef2f6;
+  border: 1px solid var(--color-border-subtle);
 }
 
 .modern-modal-body .panel-default {
   border: none;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(30, 60, 90, 0.06);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
 }
 
 .modern-modal-body .panel-default > .panel-heading {
-  background: #f8fafc;
+  background: var(--color-surface-hover);
   border-radius: 12px 12px 0 0;
-  border-bottom: 1px solid #eef2f6;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .modern-modal-body .dropdown-menu {
   border: none;
   border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
   padding: 6px;
 }
 
@@ -458,25 +458,25 @@
 }
 
 .modern-modal-actions .btn-default {
-  border: 1px solid #d7e0ea;
-  color: #45596b;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
 }
 
 .modern-modal-actions .btn-default:hover {
-  background: #f1f5f9;
-  border-color: #c3d0dd;
+  background: var(--color-surface-muted);
+  border-color: var(--color-border);
 }
 
 .modern-modal-actions .btn-modern-primary {
-  background: #4c788c;
-  border-color: #4c788c;
-  color: #ffffff;
+  background: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+  color: var(--color-surface);
 }
 
 .modern-modal-actions .btn-modern-primary:hover {
-  background: #3d6274;
-  border-color: #3d6274;
-  color: #ffffff;
+  background: var(--color-accent-strong-hover);
+  border-color: var(--color-accent-strong-hover);
+  color: var(--color-surface);
 }
 
 /* =========================================================
@@ -503,7 +503,7 @@
 .batch-upload-row .control-label {
   margin: 0;
   font-weight: 600;
-  color: #33475b;
+  color: var(--color-text-secondary);
   flex: none;
 }
 
@@ -514,11 +514,11 @@
 
 .batch-alert-danger {
   border-radius: 10px;
-  border: 1px solid #f2c2c0;
+  border: 1px solid var(--color-danger);
 }
 
 .preview-title {
-  color: #22303f;
+  color: var(--color-text-primary);
 }
 
 /* =========================================================
@@ -528,7 +528,7 @@
 .qr-page {
   min-height: 100vh;
   box-sizing: border-box;
-  background: linear-gradient(160deg, #eef3f9 0%, #dde8f2 100%);
+  background: var(--gradient-surface);
   padding: 40px 16px 60px 16px;
   display: flex;
   flex-direction: column;
@@ -536,9 +536,9 @@
 }
 
 .qr-card {
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(30, 60, 90, 0.12);
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12);
   padding: 24px;
   margin-bottom: 24px;
   display: inline-block;
@@ -562,13 +562,13 @@
 }
 
 .qr-hint {
-  color: #8592a1;
+  color: var(--color-text-tertiary);
   font-size: 12px;
   margin-top: 6px;
 }
 
 .qr-checkbox {
-  accent-color: #4c788c;
+  accent-color: var(--color-accent-strong);
   width: 18px;
   height: 18px;
 }
@@ -599,17 +599,17 @@
 }
 
 .qr-help-line {
-  color: #33475b;
+  color: var(--color-text-secondary);
   font-size: 14px;
 }
 
 .qr-help-intro {
   font-weight: 600;
-  color: #22303f;
+  color: var(--color-text-primary);
 }
 
 .qr-help-outro {
-  color: #6b7a89;
+  color: var(--color-text-tertiary);
   font-size: 13px;
   margin-top: 10px !important;
 }
@@ -651,7 +651,7 @@
   align-items: center;
   margin-left: auto;
   padding-left: 20px;
-  border-left: 1px solid #e3e9f0;
+  border-left: 1px solid var(--color-border-subtle);
 }
 
 .app-header-merged .navbar-right > li {
@@ -676,7 +676,7 @@
   display: none;
   border: none;
   background: transparent;
-  color: #45596b;
+  color: var(--color-text-secondary);
   font-size: 18px;
   padding: 8px;
   margin-left: auto;
@@ -739,7 +739,7 @@
      of declaration order, even against a more specific longhand. */
   border: none;
   background: transparent;
-  color: #64748b;
+  color: var(--color-text-tertiary);
   font-weight: 500;
   font-size: 14px;
   padding: 0;
@@ -750,54 +750,54 @@
 
 .app-shell .tabset .nav-tabs > li > a:hover,
 .app-shell .tabset .nav-tabs > li > a:focus {
-  color: #22303f;
-  border-bottom-color: #cbd5e1;
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-border);
 }
 
-/* Active-tab underline uses the login page's indigo (#4f46e5) instead
-   of the old teal #4c788c, so the accent still echoes the login
+/* Active-tab underline uses the login page's indigo (var(--color-accent-strong)) instead
+   of the old teal var(--color-accent-strong), so the accent still echoes the login
    theme even though this part of the header sits on white, not the
    purple badge. */
 .app-shell .tabset .nav-tabs > li.active > a,
 .app-shell .tabset .nav-tabs > li.active > a:hover,
 .app-shell .tabset .nav-tabs > li.active > a:focus {
-  color: #2c4a5e;
+  color: var(--color-text-primary);
   background: transparent;
   border: none;
-  border-bottom: 2px solid #4f46e5;
+  border-bottom: 2px solid var(--color-accent-strong);
   outline: none;
 }
 
 .app-shell .tabset .nav-tabs > li.dropdown.active > a {
-  color: #4f46e5;
+  color: var(--color-accent-strong);
 }
 
 .app-shell .tabset .nav-tabs .caret {
-  border-top-color: #64748b;
+  border-top-color: var(--color-text-tertiary);
 }
 
 .app-shell .tabset .nav-tabs > li.dropdown.active .caret,
 .app-shell .tabset .nav-tabs > li.dropdown > a:hover .caret {
-  border-top-color: #4f46e5;
+  border-top-color: var(--color-accent-strong);
 }
 
 .app-shell .tabset .dropdown-menu {
   z-index: 1035; /* above the fixed header, so it's never clipped/hidden behind it */
   border: none;
   border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
   padding: 6px;
   margin-top: 6px;
 }
 
 .app-shell .tabset .dropdown-menu > li > a {
   border-radius: 6px;
-  color: #33475b;
+  color: var(--color-text-secondary);
 }
 
 .app-shell .tabset .dropdown-menu > li > a:hover {
-  background: #f1f5f9;
-  color: #22303f;
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
 }
 
 /* ---------- Responsive: hamburger collapse below 1200px ----------
@@ -832,8 +832,8 @@
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    background: #ffffff;
-    box-shadow: 0 8px 24px rgba(30, 60, 90, 0.12);
+    background: var(--color-surface);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
     padding: 8px 0;
   }
 
@@ -862,8 +862,8 @@
   .app-shell .tabset .nav-tabs > li.active > a:hover,
   .app-shell .tabset .nav-tabs > li.active > a:focus {
     border-bottom: none;
-    border-left-color: #4f46e5;
-    background: #f8fafc !important;
+    border-left-color: var(--color-accent-strong);
+    background: var(--color-surface-hover) !important;
   }
 
   .app-shell .tabset .dropdown-menu {
@@ -887,17 +887,17 @@
 }
 
 .modern-page h4 {
-  color: #22303f;
+  color: var(--color-text-primary);
   font-weight: 700;
 }
 
 .modern-page h5 {
-  color: #33475b;
+  color: var(--color-text-secondary);
   font-weight: 600;
 }
 
 .modern-page h3 {
-  color: #22303f;
+  color: var(--color-text-primary);
   font-weight: 700;
 }
 
@@ -910,13 +910,13 @@
 .summary-card h3 {
   font-size: 16px;
   font-weight: 700;
-  color: #22303f;
+  color: var(--color-text-primary);
   margin-bottom: 10px;
 }
 
 .summary-legend {
   font-size: 14px;
-  color: #556575;
+  color: var(--color-text-secondary);
 }
 
 .summary-legend strong {
@@ -924,46 +924,46 @@
 }
 
 .modern-page .btn-promo {
-  background-color: #4c788c;
+  background-color: var(--color-accent-strong);
 }
 
 .modern-page .btn-promo:hover {
-  background-color: #3d6274;
+  background-color: var(--color-accent-strong-hover);
 }
 
 /* Generic table styling for tables that aren't wrapped in .modern-table-wrap
    (e.g. tables inside the configuration editor's tabs) */
 .modern-page table.table thead th {
-  background: #f8fafc;
-  color: #6b7a89;
+  background: var(--color-surface-hover);
+  color: var(--color-text-tertiary);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  border-bottom: 1px solid #e6ebf1;
+  border-bottom: 1px solid var(--color-border-subtle);
   border-top: none;
 }
 
 .modern-page table.table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--color-surface-hover);
 }
 
 .modern-page .panel-default {
   border: none;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(30, 60, 90, 0.06);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
 }
 
 .modern-page .panel-default > .panel-heading {
-  background: #f8fafc;
+  background: var(--color-surface-hover);
   border-radius: 12px 12px 0 0;
-  border-bottom: 1px solid #eef2f6;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .modern-page .config-save {
   background: rgba(255, 255, 255, 0.97);
-  border-top: 1px solid #e3e9f0;
-  box-shadow: 0 -4px 20px rgba(30, 60, 90, 0.08);
+  border-top: 1px solid var(--color-border-subtle);
+  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
 }
 
 .modern-page .config-save .btn {
@@ -971,50 +971,50 @@
   font-weight: 600;
   padding: 8px 20px;
   margin: 0 4px;
-  border: 1px solid #d7e0ea;
-  color: #45596b;
-  background: #ffffff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
 }
 
 .modern-page .config-save .btn:hover {
-  background: #f1f5f9;
-  border-color: #c3d0dd;
+  background: var(--color-surface-muted);
+  border-color: var(--color-border);
 }
 
 .modern-page .config-save .btn-attention {
-  background: #fff3cd;
-  border-color: #f0dfa0;
-  color: #7a5c00;
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning);
+  color: var(--color-warning-text);
 }
 
 .modern-page .config-save .btn-attention:hover {
-  background: #ffe9a8;
-  border-color: #e6cd7c;
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning);
 }
 
 .modern-page .modern-toolbar {
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(30, 60, 90, 0.06);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
   padding: 18px 20px 6px 20px;
   margin-bottom: 16px;
 }
 
 .modern-page .form-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
   border-radius: 8px;
-  border: 1px solid #d7e0ea;
+  border: 1px solid var(--color-border);
   box-shadow: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .modern-page .form-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus {
-  border-color: #4c788c;
-  box-shadow: 0 0 0 3px rgba(76, 120, 140, 0.15);
+  border-color: var(--color-accent-strong);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .modern-page input[type="checkbox"],
 .modern-page input[type="checkbox"].form-control {
-  accent-color: #4c788c;
+  accent-color: var(--color-accent-strong);
   width: auto;
   height: auto;
   border: none;
@@ -1023,12 +1023,12 @@
 }
 
 .modern-page input[type="radio"] {
-  accent-color: #4c788c;
+  accent-color: var(--color-accent-strong);
 }
 
 .modern-page input[type="range"],
 .modern-page input[type="range"].form-control {
-  accent-color: #4c788c;
+  accent-color: var(--color-accent-strong);
   border: none;
   box-shadow: none;
   background: transparent;
@@ -1038,53 +1038,53 @@
 
 .modern-page .btn-default {
   border-radius: 8px;
-  border: 1px solid #d7e0ea;
-  background: #ffffff;
-  color: #33475b;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .modern-page .btn-default:hover {
-  background: #f1f5f9;
-  border-color: #c3d0dd;
-  color: #22303f;
+  background: var(--color-surface-muted);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
 }
 
 .modern-page .btn-default:focus,
 .modern-page .btn-default.focus {
-  box-shadow: 0 0 0 3px rgba(76, 120, 140, 0.15);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .modern-page .btn-modern-primary {
-  background: #4c788c;
-  border-color: #4c788c;
-  color: #ffffff;
+  background: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+  color: var(--color-surface);
   font-weight: 600;
 }
 
 .modern-page .btn-modern-primary:hover {
-  background: #3d6274;
-  border-color: #3d6274;
-  color: #ffffff;
+  background: var(--color-accent-strong-hover);
+  border-color: var(--color-accent-strong-hover);
+  color: var(--color-surface);
 }
 
 .modern-page .collapse-control {
-  color: #4c788c;
+  color: var(--color-accent-strong);
 }
 
 .modern-page a.action-link {
-  color: #4c788c;
+  color: var(--color-accent-strong);
 }
 
 .modern-page a.action-link:hover,
 .modern-page a.action-link:focus {
-  color: #3d6274;
+  color: var(--color-accent-strong-hover);
 }
 
 .modern-page .dropdown-menu {
   border: none;
   border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
   padding: 6px;
 }
 
@@ -1093,9 +1093,9 @@
 }
 
 .modern-page .modern-table-wrap {
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(30, 60, 90, 0.06);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
   /* Contains wide tables (e.g. the devices list) to a scrollable strip
      instead of widening the whole page - fixes the 1024px horizontal
      page-scroll. overflow-y must be set explicitly alongside overflow-x
@@ -1113,13 +1113,13 @@
 }
 
 .modern-page .modern-table-wrap thead th {
-  background: #f8fafc;
-  color: #6b7a89;
+  background: var(--color-surface-hover);
+  color: var(--color-text-tertiary);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  border-bottom: 1px solid #e6ebf1;
+  border-bottom: 1px solid var(--color-border-subtle);
   border-top: none;
   white-space: nowrap;
 }
@@ -1133,12 +1133,12 @@
 }
 
 .modern-page .modern-table-wrap tbody td {
-  border-top: 1px solid #eef2f6;
+  border-top: 1px solid var(--color-border-subtle);
   vertical-align: middle;
 }
 
 .modern-page .modern-table-wrap tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--color-surface-hover);
 }
 
 .modern-page .deviceActions .btn-default,
@@ -1149,9 +1149,9 @@
 
 .modern-page .modern-proplist,
 .modern-proplist {
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(30, 60, 90, 0.06);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
   margin-bottom: 16px;
   overflow: hidden;
 }
@@ -1164,20 +1164,20 @@
 .modern-proplist table.table tr td {
   padding: 10px 18px;
   font-size: 13px;
-  border-top: 1px solid #eef2f6;
+  border-top: 1px solid var(--color-border-subtle);
   vertical-align: middle;
 }
 
 .modern-proplist table.table tr th {
   background: transparent;
-  color: #647485;
+  color: var(--color-text-tertiary);
   font-weight: 600;
   width: 42%;
   white-space: nowrap;
 }
 
 .modern-proplist table.table tr td {
-  color: #1f2b38;
+  color: var(--color-text-primary);
 }
 
 .modern-proplist table.table tr:first-child th,
@@ -1186,12 +1186,12 @@
 }
 
 .modern-proplist table.table tr:nth-child(even) {
-  background: #f8fafc;
+  background: var(--color-surface-hover);
 }
 
 .modern-proplist table.table tr th[colspan] {
-  background: #eaf1f6;
-  color: #2c4a5e;
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 11px;
@@ -1204,7 +1204,7 @@
 }
 
 .modern-page .pagination-label span {
-  color: #33475b;
+  color: var(--color-text-secondary);
 }
 
 .modern-page .pagination {
@@ -1215,14 +1215,14 @@
 .modern-page .pagination > li > span {
   border-radius: 6px !important;
   margin: 0 2px;
-  border: 1px solid #d7e0ea;
-  color: #45596b;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
 }
 
 .modern-page .pagination > .active > a,
 .modern-page .pagination > .active > a:hover,
 .modern-page .pagination > .active > span {
-  background-color: #4c788c;
-  border-color: #4c788c;
-  color: #ffffff;
+  background-color: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+  color: var(--color-surface);
 }
