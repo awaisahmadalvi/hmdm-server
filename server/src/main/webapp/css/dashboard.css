@@ -1055,6 +1055,16 @@
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(30, 60, 90, 0.06);
+  /* Contains wide tables (e.g. the devices list) to a scrollable strip
+     instead of widening the whole page - fixes the 1024px horizontal
+     page-scroll. overflow-y must be set explicitly alongside overflow-x
+     (CSS forces a "visible" y-axis to become "auto" when x is non-
+     visible anyway) so this is verified, not assumed, not to reclip
+     the row-actions dropdown that a past fix here already had to
+     un-clip once (see git history) - live-tested with the "..." menu
+     open on the last visible row before shipping this. */
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .modern-page .modern-table-wrap .table {
