@@ -43,41 +43,56 @@
    Modern header / top navigation
    ========================================================= */
 
+/* Same indigo gradient as the login page's submit button
+   (var(--gradient-primary), tokens.css: #6366f1 -> #4f46e5, 135deg),
+   plus a soft diagonal sheen layered on top (per gradient.webp's
+   reference style: a light diagonal streak crossing the bar). */
 .header {
-  background-color: #ffffff;
-  border-bottom: 1px solid #e3e9f0;
-  box-shadow: 0 1px 6px rgba(30, 60, 90, 0.06);
+  background-color: #4f46e5;
+  background-image: linear-gradient(
+      100deg,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0.16) 50%,
+      rgba(255, 255, 255, 0) 60%
+    ),
+    var(--gradient-primary);
+  border-bottom: none;
+  box-shadow: 0 2px 10px rgba(79, 70, 229, 0.25);
 }
 
 .header .logo-text {
-  color: #33475b;
+  color: #ffffff;
 }
 
 .header .logo-text a,
 .header .logo-text a:active {
-  color: #2c4a5e !important;
+  color: #ffffff !important;
   font-weight: 700;
 }
 
 .header .logo-text a:hover {
-  color: #4c788c !important;
+  color: #eef2ff !important;
 }
 
 .header a {
-  color: #45596b !important;
+  color: rgba(255, 255, 255, 0.8) !important;
 }
 
 .header .open a,
 .header .open .dropdown-menu {
-  background-color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.14) !important;
 }
 
+/* The flyout menu itself stays a light card - readable regardless of
+   the dark/gradient trigger it hangs off, same as every other
+   dropdown in this app. */
 .header .dropdown-menu {
   border: none;
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(30, 60, 90, 0.16);
   padding: 6px;
   margin-top: 10px;
+  background-color: #ffffff;
 }
 
 .header .dropdown-menu > li > a {
@@ -93,24 +108,24 @@
 }
 
 .navbar-nav .expiry-warning {
-  color: #a15c00 !important;
-  background: #fff3cd;
+  color: #7a5c00 !important;
+  background: #ffe9a8;
   padding: 4px 12px !important;
   border-radius: 12px;
   font-weight: 600 !important;
 }
 
 #headerDateTime {
-  color: #8592a1;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .username-label {
-  color: #2c4a5e;
+  color: #ffffff;
   font-weight: 600;
 }
 
 .username-caret {
-  color: #8592a1;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 /* =========================================================
@@ -522,14 +537,14 @@
   align-items: center;
   margin-left: auto;
   padding-left: 20px;
-  border-left: 1px solid #e3e9f0;
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .app-header-merged .mobile-nav-toggle {
   display: none;
   border: none;
   background: transparent;
-  color: #45596b;
+  color: #ffffff;
   font-size: 18px;
   padding: 8px;
   margin-left: auto;
@@ -592,7 +607,7 @@
      of declaration order, even against a more specific longhand. */
   border: none;
   background: transparent;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.78);
   font-weight: 500;
   font-size: 14px;
   padding: 0;
@@ -603,31 +618,31 @@
 
 .app-shell .tabset .nav-tabs > li > a:hover,
 .app-shell .tabset .nav-tabs > li > a:focus {
-  color: #22303f;
-  border-bottom-color: #cbd5e1;
+  color: #ffffff;
+  border-bottom-color: rgba(255, 255, 255, 0.45);
 }
 
 .app-shell .tabset .nav-tabs > li.active > a,
 .app-shell .tabset .nav-tabs > li.active > a:hover,
 .app-shell .tabset .nav-tabs > li.active > a:focus {
-  color: #2c4a5e;
+  color: #ffffff;
   background: transparent;
   border: none;
-  border-bottom: 2px solid #4c788c;
+  border-bottom: 2px solid #ffffff;
   outline: none;
 }
 
 .app-shell .tabset .nav-tabs > li.dropdown.active > a {
-  color: #4c788c;
+  color: #ffffff;
 }
 
 .app-shell .tabset .nav-tabs .caret {
-  border-top-color: #64748b;
+  border-top-color: rgba(255, 255, 255, 0.78);
 }
 
 .app-shell .tabset .nav-tabs > li.dropdown.active .caret,
 .app-shell .tabset .nav-tabs > li.dropdown > a:hover .caret {
-  border-top-color: #4c788c;
+  border-top-color: #ffffff;
 }
 
 .app-shell .tabset .dropdown-menu {
@@ -686,16 +701,31 @@
     width: 100%;
   }
 
+  /* This collapsed panel has its own white background (see .nav-tabs
+     above), unlike the indigo-gradient header it drops down from -
+     same convention as every dropdown-menu in this app (light flyout
+     regardless of a dark trigger), so nav-link colors are reset back
+     to dark text here for readability against that white panel. */
   .app-shell .tabset .nav-tabs > li > a {
     height: auto;
     padding: 12px 20px;
+    color: #64748b;
     border-bottom: none;
     border-left: 3px solid transparent;
   }
 
-  .app-shell .tabset .nav-tabs > li.active > a {
+  .app-shell .tabset .nav-tabs > li > a:hover,
+  .app-shell .tabset .nav-tabs > li > a:focus {
+    color: #22303f;
+    border-bottom-color: transparent;
+  }
+
+  .app-shell .tabset .nav-tabs > li.active > a,
+  .app-shell .tabset .nav-tabs > li.active > a:hover,
+  .app-shell .tabset .nav-tabs > li.active > a:focus {
+    color: #2c4a5e;
     border-bottom: none;
-    border-left-color: #4c788c;
+    border-left-color: #4f46e5;
     background: #f8fafc !important;
   }
 
