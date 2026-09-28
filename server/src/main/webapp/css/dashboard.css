@@ -321,14 +321,14 @@
 }
 
 .confirm-dialog-ok {
-  background: var(--color-accent-strong);
-  border: 1px solid var(--color-accent-strong);
+  background: var(--brand-dark);
+  border: 1px solid var(--brand-dark);
   color: var(--color-surface);
 }
 
 .confirm-dialog-ok:hover {
-  background: var(--color-accent-strong-hover);
-  border-color: var(--color-accent-strong-hover);
+  background: var(--brand-dark-hover);
+  border-color: var(--brand-dark-hover);
   color: var(--color-surface);
 }
 
@@ -350,7 +350,7 @@
   height: 40px;
   border-radius: 50%;
   background: var(--color-accent-soft);
-  color: var(--color-accent-strong);
+  color: var(--brand-dark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -391,13 +391,13 @@
 }
 
 .modern-modal-body .form-control:not([type="checkbox"]):not([type="radio"]):focus {
-  border-color: var(--color-accent-strong);
+  border-color: var(--brand-dark);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .modern-modal-body input[type="checkbox"],
 .modern-modal-body input[type="checkbox"].form-control {
-  accent-color: var(--color-accent-strong);
+  accent-color: var(--brand-dark);
   width: auto;
   height: auto;
   border: none;
@@ -406,7 +406,7 @@
 }
 
 .modern-modal-body input[type="radio"] {
-  accent-color: var(--color-accent-strong);
+  accent-color: var(--brand-dark);
 }
 
 .modern-modal-body .control-label {
@@ -468,14 +468,14 @@
 }
 
 .modern-modal-actions .btn-modern-primary {
-  background: var(--color-accent-strong);
-  border-color: var(--color-accent-strong);
+  background: var(--brand-dark);
+  border-color: var(--brand-dark);
   color: var(--color-surface);
 }
 
 .modern-modal-actions .btn-modern-primary:hover {
-  background: var(--color-accent-strong-hover);
-  border-color: var(--color-accent-strong-hover);
+  background: var(--brand-dark-hover);
+  border-color: var(--brand-dark-hover);
   color: var(--color-surface);
 }
 
@@ -568,7 +568,7 @@
 }
 
 .qr-checkbox {
-  accent-color: var(--color-accent-strong);
+  accent-color: var(--brand-dark);
   width: 18px;
   height: 18px;
 }
@@ -754,8 +754,8 @@
   border-bottom-color: var(--color-border);
 }
 
-/* Active-tab underline uses the login page's indigo (var(--color-accent-strong)) instead
-   of the old teal var(--color-accent-strong), so the accent still echoes the login
+/* Active-tab underline uses the login page's indigo (var(--brand-dark)) instead
+   of the old teal var(--brand-dark), so the accent still echoes the login
    theme even though this part of the header sits on white, not the
    purple badge. */
 .app-shell .tabset .nav-tabs > li.active > a,
@@ -764,12 +764,12 @@
   color: var(--color-text-primary);
   background: transparent;
   border: none;
-  border-bottom: 2px solid var(--color-accent-strong);
+  border-bottom: 2px solid var(--brand-dark);
   outline: none;
 }
 
 .app-shell .tabset .nav-tabs > li.dropdown.active > a {
-  color: var(--color-accent-strong);
+  color: var(--brand-dark);
 }
 
 .app-shell .tabset .nav-tabs .caret {
@@ -778,7 +778,7 @@
 
 .app-shell .tabset .nav-tabs > li.dropdown.active .caret,
 .app-shell .tabset .nav-tabs > li.dropdown > a:hover .caret {
-  border-top-color: var(--color-accent-strong);
+  border-top-color: var(--brand-dark);
 }
 
 .app-shell .tabset .dropdown-menu {
@@ -862,7 +862,7 @@
   .app-shell .tabset .nav-tabs > li.active > a:hover,
   .app-shell .tabset .nav-tabs > li.active > a:focus {
     border-bottom: none;
-    border-left-color: var(--color-accent-strong);
+    border-left-color: var(--brand-dark);
     background: var(--color-surface-hover) !important;
   }
 
@@ -924,11 +924,11 @@
 }
 
 .modern-page .btn-promo {
-  background-color: var(--color-accent-strong);
+  background-color: var(--brand-dark);
 }
 
 .modern-page .btn-promo:hover {
-  background-color: var(--color-accent-strong-hover);
+  background-color: var(--brand-dark-hover);
 }
 
 /* Generic table styling for tables that aren't wrapped in .modern-table-wrap
@@ -1008,13 +1008,13 @@
 }
 
 .modern-page .form-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus {
-  border-color: var(--color-accent-strong);
+  border-color: var(--brand-dark);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .modern-page input[type="checkbox"],
 .modern-page input[type="checkbox"].form-control {
-  accent-color: var(--color-accent-strong);
+  accent-color: var(--brand-dark);
   width: auto;
   height: auto;
   border: none;
@@ -1023,12 +1023,12 @@
 }
 
 .modern-page input[type="radio"] {
-  accent-color: var(--color-accent-strong);
+  accent-color: var(--brand-dark);
 }
 
 .modern-page input[type="range"],
 .modern-page input[type="range"].form-control {
-  accent-color: var(--color-accent-strong);
+  accent-color: var(--brand-dark);
   border: none;
   box-shadow: none;
   background: transparent;
@@ -1056,29 +1056,29 @@
 }
 
 .modern-page .btn-modern-primary {
-  background: var(--color-accent-strong);
-  border-color: var(--color-accent-strong);
+  background: var(--brand-dark);
+  border-color: var(--brand-dark);
   color: var(--color-surface);
   font-weight: 600;
 }
 
 .modern-page .btn-modern-primary:hover {
-  background: var(--color-accent-strong-hover);
-  border-color: var(--color-accent-strong-hover);
+  background: var(--brand-dark-hover);
+  border-color: var(--brand-dark-hover);
   color: var(--color-surface);
 }
 
 .modern-page .collapse-control {
-  color: var(--color-accent-strong);
+  color: var(--brand-dark);
 }
 
 .modern-page a.action-link {
-  color: var(--color-accent-strong);
+  color: var(--brand-dark);
 }
 
 .modern-page a.action-link:hover,
 .modern-page a.action-link:focus {
-  color: var(--color-accent-strong-hover);
+  color: var(--brand-dark-hover);
 }
 
 .modern-page .dropdown-menu {
@@ -1222,7 +1222,7 @@
 .modern-page .pagination > .active > a,
 .modern-page .pagination > .active > a:hover,
 .modern-page .pagination > .active > span {
-  background-color: var(--color-accent-strong);
-  border-color: var(--color-accent-strong);
+  background-color: var(--brand-dark);
+  border-color: var(--brand-dark);
   color: var(--color-surface);
 }

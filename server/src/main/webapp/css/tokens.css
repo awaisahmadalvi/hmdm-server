@@ -22,6 +22,7 @@
      one definition instead of two hardcoded copies of #0f172a. */
   --brand-dark: #0f172a;
   --brand-dark-rgb: 15, 23, 42; /* same color as --brand-dark, as r,g,b for rgba() gradient stops */
+  --brand-dark-hover: #1e293b; /* one step lighter (slate-800) - hover shade for anything using --brand-dark as a text/button/link color */
 
   /* Literal value from design.png. Used for icons, borders,
      focus rings, chart lines, and other >=3:1 (non-text) uses. */
