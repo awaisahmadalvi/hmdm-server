@@ -858,6 +858,26 @@ document.localization['en_US'] = {
 
     'form.settings.icons.title': 'Icons',
     'form.settings.icons.search.placeholder': 'Search icons',
+    'form.settings.icons.subtitle': 'Custom icons used for apps and shortcuts on the device launcher',
+    'form.settings.icons.add': 'Add icon',
+    'form.settings.icons.count.suffix': 'icons',
+
+    'form.icon.modal.title.add': 'Add icon',
+    'form.icon.modal.title.edit.prefix': 'Edit icon:',
+    'form.icon.hint': 'PNG with a transparent background, at least 192×192px',
+    'form.icon.file.upload.new': 'Upload a new file...',
+    'form.icon.file.none.selected': 'No file selected',
+    'form.icon.preview.title': 'Preview',
+    'form.icon.preview.dark': 'Dark background',
+    'form.icon.preview.light': 'Light background',
+    'form.icon.saving': 'Saving...',
+    'form.icon.create': 'Add icon',
+
+    'success.icon.saved': 'Icon saved',
+
+    'form.icon.empty.title': 'No icons yet',
+    'form.icon.empty.subtitle': 'Upload custom icons to use for apps and shortcuts on devices',
+    'form.icon.empty.search.prefix': 'No icons match',
 
     'form.qr.device.number': 'Device number',
     'form.qr.auto.create': 'Add to device list if not exists',

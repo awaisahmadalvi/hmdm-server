@@ -1,24 +1,80 @@
 <!-- Localization completed -->
-<div class="width-1000 modern-page" ng-controller="IconsTabController">
+<div class="width-1200 modern-page logs-page icons-page" ng-controller="IconsTabController">
 
-    <div class="text-center">
-        <h4 localized>form.settings.icons.title</h4>
+    <div class="logs-page-header">
+        <div>
+            <h4 localized>form.settings.icons.title</h4>
+            <div class="logs-page-subtitle" localized>form.settings.icons.subtitle</div>
+        </div>
+        <div class="logs-page-header-actions">
+            <button type="button" class="btn btn-modern-primary" ng-click="editIcon({})">
+                <span class="glyphicon glyphicon-plus"></span> <span localized>form.settings.icons.add</span>
+            </button>
+        </div>
     </div>
 
-    <div>
-        <div class='form-group modern-toolbar'>
-            <input type='text' ng-model='search.searchValue' ng-enter='search()'
-                   ng-change="search()"
-                   localized-placeholder='form.settings.icons.search.placeholder'
-                   class='form-control configurations-search-input'/>
+    <div class="summary-card logs-results-card">
 
-            <div class='configurations-search-buttons'>
-                <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
-                <button type='button' class='btn btn-default btn-modern-primary' ng-click='editIcon( {} )' localized>button.add</button>
+        <div class="logs-filter-row logs-filter-row-actions">
+            <div class="logs-input-icon-wrap logs-filter-grow">
+                <span class="glyphicon glyphicon-search logs-input-icon"></span>
+                <input type="text" ng-model="search.searchValue" ng-enter="search()"
+                       localized-placeholder="form.settings.icons.search.placeholder"
+                       class="form-control logs-input">
+            </div>
+            <div class="logs-results-count users-count">{{icons.length || 0}} {{'form.settings.icons.count.suffix' | localize}}</div>
+        </div>
+
+        <div class="icons-grid" ng-if="loading">
+            <div class="device-details-skeleton icons-skeleton-tile"></div>
+            <div class="device-details-skeleton icons-skeleton-tile"></div>
+            <div class="device-details-skeleton icons-skeleton-tile"></div>
+            <div class="device-details-skeleton icons-skeleton-tile"></div>
+            <div class="device-details-skeleton icons-skeleton-tile"></div>
+            <div class="device-details-skeleton icons-skeleton-tile"></div>
+        </div>
+
+        <div class="icons-grid" ng-if="!loading && icons.length > 0">
+            <div class="icon-tile" ng-repeat="icon in icons.slice(((paging.currentPage-1)*paging.pageSize), ((paging.currentPage)*paging.pageSize))"
+                 ng-click="editIcon(icon)">
+                <div class="icon-tile-image">
+                    <img ng-if="iconThumbUrl(icon)" ng-src="{{iconThumbUrl(icon)}}" class="icon-tile-img"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <span class="icon-tile-placeholder" ng-style="{display: iconThumbUrl(icon) ? 'none' : 'flex'}">
+                        <span class="glyphicon glyphicon-picture"></span>
+                    </span>
+                </div>
+                <div class="icon-tile-name" title="{{icon.name}}">{{icon.name}}</div>
+                <div class="icon-tile-meta" title="{{icon.fileName}}">{{icon.fileName}}</div>
+
+                <div class="icon-tile-actions" ng-click="$event.stopPropagation()">
+                    <button type="button" class="btn btn-default" localized-title="button.edit" ng-click="editIcon(icon)">
+                        <span class="glyphicon glyphicon-pencil"></span>
+                    </button>
+                    <button type="button" class="btn btn-default" localized-title="form.role.action.delete" ng-click="removeIcon(icon)">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="text-center" ng-if="icons.length > paging.pageSize">
+        <div class="device-details-empty icons-empty-dropzone" ng-if="!loading && icons.length === 0 && !search.searchValue"
+             ng-click="editIcon({})" drop-zone="editIcon({})">
+            <span class="glyphicon glyphicon-picture device-details-empty-icon"></span>
+            <div class="device-details-empty-title" localized>form.icon.empty.title</div>
+            <div class="logs-empty-subtitle" localized>form.icon.empty.subtitle</div>
+            <button type="button" class="btn btn-default btn-modern-primary margin-top" ng-click="editIcon({}); $event.stopPropagation()" localized>form.settings.icons.add</button>
+        </div>
+
+        <div class="device-details-empty" ng-if="!loading && icons.length === 0 && search.searchValue">
+            <span class="glyphicon glyphicon-search device-details-empty-icon"></span>
+            <div class="device-details-empty-title">
+                {{'form.icon.empty.search.prefix' | localize}} "{{search.searchValue}}"
+            </div>
+            <button type="button" class="btn btn-default margin-top" ng-click="clearSearch()" localized>form.settings.users.empty.search.clear</button>
+        </div>
+
+        <div class="logs-results-toolbar logs-results-toolbar-bottom" ng-if="!loading && icons.length > paging.pageSize">
             <pagination
                     boundary-links='true' class='pagination-sm'
                     max-size='3'
@@ -28,48 +84,9 @@
                     previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
                     last-text='&raquo;'></pagination>
         </div>
+    </div>
 
-        <div class="modern-table-wrap" ng-if='icons && icons.length > 0'>
-        <table class='table'>
-            <thead>
-            <tr>
-                <th localized>table.heading.group.name</th>
-                <th localized>table.heading.file.name</th>
-                <th class='actions-column' localized>table.heading.group.actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat='icon in icons.slice(((paging.currentPage-1)*paging.pageSize), ((paging.currentPage)*paging.pageSize))'>
-                <td>{{icon.name}}</td>
-                <td>{{icon.fileName}}</td>
-                <td>
-                    <div>
-                        <button type='button' class='btn btn-default' ng-click='editIcon(icon)'>
-                            <span class='glyphicon glyphicon-pencil'></span>
-                        </button>
-                        <button type='button'
-                                class='btn btn-default'
-                                ng-click='removeIcon(icon)'>
-                            <span class='glyphicon glyphicon-trash'></span>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-        </div>
-
-        <div ng-if='icons && icons.length === 0' class='center' localized>notfound.icons</div>
-
-        <div class="text-center" ng-if="groups.length > paging.pageSize">
-            <pagination
-                    boundary-links='true' class='pagination-sm'
-                    max-size='3'
-                    ng-model='paging.currentPage'
-                    total-items='icons.length'
-                    items-per-page='paging.pageSize'
-                    previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
-                    last-text='&raquo;'></pagination>
-        </div>
+    <div class="modern-toast" ng-if="iconsToast" ng-class="'modern-toast-' + iconsToast.type">
+        {{iconsToast.message}}
     </div>
 </div>

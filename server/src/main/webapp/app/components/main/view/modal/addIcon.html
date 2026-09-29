@@ -19,38 +19,101 @@
   ~
   -->
 
-<div ng-if='errorMessage' class='modal-header'>
-    <div class='error'><span>{{errorMessage}}</span></div>
-</div>
-<div ng-if='successMessage' class='modal-header'>
-    <div class='success'><span>{{successMessage}}</span></div>
+<div class="modern-modal-header">
+    <div class="modern-modal-icon">
+        <span class="glyphicon glyphicon-picture"></span>
+    </div>
+    <h4 class="modern-modal-title" ng-if="!icon.id" localized>form.icon.modal.title.add</h4>
+    <h4 class="modern-modal-title" ng-if="icon.id">{{'form.icon.modal.title.edit.prefix' | localize}} {{icon.name}}</h4>
+    <button type="button" class="modern-modal-close" ng-click="cancel()" aria-label="Close">&times;</button>
 </div>
 
-<div class='modal-body'>
+<div class='modal-body modern-modal-body'>
+
+    <div ng-show='errorMessage' class='device-details-inline-error'><span>{{errorMessage}}</span></div>
+
     <form class='form-horizontal'>
 
-
         <div class='form-group'>
-            <label class='col-sm-3 control-label' for="griurkfsbfkj" localized>form.icon.name</label>
+            <label class='col-sm-3 control-label' localized>form.icon.name</label>
             <div class='col-sm-9'>
-                <input ng-model='icon.name' type='text' class='form-control' id="griurkfsbfkj" maxlength="64"/>
+                <input ng-model='icon.name' type='text' class='form-control logs-input' maxlength="64"/>
             </div>
         </div>
 
-        <div class='form-group'>
-            <label class='col-sm-3 control-label' localized>form.icon.file</label>
-            <div class='col-sm-9'>
-                <select ng-options="file as file.name for file in files track by file.id" name="selectedFile"
-                        ng-model='file' class='form-control' id="fileSelection">
-                </select>
+        <div class="modern-form-section" localized>form.icon.file</div>
+
+        <div class="icon-picker-grid">
+            <div class="icon-picker-tile" ng-repeat="f in files" ng-class="{active: file.id === f.id}" ng-click="selectFile(f)">
+                <div class="icon-tile-image icon-picker-image">
+                    <img ng-if="f.url" ng-src="{{f.url}}" class="icon-tile-img"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <span class="icon-tile-placeholder" ng-style="{display: f.url ? 'none' : 'flex'}">
+                        <span class="glyphicon glyphicon-picture"></span>
+                    </span>
+                </div>
+                <div class="icon-picker-tile-name" title="{{f.name}}">{{f.name}}</div>
+            </div>
+
+            <div class="icon-picker-tile icon-picker-upload" ng-click="uploadNewFile()">
+                <span class="glyphicon glyphicon-cloud-upload"></span>
+                <div localized>form.icon.file.upload.new</div>
             </div>
         </div>
 
+        <div class="field-hint" ng-if="!file" localized>form.icon.file.none.selected</div>
+        <div class="field-hint" localized>form.icon.hint</div>
 
-        <div class='form-group'>
-            <div class='text-center'>
-                <button type='submit' class='btn btn-default' ng-click='save()' localized>button.save</button>
+        <div ng-if="file">
+            <div class="modern-form-section" localized>form.icon.preview.title</div>
+
+            <div class="icon-preview-panel">
+                <div class="icon-preview-bg icon-preview-bg-dark">
+                    <span class="icon-preview-bg-label" localized>form.icon.preview.dark</span>
+                    <div class="icon-preview-sizes">
+                        <div class="icon-preview-size-item">
+                            <img ng-src="{{file.url}}" class="icon-preview-img icon-preview-small" onerror="this.style.display='none'">
+                            <span localized>form.settings.design.size.icon.small</span>
+                        </div>
+                        <div class="icon-preview-size-item">
+                            <img ng-src="{{file.url}}" class="icon-preview-img icon-preview-medium" onerror="this.style.display='none'">
+                            <span localized>form.settings.design.size.icon.medium</span>
+                        </div>
+                        <div class="icon-preview-size-item">
+                            <img ng-src="{{file.url}}" class="icon-preview-img icon-preview-large" onerror="this.style.display='none'">
+                            <span localized>form.settings.design.size.icon.large</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="icon-preview-bg icon-preview-bg-light">
+                    <span class="icon-preview-bg-label" localized>form.icon.preview.light</span>
+                    <div class="icon-preview-sizes">
+                        <div class="icon-preview-size-item">
+                            <img ng-src="{{file.url}}" class="icon-preview-img icon-preview-small" onerror="this.style.display='none'">
+                            <span localized>form.settings.design.size.icon.small</span>
+                        </div>
+                        <div class="icon-preview-size-item">
+                            <img ng-src="{{file.url}}" class="icon-preview-img icon-preview-medium" onerror="this.style.display='none'">
+                            <span localized>form.settings.design.size.icon.medium</span>
+                        </div>
+                        <div class="icon-preview-size-item">
+                            <img ng-src="{{file.url}}" class="icon-preview-img icon-preview-large" onerror="this.style.display='none'">
+                            <span localized>form.settings.design.size.icon.large</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class='form-group modern-modal-actions'>
+            <div class='col-sm-offset-3 col-sm-9'>
                 <button type='button' class='btn btn-default' ng-click='cancel()' localized>button.cancel</button>
+                <button type='submit' class='btn btn-modern-primary' ng-disabled="savingIcon" ng-click='save()'>
+                    <span ng-if="!savingIcon && icon.id" localized>button.save</span>
+                    <span ng-if="!savingIcon && !icon.id" localized>form.icon.create</span>
+                    <span ng-if="savingIcon" localized>form.icon.saving</span>
+                </button>
             </div>
         </div>
     </form>

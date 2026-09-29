@@ -330,7 +330,17 @@ angular.module('headwind-kiosk')
                 var modalInstance = $modal.open({
                     templateUrl: 'app/components/main/view/modal/file.html',
                     // Defined in files.controller.js
-                    controller: 'FileModalController'
+                    controller: 'FileModalController',
+                    resolve: {
+                        // FileModalController requires this resolve (see its
+                        // signature in files.controller.js) - without it,
+                        // opening the modal throws "Unknown provider: file"
+                        // and silently never opens. Pre-existing bug, found
+                        // while wiring the same modal from the Icons page.
+                        file: function () {
+                            return null;
+                        }
+                    }
                 });
 
                 modalInstance.result.then(function (data) {
