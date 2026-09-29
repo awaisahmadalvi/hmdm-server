@@ -29,7 +29,16 @@
         </table>
     </div>
 
-    <div class="audit-info audit-payload">{{log.payload}}</div>
+    <div ng-if="log.payload">
+        <div class="audit-payload-header">
+            <button type="button" class="btn btn-default audit-copy-btn" ng-click="copyPayload()">
+                <span class="glyphicon" ng-class="copied ? 'glyphicon-ok' : 'glyphicon-copy'"></span>
+                <span ng-if="!copied" localized>plugin.audit.button.copy</span>
+                <span ng-if="copied" localized>plugin.audit.copied</span>
+            </button>
+        </div>
+        <pre class="audit-info audit-payload">{{formattedPayload()}}</pre>
+    </div>
 
     <div class='form-group modern-modal-actions text-center'>
         <button type='button' class='btn btn-default btn-modern-primary' ng-click='closeModal()'

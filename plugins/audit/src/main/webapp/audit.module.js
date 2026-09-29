@@ -47,9 +47,82 @@ angular.module('plugin-audit', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTa
         });
     })
     .controller('PluginAuditTabController', function ($scope, $rootScope, $window, $location, $interval, $http, $modal,
-                                                      pluginAuditService, confirmModal, authService, localization) {
+                                                      $filter, pluginAuditService, confirmModal, authService, localization) {
 
         $scope.hasPermission = authService.hasPermission;
+
+        // Display-only formatting helpers - none of these touch the stored
+        // log data, only how it's rendered in the table.
+        var LOCALHOST_IPS = { '0:0:0:0:0:0:0:1': true, '::1': true, '127.0.0.1': true };
+        $scope.formatIp = function (ip) {
+            if (LOCALHOST_IPS[ip]) {
+                return localization.localize('plugin.audit.ip.localhost');
+            }
+            return ip;
+        };
+
+        $scope.userInitial = function (login) {
+            return login ? login.charAt(0).toUpperCase() : '?';
+        };
+
+        $scope.relativeTime = function (createTime) {
+            var diffMs = Date.now() - createTime;
+            var mins = Math.floor(diffMs / 60000);
+            if (mins < 1) {
+                return localization.localize('plugin.audit.time.justnow');
+            }
+            if (mins < 60) {
+                return mins + ' ' + localization.localize('plugin.audit.time.minago');
+            }
+            var hours = Math.floor(mins / 60);
+            if (hours < 24) {
+                return hours + ' ' + localization.localize('plugin.audit.time.hourago');
+            }
+            var days = Math.floor(hours / 24);
+            return days + ' ' + localization.localize('plugin.audit.time.dayago');
+        };
+
+        // Category color by keyword in the action key, not an exhaustive
+        // per-action map - matches every action already listed in $scope.filters
+        // below without needing to maintain a parallel lookup table. A failed
+        // attempt (errorCode set) always reads as danger regardless of category.
+        // Reuses the exact same color classes already shipped for the Logs/
+        // Messaging/Push pages instead of adding audit-specific duplicates.
+        $scope.actionBadgeClass = function (log) {
+            if (log.errorCode) {
+                return 'push-badge-danger';
+            }
+            var action = log.action || '';
+            if (action.indexOf('remove') !== -1) {
+                return 'push-badge-danger';
+            }
+            if (action.indexOf('login') !== -1) {
+                return 'messaging-badge-delivered';
+            }
+            if (action.indexOf('reset') !== -1 || action.indexOf('lock') !== -1) {
+                return 'push-badge-warn';
+            }
+            return 'push-badge-info';
+        };
+
+        function computeDayLabels(logs) {
+            var todayStr = new Date().toDateString();
+            var yesterdayStr = new Date(Date.now() - 86400000).toDateString();
+            var lastLabel = null;
+            logs.forEach(function (log) {
+                var dStr = new Date(log.createTime).toDateString();
+                var label;
+                if (dStr === todayStr) {
+                    label = localization.localize('plugin.audit.day.today');
+                } else if (dStr === yesterdayStr) {
+                    label = localization.localize('plugin.audit.day.yesterday');
+                } else {
+                    label = $filter('date')(log.createTime, 'd MMM yyyy');
+                }
+                log._dayLabel = (label !== lastLabel) ? label : null;
+                lastLabel = label;
+            });
+        }
 
         $rootScope.settingsTabActive = false;
         $rootScope.pluginsTabActive = true;
@@ -140,6 +213,46 @@ angular.module('plugin-audit', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTa
             loadData();
         };
 
+        $scope.hasActiveFilters = function () {
+            return !!($scope.paging.userFilter || $scope.paging.messageFilter ||
+                $scope.paging.dateFrom || $scope.paging.dateTo);
+        };
+
+        $scope.clearFilter = function (name) {
+            if (name === 'dateFrom' || name === 'dateTo') {
+                $scope.paging[name] = null;
+            } else if (name === 'messageFilter') {
+                $scope.paging.messageFilter = '';
+            } else {
+                $scope.paging[name] = null;
+            }
+            $scope.search();
+        };
+
+        $scope.resetFilters = function () {
+            $scope.paging.userFilter = null;
+            $scope.paging.messageFilter = '';
+            $scope.paging.dateFrom = null;
+            $scope.paging.dateTo = null;
+            $scope.search();
+        };
+
+        $scope.actionFilterLabel = function (value) {
+            var match = $scope.filters.filter(function (f) { return f.item === value; });
+            return match.length ? match[0].localized : '';
+        };
+
+        $scope.resultsRangeStart = function () {
+            if (!$scope.paging.totalItems) {
+                return 0;
+            }
+            return (($scope.paging.pageNum - 1) * $scope.paging.pageSize) + 1;
+        };
+
+        $scope.resultsRangeEnd = function () {
+            return Math.min($scope.paging.pageNum * $scope.paging.pageSize, $scope.paging.totalItems || 0);
+        };
+
         $scope.viewLog = function (log) {
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/plugins/audit/views/audit.modal.html',
@@ -178,6 +291,7 @@ angular.module('plugin-audit', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTa
             }
 
             loading = true;
+            $scope.loading = true;
 
             var request = {};
             for (var p in $scope.paging) {
@@ -188,14 +302,17 @@ angular.module('plugin-audit', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTa
 
             pluginAuditService.getLogs(request, function (response) {
                 loading = false;
+                $scope.loading = false;
                 if (response.status === 'OK') {
                     $scope.logs = response.data.items;
                     $scope.paging.totalItems = response.data.totalItemsCount;
+                    computeDayLabels($scope.logs);
                 } else {
                     $scope.errorMessage = localization.localizeServerResponse(response);
                 }
             }, function () {
                 loading = false;
+                $scope.loading = false;
                 $scope.errorMessage = localization.localize('error.request.failure');
             })
         };
@@ -210,11 +327,33 @@ angular.module('plugin-audit', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTa
 
     })
     .controller('PluginAuditModalController',
-        function ($scope, $modalInstance, log, localization) {
+        function ($scope, $timeout, $modalInstance, log, localization) {
             $scope.createTimeFormat = localization.localize('format.date.plugin.audit.createTime');
             $scope.log = log;
             $scope.closeModal = function () {
                 $modalInstance.dismiss();
+            };
+
+            $scope.formattedPayload = function () {
+                if (!log.payload) {
+                    return log.payload;
+                }
+                try {
+                    return JSON.stringify(JSON.parse(log.payload), null, 2);
+                } catch (e) {
+                    return log.payload;
+                }
+            };
+
+            $scope.copied = false;
+            $scope.copyPayload = function () {
+                if (!log.payload || !navigator.clipboard) {
+                    return;
+                }
+                navigator.clipboard.writeText(log.payload).then(function () {
+                    $scope.copied = true;
+                    $timeout(function () { $scope.copied = false; }, 2000);
+                });
             };
     })
     .run(function ($rootScope, $location, localization) {

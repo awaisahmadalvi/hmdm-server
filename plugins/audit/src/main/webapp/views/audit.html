@@ -20,70 +20,96 @@
   -->
 
 <!-- Localization completed -->
-<div class="width-1000 modern-page" ng-controller="PluginAuditTabController">
-    <div class="text-center">
-        <h4 localized>plugin.audit.tab.title</h4>
+<div class="width-1200 modern-page logs-page" ng-controller="PluginAuditTabController">
+
+    <div class="logs-page-header">
+        <div>
+            <h4 localized>plugin.audit.tab.title</h4>
+            <div class="logs-page-subtitle" localized>plugin.audit.subtitle</div>
+        </div>
     </div>
 
-    <div>
-        <div class='form-group'>
-            <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
-        </div>
+    <div class='device-details-inline-error' ng-show='errorMessage'><span>{{errorMessage}}</span></div>
 
-        <div class="modern-toolbar">
-        <div class="form-group">
-            <div class="col-sm-3">
+    <form class="modern-toolbar logs-filter-card">
+        <div class="logs-filter-row logs-filter-row-actions">
+            <div class="logs-input-icon-wrap logs-filter-grow">
+                <span class="glyphicon glyphicon-user logs-input-icon"></span>
                 <input type="text"
                        ng-model="paging.userFilter"
                        ng-enter='search()'
                        localized-placeholder="search.placeholder.user"
                        autocomplete="off"
-                       class="form-control"
+                       class="form-control logs-input"
                        typeahead="user for user in getUsers($viewValue)"
                        typeahead-loading="loadingUsers"
                        typeahead-wait-ms="300"
                        typeahead-focus-first="false"
                        typeahead-no-results="noResults">
             </div>
-            <div class="col-sm-3">
-                <select class='form-control'
-                        ng-model='paging.messageFilter'
-                        ng-options="filter.item as filter.localized for filter in filters">
-                </select>
-            </div>
-            <div class='col-sm-2'>
-                <div class='min-padding date-picker date-picker-input'>
-                    <input class='form-control' datepicker-popup='{{dateFormat}}' localized-placeholder="search.placeholder.from"
+
+            <select class='form-control logs-severity-select'
+                    ng-model='paging.messageFilter'
+                    ng-options="filter.item as filter.localized for filter in filters">
+            </select>
+
+            <div class="logs-date-range">
+                <div class="logs-input-icon-wrap logs-date-input">
+                    <span class="glyphicon glyphicon-calendar logs-input-icon"></span>
+                    <input class="form-control logs-input" datepicker-popup='{{dateFormat}}'
+                           localized-placeholder="search.placeholder.from"
+                           ng-enter='search()'
+                           ng-click='openDateCalendar($event, true)'
                            ng-model='paging.dateFrom' is-open='openDatePickers.dateFrom' show-button-bar='false'
                            datepicker-options='datePickerOptions'/>
                 </div>
-                <div class='min-padding date-picker date-picker-button'>
-                    <button type='button' class='btn btn-default' ng-click='openDateCalendar( $event, true )'>
-                        <span class='glyphicon glyphicon-calendar'></span>
-                    </button>
-                </div>
-            </div>
-            <div class='col-sm-2'>
-                <div class='min-padding date-picker date-picker-input'>
-                    <input class='form-control' datepicker-popup='{{dateFormat}}' localized-placeholder="search.placeholder.to"
+                <span class="logs-date-sep">&ndash;</span>
+                <div class="logs-input-icon-wrap logs-date-input">
+                    <span class="glyphicon glyphicon-calendar logs-input-icon"></span>
+                    <input class="form-control logs-input" datepicker-popup='{{dateFormat}}'
+                           localized-placeholder="search.placeholder.to"
+                           ng-enter='search()'
+                           ng-click='openDateCalendar($event, false)'
                            ng-model='paging.dateTo' is-open='openDatePickers.dateTo' show-button-bar='false'
                            datepicker-options='datePickerOptions'/>
                 </div>
-                <div class='min-padding date-picker date-picker-button'>
-                    <button type='button' class='btn btn-default' ng-click='openDateCalendar( $event, false )'>
-                        <span class='glyphicon glyphicon-calendar'></span>
-                    </button>
-                </div>
             </div>
 
-            <div class='col-sm-2 text-right'>
+            <div class="logs-filter-buttons">
+                <button type="button" class="btn logs-btn-reset" ng-click="resetFilters()" localized>plugin.audit.button.reset</button>
                 <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
             </div>
         </div>
-        </div>
 
-        <div class="text-center" ng-if="paging.totalItems > paging.pageSize">
+        <div class="logs-filter-chips" ng-if="hasActiveFilters()">
+            <span class="logs-chip" ng-if="paging.userFilter">
+                <span localized>search.placeholder.user</span>: {{paging.userFilter}}
+                <span class="logs-chip-remove" ng-click="clearFilter('userFilter')">&times;</span>
+            </span>
+            <span class="logs-chip" ng-if="paging.messageFilter">
+                <span localized>table.heading.plugin.audit.action</span>: {{actionFilterLabel(paging.messageFilter)}}
+                <span class="logs-chip-remove" ng-click="clearFilter('messageFilter')">&times;</span>
+            </span>
+            <span class="logs-chip" ng-if="paging.dateFrom">
+                <span localized>search.placeholder.from</span>: {{paging.dateFrom | date:dateFormat}}
+                <span class="logs-chip-remove" ng-click="clearFilter('dateFrom')">&times;</span>
+            </span>
+            <span class="logs-chip" ng-if="paging.dateTo">
+                <span localized>search.placeholder.to</span>: {{paging.dateTo | date:dateFormat}}
+                <span class="logs-chip-remove" ng-click="clearFilter('dateTo')">&times;</span>
+            </span>
+        </div>
+    </form>
+
+    <div class="summary-card logs-results-card">
+
+        <div class="logs-results-toolbar" ng-if="!loading && logs && logs.length > 0">
+            <div class="logs-results-count">
+                {{'plugin.audit.results.showing' | localize}} {{resultsRangeStart()}}&ndash;{{resultsRangeEnd()}}
+                {{'plugin.audit.results.of' | localize}} {{paging.totalItems}}
+            </div>
             <pagination
+                    ng-if="paging.totalItems > paging.pageSize"
                     boundary-links='true' class='pagination-sm'
                     max-size='3'
                     ng-model='paging.pageNum'
@@ -93,7 +119,15 @@
                     last-text='&raquo;'></pagination>
         </div>
 
-        <div class="modern-table-wrap" ng-if='logs && logs.length > 0'>
+        <div class="device-details-skeleton-group" ng-if="loading">
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+        </div>
+
+        <div class="modern-table-wrap logs-table-wrap" ng-if="!loading && logs && logs.length > 0">
         <table class='table'>
             <thead>
             <tr>
@@ -101,30 +135,46 @@
                 <th localized>table.heading.plugin.audit.user</th>
                 <th localized>table.heading.plugin.audit.ipAddress</th>
                 <th localized>table.heading.plugin.audit.action</th>
-                <th></th>
+                <th>&nbsp;</th>
             </tr>
             </thead>
             <tbody>
-            <tr ng-repeat='log in logs'>
-                <td>{{log.createTime | date:createTimeFormat}}.{{("00000" + (log.createTime % 1000)).slice(-3) }}</td>
-                <td>{{log.login}}</td>
-                <td>{{log.ipAddress}}</td>
-                <td>{{log.action | localize}}{{log.errorCode ? ('plugin.audit.error' | localize) : ''}}</td>
+            <tr ng-repeat-start='log in logs' ng-if="log._dayLabel" class="audit-day-separator">
+                <td colspan="5">{{log._dayLabel}}</td>
+            </tr>
+            <tr ng-repeat-end ng-click="viewLog(log)" class="logs-row">
+                <td class="logs-time" title="{{relativeTime(log.createTime)}}">{{log.createTime | date:createTimeFormat}}</td>
                 <td>
-                    <button type='button' class='btn btn-default' ng-click='viewLog(log)'
-                            localized-title="plugin.audit.button.details">
-                        <span class='glyphicon glyphicon-search'></span>
-                    </button>
-
+                    <span class="audit-avatar">{{userInitial(log.login)}}</span>
+                    <span>{{log.login}}</span>
+                </td>
+                <td class="device-details-app-pkg" title="{{log.ipAddress}}">{{formatIp(log.ipAddress)}}</td>
+                <td>
+                    <span class="device-details-badge" ng-class="actionBadgeClass(log)">
+                        {{log.action | localize}}{{log.errorCode ? ('plugin.audit.error' | localize) : ''}}
+                    </span>
+                </td>
+                <td class="text-right">
+                    <a href="" class="audit-view-link" ng-click="viewLog(log); $event.stopPropagation()" localized>plugin.audit.button.details</a>
                 </td>
             </tr>
             </tbody>
         </table>
         </div>
 
-        <div ng-if='logs && logs.length === 0' class='center' localized>notfound.common.plugin.audit.logs</div>
+        <div class="device-details-empty" ng-if="!loading && (!logs || logs.length === 0) && !hasActiveFilters()">
+            <span class="glyphicon glyphicon-list-alt device-details-empty-icon"></span>
+            <div class="device-details-empty-title" localized>plugin.audit.empty.title</div>
+            <div class="logs-empty-subtitle" localized>plugin.audit.empty.subtitle</div>
+        </div>
 
-        <div class="text-center" ng-if="paging.totalItems > paging.pageSize">
+        <div class="device-details-empty" ng-if="!loading && (!logs || logs.length === 0) && hasActiveFilters()">
+            <span class="glyphicon glyphicon-list-alt device-details-empty-icon"></span>
+            <div class="device-details-empty-title" localized>plugin.audit.empty.filtered.title</div>
+            <button type="button" class="btn btn-default margin-top" ng-click="resetFilters()" localized>plugin.audit.button.reset</button>
+        </div>
+
+        <div class="logs-results-toolbar logs-results-toolbar-bottom" ng-if="!loading && logs && logs.length > 0 && paging.totalItems > paging.pageSize">
             <pagination
                     boundary-links='true' class='pagination-sm'
                     max-size='3'
@@ -136,4 +186,5 @@
         </div>
 
     </div>
+
 </div>

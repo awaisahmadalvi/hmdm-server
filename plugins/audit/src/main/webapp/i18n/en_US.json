@@ -43,5 +43,22 @@
   "table.heading.plugin.audit.ipAddress": "IP-address",
   "table.heading.plugin.audit.action": "Action",
   "table.heading.plugin.audit.payload": "Payload",
-  "notfound.common.plugin.audit.logs": "No audit log records found. Try a different query."
+  "notfound.common.plugin.audit.logs": "No audit log records found. Try a different query.",
+
+  "plugin.audit.subtitle": "Record of user activity in the admin panel",
+  "plugin.audit.empty.title": "No audit records found",
+  "plugin.audit.empty.subtitle": "Try a different query, or clear your filters to see all activity",
+  "plugin.audit.empty.filtered.title": "Nothing matches your filters",
+  "plugin.audit.results.showing": "Showing",
+  "plugin.audit.results.of": "of",
+  "plugin.audit.button.reset": "Reset",
+  "plugin.audit.day.today": "Today",
+  "plugin.audit.day.yesterday": "Yesterday",
+  "plugin.audit.ip.localhost": "localhost",
+  "plugin.audit.button.copy": "Copy",
+  "plugin.audit.copied": "Copied!",
+  "plugin.audit.time.justnow": "Just now",
+  "plugin.audit.time.minago": "min ago",
+  "plugin.audit.time.hourago": "hours ago",
+  "plugin.audit.time.dayago": "days ago"
 }

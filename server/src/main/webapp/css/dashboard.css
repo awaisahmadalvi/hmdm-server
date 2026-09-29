@@ -417,11 +417,31 @@
 }
 
 .modern-modal-body .audit-payload {
-  margin: 18px 0;
+  margin: 0 0 18px 0;
   padding: 12px 14px;
   background: var(--color-surface-hover);
   border-radius: 8px;
   border: 1px solid var(--color-border-subtle);
+  /* Now a <pre> (was a plain div) so long JSON pretty-print keeps its
+     line breaks/indentation instead of collapsing to one line. */
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.audit-payload-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+
+.audit-copy-btn {
+  font-size: 12px;
+  padding: 4px 10px;
 }
 
 .modern-modal-body .panel-default {
@@ -2016,6 +2036,15 @@
   flex: 0 0 180px;
 }
 
+/* Generic "take remaining space" utility for a filter-row item sitting
+   next to fixed-width siblings (a select, a date-range group, buttons) -
+   used where a whole row isn't uniformly equal-width like
+   .logs-filter-row-3's children. */
+.logs-filter-grow {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .logs-filter-buttons {
   display: flex;
   gap: 8px;
@@ -2412,6 +2441,53 @@
 .push-schedule-search {
   flex: 1 1 auto;
   max-width: 420px;
+}
+
+/* =========================================================
+   Audit plugin page - reuses the Logs/Messaging/Push .logs-* components
+   (filter card, chips, results card, table, empty state, skeleton) and
+   their existing badge color classes (push-badge-danger/-warn/-info,
+   messaging-badge-delivered) for the action pill instead of adding
+   audit-specific duplicates. Only what's unique to this page is below.
+   ========================================================= */
+
+.audit-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(var(--brand-dark-rgb), 0.1);
+  color: var(--brand-dark);
+  font-size: 11px;
+  font-weight: 700;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.audit-day-separator td {
+  background: var(--color-surface-muted);
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 18px !important;
+  border-top: none !important;
+}
+
+.audit-view-link {
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.audit-view-link:hover,
+.audit-view-link:focus {
+  color: var(--brand-dark);
+  text-decoration: none;
 }
 
 .modern-page .custom-pagination-wrapper {
