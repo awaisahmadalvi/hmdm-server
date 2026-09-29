@@ -49,6 +49,51 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
             deleteTask: {url: 'rest/plugins/push/private/task/:id', method: 'DELETE'}
         });
     })
+    // Shared between PluginPushTabController (message.messageType) and
+    // PluginPushScheduleTabController (task.messageType) - both display the
+    // same set of message types, so the icon/color mapping is defined once
+    // here instead of twice.
+    .constant('PUSH_TYPE_META', {
+        configUpdated:          { icon: 'glyphicon-cog',           cls: 'push-badge-info' },
+        runApp:                 { icon: 'glyphicon-play',          cls: 'push-badge-info' },
+        uninstallApp:           { icon: 'glyphicon-trash',         cls: 'push-badge-danger' },
+        deleteFile:             { icon: 'glyphicon-file',          cls: 'push-badge-danger' },
+        deleteDir:              { icon: 'glyphicon-folder-close',  cls: 'push-badge-danger' },
+        purgeDir:               { icon: 'glyphicon-remove-circle', cls: 'push-badge-danger' },
+        permissiveMode:         { icon: 'glyphicon-lock',          cls: 'push-badge-warn' },
+        intent:                 { icon: 'glyphicon-share',         cls: 'push-badge-info' },
+        runCommand:             { icon: 'glyphicon-flash',         cls: 'push-badge-info' },
+        reboot:                 { icon: 'glyphicon-refresh',       cls: 'push-badge-warn' },
+        exitKiosk:              { icon: 'glyphicon-log-out',       cls: 'push-badge-warn' },
+        adminPanel:             { icon: 'glyphicon-user',          cls: 'push-badge-info' },
+        clearDownloadHistory:   { icon: 'glyphicon-list-alt',      cls: 'push-badge-danger' },
+        grantPermissions:       { icon: 'glyphicon-ok-circle',     cls: 'push-badge-info' },
+        clearAppData:           { icon: 'glyphicon-erase',         cls: 'push-badge-danger' }
+    })
+    .factory('pushTypeHelper', ['PUSH_TYPE_META', function (PUSH_TYPE_META) {
+        return {
+            icon: function (type) {
+                return (PUSH_TYPE_META[type] && PUSH_TYPE_META[type].icon) || 'glyphicon-send';
+            },
+            badgeClass: function (type) {
+                return (PUSH_TYPE_META[type] && PUSH_TYPE_META[type].cls) || 'push-badge-neutral';
+            },
+            // Pretty-prints the payload if it's valid JSON, otherwise returns
+            // it unchanged - payloads are free-form text (see samplePayloads
+            // in NewPushMessageController/NewPushScheduleController), not
+            // guaranteed to be JSON at all.
+            formatPayload: function (payload) {
+                if (!payload) {
+                    return payload;
+                }
+                try {
+                    return JSON.stringify(JSON.parse(payload), null, 2);
+                } catch (e) {
+                    return payload;
+                }
+            }
+        };
+    }])
     .factory('getDevicesService', ['pluginPushService', function(pluginPushService) {
         var getDeviceInfo = function( device ) {
             if ( device.info ) {
@@ -102,9 +147,12 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
     }])
     .controller('PluginPushTabController', function ($scope, $rootScope, $window, $location, $modal, $timeout, $interval,
                                                           pluginPushService, getDevicesService, confirmModal,
-                                                          authService, localization) {
+                                                          authService, localization, pushTypeHelper) {
 
         $scope.hasPermission = authService.hasPermission;
+        $scope.typeIcon = pushTypeHelper.icon;
+        $scope.typeBadgeClass = pushTypeHelper.badgeClass;
+        $scope.formatPayload = pushTypeHelper.formatPayload;
 
         $rootScope.settingsTabActive = false;
         $rootScope.pluginsTabActive = true;
@@ -167,6 +215,44 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
             loadData();
         };
 
+        $scope.hasActiveFilters = function () {
+            return !!($scope.paging.deviceFilter || $scope.paging.messageFilter ||
+                $scope.paging.dateFrom || $scope.paging.dateTo);
+        };
+
+        $scope.clearFilter = function (name) {
+            if (name === 'dateFrom' || name === 'dateTo') {
+                $scope.paging[name] = null;
+            } else {
+                $scope.paging[name] = '';
+            }
+            $scope.search();
+        };
+
+        $scope.resetFilters = function () {
+            $scope.paging.deviceFilter = '';
+            $scope.paging.messageFilter = '';
+            $scope.paging.dateFrom = null;
+            $scope.paging.dateTo = null;
+            $scope.search();
+        };
+
+        $scope.resultsRangeStart = function () {
+            if (!$scope.paging.totalItems) {
+                return 0;
+            }
+            return (($scope.paging.pageNum - 1) * $scope.paging.pageSize) + 1;
+        };
+
+        $scope.resultsRangeEnd = function () {
+            return Math.min($scope.paging.pageNum * $scope.paging.pageSize, $scope.paging.totalItems || 0);
+        };
+
+        $scope.expandedMessage = null;
+        $scope.toggleExpand = function (message) {
+            $scope.expandedMessage = ($scope.expandedMessage === message) ? null : message;
+        };
+
         $scope.$watch('paging.pageNum', function () {
             loadData();
         });
@@ -192,13 +278,14 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
         var loading = false;
         var loadData = function () {
             $scope.errorMessage = undefined;
-            
+
             if (loading) {
                 console.log("Skipping query for message list since a previous request is pending");
                 return;
             }
 
             loading = true;
+            $scope.loading = true;
 
             var request = {};
             for (var p in $scope.paging) {
@@ -211,6 +298,7 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
 
             pluginPushService.getMessages(request, function (response) {
                 loading = false;
+                $scope.loading = false;
                 if (response.status === 'OK') {
                     $scope.messages = response.data.items;
                     $scope.paging.totalItems = response.data.totalItemsCount;
@@ -219,6 +307,7 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
                 }
             }, function () {
                 loading = false;
+                $scope.loading = false;
                 $scope.errorMessage = localization.localize('error.request.failure');
             })
         };
@@ -226,9 +315,15 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
         loadData();
     })
     .controller('PluginPushScheduleTabController', function ($scope, $rootScope, $window, $location, $modal, $timeout, $interval,
-                                                     pluginPushService, confirmModal, authService, localization) {
+                                                     pluginPushService, confirmModal, authService, localization, pushTypeHelper) {
 
         $scope.hasPermission = authService.hasPermission;
+        $scope.typeIcon = pushTypeHelper.icon;
+        $scope.typeBadgeClass = pushTypeHelper.badgeClass;
+
+        $scope.scheduleText = function (task) {
+            return task.min + ' ' + task.hour + ' ' + task.day + ' ' + task.weekday + ' ' + task.month;
+        };
 
         $rootScope.settingsTabActive = false;
         $rootScope.pluginsTabActive = true;
@@ -251,6 +346,26 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
             $scope.errorMessage = undefined;
             $scope.paging.pageNum = 1;
             loadData();
+        };
+
+        $scope.hasActiveFilters = function () {
+            return !!$scope.paging.messageFilter;
+        };
+
+        $scope.resetFilters = function () {
+            $scope.paging.messageFilter = '';
+            $scope.search();
+        };
+
+        $scope.resultsRangeStart = function () {
+            if (!$scope.paging.totalItems) {
+                return 0;
+            }
+            return (($scope.paging.pageNum - 1) * $scope.paging.pageSize) + 1;
+        };
+
+        $scope.resultsRangeEnd = function () {
+            return Math.min($scope.paging.pageNum * $scope.paging.pageSize, $scope.paging.totalItems || 0);
         };
 
         $scope.$watch('paging.pageNum', function () {
@@ -298,6 +413,7 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
             }
 
             loading = true;
+            $scope.loading = true;
 
             var request = {};
             for (var p in $scope.paging) {
@@ -308,6 +424,7 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
 
             pluginPushService.getTasks(request, function (response) {
                 loading = false;
+                $scope.loading = false;
                 if (response.status === 'OK') {
                     $scope.tasks = response.data.items;
                     $scope.paging.totalItems = response.data.totalItemsCount;
@@ -316,6 +433,7 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
                 }
             }, function () {
                 loading = false;
+                $scope.loading = false;
                 $scope.errorMessage = localization.localize('error.request.failure');
             })
         };

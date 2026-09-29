@@ -1,6 +1,14 @@
 <!-- Localization completed -->
-<div class="modern-page">
-    <tabset class='tabset'>
+<div class="width-1200 modern-page push-page">
+
+    <div class="logs-page-header">
+        <div>
+            <h4 localized>plugin.push.tab.title</h4>
+            <div class="logs-page-subtitle" localized>plugin.push.subtitle</div>
+        </div>
+    </div>
+
+    <tabset class="modern-tabset push-tabset">
 
         <!-- COMMON SETTINGS -->
         <tab>
@@ -8,130 +16,179 @@
             <tab-heading localized>plugin.push.tab.title</tab-heading>
 
             <div ng-controller="PluginPushTabController">
-                <div class='form-group'>
-                    <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
-                </div>
-                <div class='form-group'>
-                    <div ng-show='successMessage' class='success'><span>{{successMessage}}</span></div>
-                </div>
+                <div class='device-details-inline-error' ng-show='errorMessage'><span>{{errorMessage}}</span></div>
+                <div class='messaging-success' ng-show='successMessage'><span>{{successMessage}}</span></div>
 
-                <div class="modern-toolbar">
-                <div class='form-group'>
-                    <div class="col-sm-3">
-                        <input type="text"
-                               ng-model="paging.deviceFilter"
-                               ng-enter='search()'
-                               localized-placeholder="search.placeholder.device"
-                               autocomplete="off"
-                               class="form-control"
-                               typeahead="device for device in getDevices($viewValue)"
-                               typeahead-loading="loadingDevices"
-                               typeahead-wait-ms="300"
-                               typeahead-focus-first="false"
-                               typeahead-input-formatter="deviceLookupFormatter($model)"
-                               typeahead-no-results="noResults">
-                    </div>
-                    <div class="col-sm-3">
-                        &nbsp;
-                    </div>
-                    <div class="col-sm-6">
-                        <input type="text"
-                               ng-model="paging.messageFilter"
-                               ng-enter='search()'
-                               localized-placeholder="search.placeholder.message"
-                               class="form-control">
-                    </div>
+                <div class="push-tab-actions">
+                    <button type='button' class='btn btn-default btn-modern-primary' ng-click='newMessage()'>
+                        <span class="glyphicon glyphicon-plus"></span> <span localized>plugin.push.button.newMessage</span>
+                    </button>
                 </div>
 
-                <br/>
-                <br/>
-
-                <div class="form-group">
-                    <div class='col-sm-3'>
-                        <div class='min-padding date-picker date-picker-input'>
-                            <input class='form-control' datepicker-popup='{{dateFormat}}' localized-placeholder="search.placeholder.from"
-                                   ng-model='paging.dateFrom' is-open='openDatePickers.dateFrom' show-button-bar='false'
-                                   datepicker-options='datePickerOptions'/>
+                <form class="modern-toolbar logs-filter-card">
+                    <div class="logs-filter-row logs-filter-row-3">
+                        <div class="logs-input-icon-wrap">
+                            <span class="glyphicon glyphicon-phone logs-input-icon"></span>
+                            <input type="text"
+                                   ng-model="paging.deviceFilter"
+                                   ng-enter='search()'
+                                   localized-placeholder="search.placeholder.device"
+                                   autocomplete="off"
+                                   class="form-control logs-input"
+                                   typeahead="device for device in getDevices($viewValue)"
+                                   typeahead-loading="loadingDevices"
+                                   typeahead-wait-ms="300"
+                                   typeahead-focus-first="false"
+                                   typeahead-input-formatter="deviceLookupFormatter($model)"
+                                   typeahead-no-results="noResults">
                         </div>
-                        <div class='min-padding date-picker date-picker-button'>
-                            <button type='button' class='btn btn-default' ng-click='openDateCalendar( $event, true )'>
-                                <span class='glyphicon glyphicon-calendar'></span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class='col-sm-3'>
-                        <div class='min-padding date-picker date-picker-input'>
-                            <input class='form-control' datepicker-popup='{{dateFormat}}' localized-placeholder="search.placeholder.to"
-                                   ng-model='paging.dateTo' is-open='openDatePickers.dateTo' show-button-bar='false'
-                                   datepicker-options='datePickerOptions'/>
-                        </div>
-                        <div class='min-padding date-picker date-picker-button'>
-                            <button type='button' class='btn btn-default' ng-click='openDateCalendar( $event, false )'>
-                                <span class='glyphicon glyphicon-calendar'></span>
-                            </button>
+                        <div class="logs-input-icon-wrap">
+                            <span class="glyphicon glyphicon-search logs-input-icon"></span>
+                            <input type="text"
+                                   ng-model="paging.messageFilter"
+                                   ng-enter='search()'
+                                   localized-placeholder="search.placeholder.message"
+                                   class="form-control logs-input">
                         </div>
                     </div>
 
-                    <div class='col-sm-3 text-right'>
-                        <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
-                        <button type='button' class='btn btn-default btn-modern-primary' ng-click='newMessage()' localized>plugin.push.button.newMessage</button>
+                    <div class="logs-filter-row logs-filter-row-actions">
+                        <div class="logs-date-range">
+                            <div class="logs-input-icon-wrap logs-date-input">
+                                <span class="glyphicon glyphicon-calendar logs-input-icon"></span>
+                                <input class="form-control logs-input" datepicker-popup='{{dateFormat}}'
+                                       localized-placeholder="search.placeholder.from"
+                                       ng-enter='search()'
+                                       ng-click='openDateCalendar($event, true)'
+                                       ng-model='paging.dateFrom' is-open='openDatePickers.dateFrom' show-button-bar='false'
+                                       datepicker-options='datePickerOptions'/>
+                            </div>
+                            <span class="logs-date-sep">&ndash;</span>
+                            <div class="logs-input-icon-wrap logs-date-input">
+                                <span class="glyphicon glyphicon-calendar logs-input-icon"></span>
+                                <input class="form-control logs-input" datepicker-popup='{{dateFormat}}'
+                                       localized-placeholder="search.placeholder.to"
+                                       ng-enter='search()'
+                                       ng-click='openDateCalendar($event, false)'
+                                       ng-model='paging.dateTo' is-open='openDatePickers.dateTo' show-button-bar='false'
+                                       datepicker-options='datePickerOptions'/>
+                            </div>
+                        </div>
+
+                        <div class="logs-filter-buttons">
+                            <button type="button" class="btn logs-btn-reset" ng-click="resetFilters()" localized>plugin.push.button.reset</button>
+                            <button type='button' class='btn btn-default' ng-click='search()' localized>button.search</button>
+                        </div>
                     </div>
-                </div>
-                </div>
 
-                <div class="text-center" ng-if="paging.totalItems > paging.pageSize">
-                    <pagination
-                            boundary-links='true' class='pagination-sm'
-                            max-size='3'
-                            ng-model='paging.pageNum'
-                            total-items='paging.totalItems'
-                            items-per-page='paging.pageSize'
-                            previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
-                            last-text='&raquo;'></pagination>
+                    <div class="logs-filter-chips" ng-if="hasActiveFilters()">
+                        <span class="logs-chip" ng-if="paging.deviceFilter">
+                            <span localized>search.placeholder.device</span>: {{paging.deviceFilter}}
+                            <span class="logs-chip-remove" ng-click="clearFilter('deviceFilter')">&times;</span>
+                        </span>
+                        <span class="logs-chip" ng-if="paging.messageFilter">
+                            <span localized>search.placeholder.message</span>: {{paging.messageFilter}}
+                            <span class="logs-chip-remove" ng-click="clearFilter('messageFilter')">&times;</span>
+                        </span>
+                        <span class="logs-chip" ng-if="paging.dateFrom">
+                            <span localized>search.placeholder.from</span>: {{paging.dateFrom | date:dateFormat}}
+                            <span class="logs-chip-remove" ng-click="clearFilter('dateFrom')">&times;</span>
+                        </span>
+                        <span class="logs-chip" ng-if="paging.dateTo">
+                            <span localized>search.placeholder.to</span>: {{paging.dateTo | date:dateFormat}}
+                            <span class="logs-chip-remove" ng-click="clearFilter('dateTo')">&times;</span>
+                        </span>
+                    </div>
+                </form>
+
+                <div class="summary-card logs-results-card">
+
+                    <div class="logs-results-toolbar" ng-if="!loading && messages && messages.length > 0">
+                        <div class="logs-results-count">
+                            {{'plugin.push.results.showing' | localize}} {{resultsRangeStart()}}&ndash;{{resultsRangeEnd()}}
+                            {{'plugin.push.results.of' | localize}} {{paging.totalItems}}
+                        </div>
+                        <pagination
+                                ng-if="paging.totalItems > paging.pageSize"
+                                boundary-links='true' class='pagination-sm'
+                                max-size='3'
+                                ng-model='paging.pageNum'
+                                total-items='paging.totalItems'
+                                items-per-page='paging.pageSize'
+                                previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
+                                last-text='&raquo;'></pagination>
+                    </div>
+
+                    <div class="device-details-skeleton-group" ng-if="loading">
+                        <div class="device-details-skeleton logs-skeleton-row"></div>
+                        <div class="device-details-skeleton logs-skeleton-row"></div>
+                        <div class="device-details-skeleton logs-skeleton-row"></div>
+                        <div class="device-details-skeleton logs-skeleton-row"></div>
+                        <div class="device-details-skeleton logs-skeleton-row"></div>
+                    </div>
+
+                    <div class="modern-table-wrap logs-table-wrap" ng-if="!loading && messages && messages.length > 0">
+                    <table class='table'>
+                        <thead>
+                        <tr>
+                            <th ng-click='sortByCreateTime()' class="push-col-time">
+                                <span localized>table.heading.plugin.push.dateTime</span>
+                                <span class="glyphicon glyphicon-sort-by-attributes-alt logs-sort-icon"></span>
+                            </th>
+                            <th ng-click='sortByDeviceNumber()'>
+                                <span localized>table.heading.plugin.push.deviceNumber</span>
+                                <span ng-if='paging.sortValue === "deviceNumber"' class="glyphicon glyphicon-sort-by-attributes logs-sort-icon"></span>
+                            </th>
+                            <th localized>table.heading.plugin.push.messageType</th>
+                            <th localized>table.heading.plugin.push.payload</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat='message in messages' ng-click="toggleExpand(message)" class="logs-row">
+                            <td class="logs-time">{{message.ts | date:createTimeFormat}}</td>
+                            <td>{{message.deviceNumber}}</td>
+                            <td>
+                                <span class="device-details-badge" ng-class="typeBadgeClass(message.messageType)">
+                                    <span class="glyphicon push-badge-icon" ng-class="typeIcon(message.messageType)"></span>
+                                    {{message.messageType}}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="logs-message logs-message-clamped device-details-app-pkg" ng-if="expandedMessage !== message">{{message.payload || '—'}}</div>
+                                <pre class="logs-message-expanded" ng-if="expandedMessage === message">{{formatPayload(message.payload) || '—'}}</pre>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    </div>
+
+                    <div class="device-details-empty" ng-if="!loading && (!messages || messages.length === 0) && !hasActiveFilters()">
+                        <span class="glyphicon glyphicon-bullhorn device-details-empty-icon"></span>
+                        <div class="device-details-empty-title" localized>notfound.common.plugin.push.messages</div>
+                        <div class="logs-empty-subtitle" localized>plugin.push.empty.subtitle</div>
+                        <button type='button' class='btn btn-default btn-modern-primary' ng-click='newMessage()'>
+                            <span class="glyphicon glyphicon-plus"></span> <span localized>plugin.push.button.newMessage</span>
+                        </button>
+                    </div>
+
+                    <div class="device-details-empty" ng-if="!loading && (!messages || messages.length === 0) && hasActiveFilters()">
+                        <span class="glyphicon glyphicon-bullhorn device-details-empty-icon"></span>
+                        <div class="device-details-empty-title" localized>plugin.push.empty.filtered.title</div>
+                        <button type="button" class="btn btn-default margin-top" ng-click="resetFilters()" localized>plugin.push.button.reset</button>
+                    </div>
+
+                    <div class="logs-results-toolbar logs-results-toolbar-bottom" ng-if="!loading && messages && messages.length > 0 && paging.totalItems > paging.pageSize">
+                        <pagination
+                                boundary-links='true' class='pagination-sm'
+                                max-size='3'
+                                ng-model='paging.pageNum'
+                                total-items='paging.totalItems'
+                                items-per-page='paging.pageSize'
+                                previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
+                                last-text='&raquo;'></pagination>
+                    </div>
+
                 </div>
-
-                <div class="modern-table-wrap" ng-if='messages && messages.length > 0'>
-                <table class='table'>
-                    <thead>
-                    <tr>
-                        <th ng-click='sortByCreateTime()'>
-                            <span localized>table.heading.plugin.push.dateTime</span>
-                            <span class="glyphicon glyphicon-sort-by-attributes-alt"></span>
-                        </th>
-                        <th ng-click='sortByDeviceNumber()'>
-                            <span localized>table.heading.plugin.push.deviceNumber</span>
-                            <span ng-if='paging.sortValue === "deviceNumber"' class="glyphicon glyphicon-sort-by-attributes"></span>
-                        </th>
-                        <th localized>table.heading.plugin.push.messageType</th>
-                        <th localized>table.heading.plugin.push.payload</th>
-                        <th>&nbsp;</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr ng-repeat='message in messages'>
-                        <td>{{message.ts | date:createTimeFormat}}</td>
-                        <td>{{message.deviceNumber}}</td>
-                        <td>{{message.messageType}}</td>
-                        <td>{{message.payload}}</td>
-                        <td>&nbsp;</td>
-                    </tr>
-                    </tbody>
-                </table>
-                </div>
-
-                <div ng-if='messages && messages.length === 0' class='center' localized>notfound.common.plugin.push.messages</div>
-
-                <div class="text-center" ng-if="paging.totalItems > paging.pageSize">
-                    <pagination
-                            boundary-links='true' class='pagination-sm'
-                            max-size='3'
-                            ng-model='paging.pageNum'
-                            total-items='paging.totalItems'
-                            items-per-page='paging.pageSize'
-                            previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
-                            last-text='&raquo;'></pagination>
-                </div>
-
             </div>
         </tab>
 
@@ -141,98 +198,134 @@
             <tab-heading localized>plugin.push.schedule.tab.title</tab-heading>
 
             <div ng-controller="PluginPushScheduleTabController">
-                <div class='form-group'>
-                    <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
-                </div>
-                <div class='form-group'>
-                    <div ng-show='successMessage' class='success'><span>{{successMessage}}</span></div>
+                <div class='device-details-inline-error' ng-show='errorMessage'><span>{{errorMessage}}</span></div>
+                <div class='messaging-success' ng-show='successMessage'><span>{{successMessage}}</span></div>
+
+                <div class="push-tab-actions">
+                    <button type='button' class='btn btn-default btn-modern-primary' ng-click='editTask()'>
+                        <span class="glyphicon glyphicon-plus"></span> <span localized>plugin.push.button.new.task</span>
+                    </button>
                 </div>
 
-                <div class="modern-toolbar">
-                <div class="form-group">
-                    <div class="col-sm-6">
-                        <input type="text"
-                               ng-model="paging.messageFilter"
-                               ng-enter='search()'
-                               localized-placeholder="search.placeholder"
-                               class="form-control">
+                <form class="modern-toolbar logs-filter-card">
+                    <div class="logs-filter-row logs-filter-row-actions">
+                        <div class="logs-input-icon-wrap push-schedule-search">
+                            <span class="glyphicon glyphicon-search logs-input-icon"></span>
+                            <input type="text"
+                                   ng-model="paging.messageFilter"
+                                   ng-enter='search()'
+                                   localized-placeholder="search.placeholder"
+                                   class="form-control logs-input">
+                        </div>
+
+                        <div class="logs-filter-buttons">
+                            <button type="button" class="btn logs-btn-reset" ng-click="resetFilters()" localized>plugin.push.button.reset</button>
+                            <button type='button' class='btn btn-default' ng-click='search()' localized>button.search</button>
+                        </div>
                     </div>
 
-                    <div class='col-sm-6'>
-                        <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
-                        <button type='button' class='btn btn-default btn-modern-primary' ng-click='editTask()' localized>plugin.push.button.new.task</button>
+                    <div class="logs-filter-chips" ng-if="hasActiveFilters()">
+                        <span class="logs-chip" ng-if="paging.messageFilter">
+                            <span localized>search.placeholder</span>: {{paging.messageFilter}}
+                            <span class="logs-chip-remove" ng-click="resetFilters()">&times;</span>
+                        </span>
                     </div>
-                </div>
-                </div>
+                </form>
 
-                <div class="text-center" ng-if="paging.totalItems > paging.pageSize">
-                    <pagination
-                            boundary-links='true' class='pagination-sm'
-                            max-size='3'
-                            ng-model='paging.pageNum'
-                            total-items='paging.totalItems'
-                            items-per-page='paging.pageSize'
-                            previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
-                            last-text='&raquo;'></pagination>
+                <div class="summary-card logs-results-card">
+
+                    <div class="logs-results-toolbar" ng-if="!loading && tasks && tasks.length > 0">
+                        <div class="logs-results-count">
+                            {{'plugin.push.results.showing' | localize}} {{resultsRangeStart()}}&ndash;{{resultsRangeEnd()}}
+                            {{'plugin.push.results.of' | localize}} {{paging.totalItems}}
+                        </div>
+                        <pagination
+                                ng-if="paging.totalItems > paging.pageSize"
+                                boundary-links='true' class='pagination-sm'
+                                max-size='3'
+                                ng-model='paging.pageNum'
+                                total-items='paging.totalItems'
+                                items-per-page='paging.pageSize'
+                                previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
+                                last-text='&raquo;'></pagination>
+                    </div>
+
+                    <div class="device-details-skeleton-group" ng-if="loading">
+                        <div class="device-details-skeleton logs-skeleton-row"></div>
+                        <div class="device-details-skeleton logs-skeleton-row"></div>
+                        <div class="device-details-skeleton logs-skeleton-row"></div>
+                    </div>
+
+                    <div class="modern-table-wrap logs-table-wrap" ng-if="!loading && tasks && tasks.length > 0">
+                    <table class='table'>
+                        <thead>
+                        <tr>
+                            <th localized>table.heading.plugin.push.messageType</th>
+                            <th localized>table.heading.plugin.push.target</th>
+                            <th localized>table.heading.plugin.push.payload</th>
+                            <th localized>table.heading.plugin.push.comment</th>
+                            <th localized>table.heading.plugin.push.schedule</th>
+                            <th>&nbsp;</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat='task in tasks'>
+                            <td>
+                                <span class="device-details-badge" ng-class="typeBadgeClass(task.messageType)">
+                                    <span class="glyphicon push-badge-icon" ng-class="typeIcon(task.messageType)"></span>
+                                    {{task.messageType}}
+                                </span>
+                            </td>
+                            <td>{{('plugin.push.scope.' + task.scope) | localize}}<span ng-if="task.target">: {{task.target}}</span></td>
+                            <td>
+                                <div class="logs-message logs-message-clamped device-details-app-pkg">{{task.payload || '—'}}</div>
+                            </td>
+                            <td>{{task.comment || '—'}}</td>
+                            <td><span class="push-schedule-badge">{{scheduleText(task)}}</span></td>
+                            <td>
+                                <div class="push-row-actions">
+                                    <button localized-title="button.edit"
+                                            type='button' class='btn btn-default' ng-click='editTask(task)'>
+                                        <span class='glyphicon glyphicon-pencil'></span>
+                                    </button>
+                                    <button localized-title="button.delete"
+                                            type='button' class='btn btn-default' ng-click='removeTask(task)'>
+                                        <span class='glyphicon glyphicon-trash'></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    </div>
+
+                    <div class="device-details-empty" ng-if="!loading && (!tasks || tasks.length === 0) && !hasActiveFilters()">
+                        <span class="glyphicon glyphicon-time device-details-empty-icon"></span>
+                        <div class="device-details-empty-title" localized>plugin.push.schedule.not.found</div>
+                        <div class="logs-empty-subtitle" localized>plugin.push.schedule.empty.subtitle</div>
+                        <button type='button' class='btn btn-default btn-modern-primary' ng-click='editTask()'>
+                            <span class="glyphicon glyphicon-plus"></span> <span localized>plugin.push.button.new.task</span>
+                        </button>
+                    </div>
+
+                    <div class="device-details-empty" ng-if="!loading && (!tasks || tasks.length === 0) && hasActiveFilters()">
+                        <span class="glyphicon glyphicon-time device-details-empty-icon"></span>
+                        <div class="device-details-empty-title" localized>plugin.push.empty.filtered.title</div>
+                        <button type="button" class="btn btn-default margin-top" ng-click="resetFilters()" localized>plugin.push.button.reset</button>
+                    </div>
+
+                    <div class="logs-results-toolbar logs-results-toolbar-bottom" ng-if="!loading && tasks && tasks.length > 0 && paging.totalItems > paging.pageSize">
+                        <pagination
+                                boundary-links='true' class='pagination-sm'
+                                max-size='3'
+                                ng-model='paging.pageNum'
+                                total-items='paging.totalItems'
+                                items-per-page='paging.pageSize'
+                                previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
+                                last-text='&raquo;'></pagination>
+                    </div>
+
                 </div>
-
-                <div class="modern-table-wrap" ng-if='tasks && tasks.length > 0'>
-                <table class='table'>
-                    <thead>
-                    <tr>
-                        <th localized>table.heading.plugin.push.messageType</th>
-                        <th localized>table.heading.plugin.push.payload</th>
-                        <th localized>table.heading.plugin.push.comment</th>
-                        <th localized>table.heading.plugin.push.scope</th>
-                        <th localized>table.heading.plugin.push.target</th>
-                        <th localized>table.heading.plugin.push.min</th>
-                        <th localized>table.heading.plugin.push.hour</th>
-                        <th localized>table.heading.plugin.push.day</th>
-                        <th localized>table.heading.plugin.push.weekday</th>
-                        <th localized>table.heading.plugin.push.month</th>
-                        <th>&nbsp;</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr ng-repeat='task in tasks'>
-                        <td>{{task.messageType}}</td>
-                        <td>{{task.payload}}</td>
-                        <td>{{task.comment}}</td>
-                        <td>{{task.scope}}</td>
-                        <td>{{task.target}}</td>
-                        <td>{{task.min}}</td>
-                        <td>{{task.hour}}</td>
-                        <td>{{task.day}}</td>
-                        <td>{{task.weekday}}</td>
-                        <td>{{task.month}}</td>
-                        <td><div>
-                            <button localized-title="button.edit"
-                                    type='button' class='btn btn-default' ng-click='editTask(task)'>
-                                <span class='glyphicon glyphicon-pencil'></span>
-                            </button>
-                            <button localized-title="button.delete"
-                                    type='button' class='btn btn-default' ng-click='removeTask(task)'>
-                                <span class='glyphicon glyphicon-trash'></span>
-                            </button>
-                        </div></td>
-                    </tr>
-                    </tbody>
-                </table>
-                </div>
-
-                <div ng-if='tasks && tasks.length === 0' class='center' localized>plugin.push.schedule.not.found</div>
-
-                <div class="text-center" ng-if="paging.totalItems > paging.pageSize">
-                    <pagination
-                            boundary-links='true' class='pagination-sm'
-                            max-size='3'
-                            ng-model='paging.pageNum'
-                            total-items='paging.totalItems'
-                            items-per-page='paging.pageSize'
-                            previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
-                            last-text='&raquo;'></pagination>
-                </div>
-
             </div>
         </tab>
     </tabset>

@@ -2281,6 +2281,139 @@
   margin-top: 4px;
 }
 
+/* =========================================================
+   Generic underline tabset - opt-in via an extra "modern-tabset" class
+   on any <tabset> element, replacing Bootstrap's boxed default (white
+   box, grey border, flat top) with a clean underline (2px --brand-dark
+   on the active tab, muted text otherwise) matching the main app nav's
+   own tab style. Not scoped to any one plugin - any page's internal
+   tabset can opt in. Selector depth is deliberately a single ">"
+   (tabset > .nav-tabs): uib-tabset's directive uses replace:true, so
+   <tabset> itself becomes the template's own outer element and
+   ul.nav-tabs is a DIRECT child of it, not a grandchild - confirmed
+   live against the exact same directive when the main nav's own
+   .app-nav-tabset selectors were being debugged (see the .app-shell
+   history above). A nested plugin-internal tabset one level deeper
+   only matters if IT ALSO carries "modern-tabset" - direct-child alone
+   already can't reach past one level, so no extra exclusion is needed
+   the way .app-nav-tabset needed one. */
+.modern-tabset > .nav-tabs {
+  border-bottom: 1px solid var(--color-border-subtle);
+  margin-bottom: 20px;
+  display: flex;
+  gap: 4px;
+}
+
+.modern-tabset > .nav-tabs > li {
+  float: none;
+}
+
+.modern-tabset > .nav-tabs > li > a {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 4px;
+  margin: 0 20px 0 0;
+  border-bottom: 2px solid transparent;
+}
+
+.modern-tabset > .nav-tabs > li > a:hover,
+.modern-tabset > .nav-tabs > li > a:focus {
+  color: var(--color-text-primary);
+  background: transparent;
+  border-bottom-color: var(--color-border);
+}
+
+.modern-tabset > .nav-tabs > li.active > a,
+.modern-tabset > .nav-tabs > li.active > a:hover,
+.modern-tabset > .nav-tabs > li.active > a:focus {
+  color: var(--brand-dark);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--brand-dark);
+  outline: none;
+}
+
+@media (max-width: 600px) {
+  .modern-tabset > .nav-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+}
+
+/* =========================================================
+   Push messages plugin (both tabs) - reuses the Logs/Messaging .logs-*
+   components (filter card, date range, chips, results card, table,
+   empty state, skeleton) almost entirely; only the pieces genuinely
+   unique to this page get their own rules below.
+   ========================================================= */
+
+.push-tab-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.push-col-time {
+  white-space: nowrap;
+}
+
+.logs-sort-icon {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  margin-left: 4px;
+}
+
+.push-badge-icon {
+  font-size: 10px;
+  margin-right: 4px;
+}
+
+.push-badge-info {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.push-badge-danger {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.push-badge-warn {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.push-badge-neutral {
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+}
+
+.push-schedule-badge {
+  display: inline-block;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  border-radius: 6px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.push-row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.push-schedule-search {
+  flex: 1 1 auto;
+  max-width: 420px;
+}
+
 .modern-page .custom-pagination-wrapper {
   margin-top: 14px;
 }

@@ -52,5 +52,14 @@
   "table.heading.plugin.push.weekday": "Weekdays",
   "table.heading.plugin.push.month": "Months",
   "plugin.push.schedule.success": "Task successfully scheduled",
-  "plugin.push.delete.task": "Delete this scheduled task?"
+  "plugin.push.delete.task": "Delete this scheduled task?",
+
+  "plugin.push.subtitle": "Commands and messages pushed to devices",
+  "plugin.push.empty.subtitle": "Send a message to one or more devices to get started",
+  "plugin.push.empty.filtered.title": "Nothing matches your filters",
+  "plugin.push.schedule.empty.subtitle": "Schedule a task to run commands on devices automatically",
+  "plugin.push.results.showing": "Showing",
+  "plugin.push.results.of": "of",
+  "plugin.push.button.reset": "Reset",
+  "table.heading.plugin.push.schedule": "Schedule"
 }
