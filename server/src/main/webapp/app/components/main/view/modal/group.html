@@ -1,21 +1,34 @@
-<div ng-show='errorMessage' class='modal-header'>
-    <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
+<div class="modern-modal-header">
+    <div class="modern-modal-icon">
+        <span class="glyphicon glyphicon-folder-close"></span>
+    </div>
+    <h4 class="modern-modal-title" ng-if="!group.id" localized>form.group.modal.title.add</h4>
+    <h4 class="modern-modal-title" ng-if="group.id">{{'form.group.modal.title.edit.prefix' | localize}} {{group.name}}</h4>
+    <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
 </div>
-<div class='modal-body'>
+
+<div class='modal-body modern-modal-body'>
+
+    <div ng-show='errorMessage' class='device-details-inline-error'><span>{{errorMessage}}</span></div>
+
     <form class='form-horizontal'>
 
         <div class='form-group'>
-            <label class='col-sm-2 control-label' localized>form.group.name</label>
-            <div class='col-sm-10'>
-                <input ng-model='group.name' required type='text' class='form-control'
+            <label class='col-sm-3 control-label' localized>form.group.name</label>
+            <div class='col-sm-9'>
+                <input ng-model='group.name' required type='text' class='form-control logs-input'
                        localized-placeholder='form.group.name.placeholder'>
             </div>
         </div>
 
-        <div class='form-group'>
-            <div class='col-sm-offset-2 col-sm-10'>
-                <button type='submit' class='btn btn-default' ng-click='save()' localized>button.save</button>
+        <div class='form-group modern-modal-actions'>
+            <div class='col-sm-offset-3 col-sm-9'>
                 <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
+                <button type='submit' class='btn btn-modern-primary' ng-disabled="savingGroup" ng-click='save()'>
+                    <span ng-if="!savingGroup && group.id" localized>button.save</span>
+                    <span ng-if="!savingGroup && !group.id" localized>form.group.create</span>
+                    <span ng-if="savingGroup" localized>form.group.saving</span>
+                </button>
             </div>
         </div>
     </form>

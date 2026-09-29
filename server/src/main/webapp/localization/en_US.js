@@ -806,6 +806,20 @@ document.localization['en_US'] = {
 
     'form.settings.groups.title': 'Groups',
     'form.settings.groups.search.placeholder': 'Group search',
+    'form.settings.groups.subtitle': 'Organize devices into groups for filtering and access control',
+    'form.settings.groups.add': 'Add group',
+    'form.settings.groups.count.suffix': 'groups',
+
+    'form.group.default.badge': 'Default',
+    'form.group.default.tooltip': "The default group can't be deleted",
+    'form.group.empty.search.prefix': 'No groups match',
+    'form.group.empty.nogroups.title': 'Create groups to organize your devices',
+    'form.group.saving': 'Saving...',
+    'form.group.create': 'Create group',
+    'form.group.modal.title.add': 'Add group',
+    'form.group.modal.title.edit.prefix': 'Edit group:',
+
+    'success.group.saved': 'Group saved',
 
     'form.settings.users.title': 'Users',
     'form.settings.users.search.placeholder': 'Search user',

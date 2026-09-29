@@ -1,24 +1,87 @@
 <!-- Localization completed -->
-<div class="width-1000 modern-page" ng-controller="GroupsTabController">
+<div class="width-1200 modern-page logs-page groups-page" ng-controller="GroupsTabController">
 
-    <div class="text-center">
-        <h4 localized>form.settings.groups.title</h4>
+    <div class="logs-page-header">
+        <div>
+            <h4 localized>form.settings.groups.title</h4>
+            <div class="logs-page-subtitle" localized>form.settings.groups.subtitle</div>
+        </div>
+        <div class="logs-page-header-actions">
+            <button type="button" class="btn btn-modern-primary" ng-click="editGroup({})">
+                <span class="glyphicon glyphicon-plus"></span> <span localized>form.settings.groups.add</span>
+            </button>
+        </div>
     </div>
 
-    <div>
-        <div class='form-group modern-toolbar'>
-            <input type='text' ng-model='search.searchValue' ng-enter='search()'
-                   ng-change="search()"
-                   localized-placeholder='form.settings.groups.search.placeholder'
-                   class='form-control configurations-search-input'/>
+    <div class="summary-card logs-results-card">
 
-            <div class='configurations-search-buttons'>
-                <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
-                <button type='button' class='btn btn-default btn-modern-primary' ng-click='editGroup( {} )' localized>button.add</button>
+        <div class="logs-filter-row logs-filter-row-actions">
+            <div class="logs-input-icon-wrap logs-filter-grow">
+                <span class="glyphicon glyphicon-search logs-input-icon"></span>
+                <input type="text" ng-model="search.searchValue" ng-enter="search()"
+                       localized-placeholder="form.settings.groups.search.placeholder"
+                       class="form-control logs-input">
             </div>
+            <div class="logs-results-count users-count">{{groups.length || 0}} {{'form.settings.groups.count.suffix' | localize}}</div>
         </div>
 
-        <div class="text-center" ng-if="groups.length > paging.pageSize">
+        <div class="device-details-skeleton-group" ng-if="loading">
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+        </div>
+
+        <div class="modern-table-wrap" ng-if="!loading && groups.length > 0">
+            <table class="table modern-responsive-table">
+                <thead>
+                <tr>
+                    <th localized>table.heading.group.name</th>
+                    <th class="actions-column" localized>table.heading.group.actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="logs-row" ng-repeat="group in groups.slice(((paging.currentPage-1)*paging.pageSize), ((paging.currentPage)*paging.pageSize))"
+                    ng-click="editGroup(group)">
+                    <td data-label="{{'table.heading.group.name' | localize}}">
+                        <div class="groups-cell">
+                            <span class="glyphicon glyphicon-folder-close groups-icon"></span>
+                            <span class="groups-name">{{group.name}}</span>
+                            <span class="users-you-badge" ng-if="group.id === 1" title="{{'form.group.default.tooltip' | localize}}">{{'form.group.default.badge' | localize}}</span>
+                        </div>
+                    </td>
+                    <td class="actions-column" data-label="{{'table.heading.group.actions' | localize}}" ng-click="$event.stopPropagation()">
+                        <button type="button" class="btn btn-default" localized-title="button.edit" ng-click="editGroup(group)">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                        </button>
+                        <div class="users-row-menu" uib-dropdown ng-if="group.id !== 1">
+                            <button type="button" class="btn btn-default" uib-dropdown-toggle>
+                                <span class="glyphicon glyphicon-option-vertical"></span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu>
+                                <li><a ng-click="removeGroup(group)" localized>form.role.action.delete</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="device-details-empty" ng-if="!loading && groups.length === 0 && !search.searchValue">
+            <span class="glyphicon glyphicon-folder-open device-details-empty-icon"></span>
+            <div class="device-details-empty-title" localized>form.group.empty.nogroups.title</div>
+            <button type="button" class="btn btn-default btn-modern-primary margin-top" ng-click="editGroup({})" localized>form.settings.groups.add</button>
+        </div>
+
+        <div class="device-details-empty" ng-if="!loading && groups.length === 0 && search.searchValue">
+            <span class="glyphicon glyphicon-search device-details-empty-icon"></span>
+            <div class="device-details-empty-title">
+                {{'form.group.empty.search.prefix' | localize}} "{{search.searchValue}}"
+            </div>
+            <button type="button" class="btn btn-default margin-top" ng-click="clearSearch()" localized>form.settings.users.empty.search.clear</button>
+        </div>
+
+        <div class="logs-results-toolbar logs-results-toolbar-bottom" ng-if="!loading && groups.length > paging.pageSize">
             <pagination
                     boundary-links='true' class='pagination-sm'
                     max-size='3'
@@ -28,47 +91,9 @@
                     previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
                     last-text='&raquo;'></pagination>
         </div>
+    </div>
 
-        <div class="modern-table-wrap" ng-if='groups && groups.length > 0'>
-        <table class='table'>
-            <thead>
-            <tr>
-                <th localized>table.heading.group.name</th>
-                <th class='actions-column' localized>table.heading.group.actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat='group in groups.slice(((paging.currentPage-1)*paging.pageSize), ((paging.currentPage)*paging.pageSize))'>
-                <td>{{group.name}}</td>
-                <td>
-                    <div>
-                        <button type='button' class='btn btn-default' ng-click='editGroup( group )'>
-                            <span class='glyphicon glyphicon-pencil'></span>
-                        </button>
-                        <button type='button'
-                                class='btn btn-default'
-                                ng-disabled='group.id === 1'
-                                ng-click='removeGroup( group )'>
-                            <span class='glyphicon glyphicon-trash'></span>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-        </div>
-
-        <div ng-if='groups && groups.length === 0' class='center' localized>notfound.groups</div>
-
-        <div class="text-center" ng-if="groups.length > paging.pageSize">
-            <pagination
-                    boundary-links='true' class='pagination-sm'
-                    max-size='3'
-                    ng-model='paging.currentPage'
-                    total-items='groups.length'
-                    items-per-page='paging.pageSize'
-                    previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
-                    last-text='&raquo;'></pagination>
-        </div>
+    <div class="modern-toast" ng-if="groupsToast" ng-class="'modern-toast-' + groupsToast.type">
+        {{groupsToast.message}}
     </div>
 </div>

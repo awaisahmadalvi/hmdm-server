@@ -3296,37 +3296,40 @@
 }
 
 @media (max-width: 700px) {
-  .users-table thead {
+  /* Generic "table becomes stacked cards on mobile" treatment (requires
+     data-label="..." on each <td> for its row label) - not page-prefixed,
+     any table can opt in. */
+  .modern-responsive-table thead {
     display: none;
   }
 
-  .users-table,
-  .users-table tbody,
-  .users-table tr,
-  .users-table td {
+  .modern-responsive-table,
+  .modern-responsive-table tbody,
+  .modern-responsive-table tr,
+  .modern-responsive-table td {
     display: block;
     width: 100%;
   }
 
-  .users-table tr {
+  .modern-responsive-table tr {
     padding: 12px 14px;
     margin-bottom: 10px;
     border: 1px solid var(--color-border-subtle);
     border-radius: 12px;
   }
 
-  .users-table td {
+  .modern-responsive-table td {
     border-top: none;
     padding: 6px 0;
   }
 
-  .users-table td.actions-column {
+  .modern-responsive-table td.actions-column {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
   }
 
-  .users-table td[data-label]::before {
+  .modern-responsive-table td[data-label]::before {
     content: attr(data-label);
     display: block;
     font-size: 10px;
@@ -3337,7 +3340,7 @@
     margin-bottom: 4px;
   }
 
-  .users-table td.actions-column::before {
+  .modern-responsive-table td.actions-column::before {
     display: none;
   }
 
@@ -3499,6 +3502,48 @@
   }
 
   .roles-page .logs-page-header-actions .btn {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Groups page (Settings -> Groups) and its add/edit dialog.
+   Scoped under .groups-page. Reuses .logs-page-header, .summary-card +
+   .logs-results-card, .logs-filter-row(-actions/-grow), .logs-input(-icon
+   -wrap), .logs-results-count, .modern-responsive-table, .logs-row
+   (hover), .actions-column, .device-details-empty*, .device-details-
+   skeleton*, .users-you-badge (reused as-is for the "Default" badge),
+   .users-row-menu, .modern-toast, .modern-modal-* and .device-details-
+   inline-error instead of duplicating any of them.
+   ========================================================= */
+
+.groups-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.groups-icon {
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+.groups-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 600px) {
+  .groups-page .logs-page-header {
+    flex-direction: column;
+  }
+
+  .groups-page .logs-page-header-actions {
+    width: 100%;
+  }
+
+  .groups-page .logs-page-header-actions .btn {
     width: 100%;
   }
 }
