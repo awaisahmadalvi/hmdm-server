@@ -24,19 +24,18 @@
   --brand-dark-rgb: 15, 23, 42; /* same color as --brand-dark, as r,g,b for rgba() gradient stops */
   --brand-dark-hover: #1e293b; /* one step lighter (slate-800) - hover shade for anything using --brand-dark as a text/button/link color */
 
-  /* Was a separate indigo accent family (#6366f1/#4f46e5) - explicitly
-     rejected: the app's one theme color is --brand-dark (the login
-     page's own background), everywhere, not a second indigo hue for
-     "accent" surfaces. Redefined here in terms of --brand-dark so every
-     consumer below (icons, borders, focus rings, the login submit
-     button/links/checkbox) stays in sync automatically. */
-  --color-accent: var(--brand-dark);
-  --color-accent-soft: #e2e8f0;
-  --color-accent-glow: rgba(var(--brand-dark-rgb), 0.28);
+  /* Literal value from design.png. Used for icons, borders,
+     focus rings, chart lines, and other >=3:1 (non-text) uses. */
+  --color-accent: #6366f1;
+  --color-accent-soft: #eef2ff;
+  --color-accent-glow: rgba(99, 102, 241, 0.28);
 
-  --color-accent-strong: var(--brand-dark);
-  --color-accent-strong-hover: var(--brand-dark-hover);
-  --color-accent-strong-active: #020617;
+  /* Text-bearing filled surfaces (buttons, filled badges) need
+     4.5:1 with white text - #6366F1 measures 4.47:1, just under.
+     accent-strong is the verified AA-safe fill for those cases. */
+  --color-accent-strong: #4f46e5;
+  --color-accent-strong-hover: #4338ca;
+  --color-accent-strong-active: #3730a3;
 
   /* Lime from design1.png, demoted per project ruling: restrained
      accent for active-nav indicator / focus glow / positive-status
@@ -82,19 +81,19 @@
   --color-warning-bg: #fffbeb;
   --color-danger: #dc2626; /* 4.83:1 - safe for text too */
   --color-danger-bg: #fef2f2;
-  --color-info: var(--brand-dark); /* = accent-strong, avoids palette sprawl */
-  --color-info-bg: #e2e8f0;
+  --color-info: #4f46e5; /* = accent-strong, avoids palette sprawl */
+  --color-info-bg: #eef2ff;
 
   /* ---------- Gradients ---------- */
   --gradient-chrome: linear-gradient(180deg, var(--color-chrome-start) 0%, var(--color-chrome-end) 100%);
-  --gradient-primary: linear-gradient(135deg, var(--brand-dark-hover) 0%, var(--brand-dark) 100%);
+  --gradient-primary: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   --gradient-surface: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  --gradient-glow-accent: radial-gradient(circle, var(--color-accent-glow) 0%, rgba(var(--brand-dark-rgb), 0) 70%);
+  --gradient-glow-accent: radial-gradient(circle, var(--color-accent-glow) 0%, rgba(99, 102, 241, 0) 70%);
   --gradient-glow-lime: radial-gradient(circle, var(--color-accent-lime-glow) 0%, rgba(170, 205, 2, 0) 70%);
   /* Login video overlay: tints the background video toward the
      brand palette so bla.mp4/whi.mp4 read as part of this app,
      not stock footage. */
-  --gradient-login-overlay: linear-gradient(160deg, rgba(var(--brand-dark-rgb), 0.55) 0%, rgba(var(--brand-dark-rgb), 0.35) 55%, rgba(var(--brand-dark-rgb), 0.78) 100%);
+  --gradient-login-overlay: linear-gradient(160deg, rgba(15, 23, 42, 0.55) 0%, rgba(99, 102, 241, 0.35) 55%, rgba(15, 23, 42, 0.78) 100%);
 
   /* ---------- Radius scale ---------- */
   --radius-sm: 6px;
@@ -180,17 +179,12 @@
 /* Manual override hook for a future toggle (not active until
    something sets data-theme on <html> - nothing does yet). */
 :root[data-theme="dark"] {
-  /* Slate-toned, not brand-dark literal: on this theme's own dark
-     surfaces (#0f172a/#1e293b), an accent that IS #0f172a would be
-     invisible - needs to read lighter than the surface to work as an
-     accent, hence slate-400/300/200 instead of the brand navy itself.
-     Still explicitly not indigo. */
-  --color-accent: #94a3b8;
-  --color-accent-soft: rgba(148, 163, 184, 0.16);
-  --color-accent-glow: rgba(148, 163, 184, 0.35);
-  --color-accent-strong: #94a3b8;
-  --color-accent-strong-hover: #cbd5e1;
-  --color-accent-strong-active: #e2e8f0;
+  --color-accent: #6366f1;
+  --color-accent-soft: rgba(99, 102, 241, 0.16);
+  --color-accent-glow: rgba(99, 102, 241, 0.35);
+  --color-accent-strong: #6366f1;
+  --color-accent-strong-hover: #818cf8;
+  --color-accent-strong-active: #a5b4fc;
   --color-accent-lime: #aacd02;
   --color-accent-lime-glow: rgba(170, 205, 2, 0.4);
   --color-canvas: #0f172a;
@@ -218,10 +212,10 @@
   --color-warning-bg: rgba(251, 191, 36, 0.12);
   --color-danger: #f87171;
   --color-danger-bg: rgba(248, 113, 113, 0.12);
-  --color-info: #94a3b8;
-  --color-info-bg: rgba(148, 163, 184, 0.12);
+  --color-info: #818cf8;
+  --color-info-bg: rgba(129, 140, 248, 0.12);
   --gradient-surface: linear-gradient(180deg, #1e293b 0%, #17212f 100%);
-  --gradient-login-overlay: linear-gradient(160deg, rgba(2, 6, 23, 0.7) 0%, rgba(15, 23, 42, 0.3) 55%, rgba(2, 6, 23, 0.88) 100%);
+  --gradient-login-overlay: linear-gradient(160deg, rgba(2, 6, 23, 0.7) 0%, rgba(99, 102, 241, 0.3) 55%, rgba(2, 6, 23, 0.88) 100%);
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 16px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3), 0 12px 28px rgba(0, 0, 0, 0.4);
