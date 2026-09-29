@@ -8,6 +8,18 @@
   "plugin.deviceinfo.settings.interval.mins": "Data collection interval",
   "plugin.deviceinfo.settings.send.data": "Transmit detailed information",
 
+  "plugin.deviceinfo.settings.subtitle": "Settings for collecting and storing detailed device data",
+  "plugin.deviceinfo.settings.collection.title": "Data collection",
+  "plugin.deviceinfo.settings.storage.title": "Storage",
+  "plugin.deviceinfo.settings.send.data.hint": "Devices send detailed information (battery, network, sensors etc.) to the server",
+  "plugin.deviceinfo.settings.send.data.off.note": "Devices won't send detailed data, so the Detailed information page will show limited data.",
+  "plugin.deviceinfo.settings.interval.hint": "How often devices collect and send data",
+  "plugin.deviceinfo.settings.interval.disabled.tooltip": "Enable transmission to change this",
+  "plugin.deviceinfo.settings.interval.battery.hint": "Shorter intervals give more detail but use more battery and data",
+  "plugin.deviceinfo.settings.data.preserve.period.hint": "Detailed data older than this is deleted automatically",
+  "plugin.deviceinfo.settings.data.preserve.period.suffix": "days",
+  "plugin.deviceinfo.settings.data.preserve.period.error": "Enter a whole number of at least 1",
+
   "plugin.deviceinfo.state.wifiState.inactive": "Wi-Fi disabled",
   "plugin.deviceinfo.state.wifiState.scanning": "Network Search",
   "plugin.deviceinfo.state.wifiState.disconnected": "Connection failed",

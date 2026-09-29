@@ -74,8 +74,14 @@
                 <span class="device-details-badge" ng-class="pluginSelection[plugin.id] ? 'device-details-badge-ok' : 'users-role-neutral'">
                     {{(pluginSelection[plugin.id] ? 'form.settings.plugins.status.enabled' : 'form.settings.plugins.status.disabled') | localize}}
                 </span>
-                <a class="action-link plugin-card-open" ng-if="pluginSelection[plugin.id] && plugin.functionsViewTemplate"
-                   ng-click="openPlugin(plugin); $event.stopPropagation()" localized>form.settings.plugins.open</a>
+                <span class="plugin-card-links" ng-click="$event.stopPropagation()">
+                    <a class="action-link plugin-card-settings" ng-if="plugin.settingsViewTemplate"
+                       ng-click="openPluginSettings(plugin)" localized-title="form.settings.plugins.settings">
+                        <span class="glyphicon glyphicon-cog"></span>
+                    </a>
+                    <a class="action-link plugin-card-open" ng-if="pluginSelection[plugin.id] && plugin.functionsViewTemplate"
+                       ng-click="openPlugin(plugin)" localized>form.settings.plugins.open</a>
+                </span>
             </div>
         </div>
     </div>

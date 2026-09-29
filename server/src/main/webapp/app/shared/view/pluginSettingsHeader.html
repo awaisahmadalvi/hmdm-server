@@ -1,0 +1,23 @@
+<div class="logs-page-header columns-sticky-header plugin-settings-header">
+    <div>
+        <div class="plugin-settings-breadcrumb">
+            <a ui-sref="pluginSettings">{{'form.settings.plugins.title' | localize}}</a>
+            <span class="plugin-settings-breadcrumb-sep">/</span>
+            <span>{{breadcrumbLabel}}</span>
+        </div>
+        <div class="plugin-settings-title-row">
+            <span class="glyphicon plugin-settings-icon" ng-class="icon"></span>
+            <h4>{{name}}</h4>
+        </div>
+        <div class="logs-page-subtitle">{{subtitle}}</div>
+    </div>
+    <div class="logs-page-header-actions design-header-actions">
+        <a class="action-link plugin-settings-open-link" ng-if="pluginState" ui-sref="{{pluginState}}">{{'form.settings.plugins.open.plugin' | localize}}</a>
+        <span class="design-unsaved-indicator" ng-if="isDirty()" localized>form.settings.design.unsaved</span>
+        <button type="button" class="logs-btn-reset" ng-disabled="!isDirty()" ng-click="onReset()" localized>form.settings.design.reset</button>
+        <button type="button" class="btn btn-modern-primary" ng-disabled="saving" ng-click="onSave()">
+            <span ng-if="!saving" localized>form.settings.design.save</span>
+            <span ng-if="saving" localized>form.settings.design.saving</span>
+        </button>
+    </div>
+</div>

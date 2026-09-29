@@ -179,6 +179,11 @@
   margin: 0px auto;
 }
 
+.width-800 {
+  max-width: 800px;
+  margin: 0px auto;
+}
+
 .promo {
   margin-top: 30px;
   margin-bottom: 30px;

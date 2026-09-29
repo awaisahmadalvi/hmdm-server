@@ -99,6 +99,12 @@ angular.module('headwind-kiosk')
             }
         };
 
+        $scope.openPluginSettings = function (plugin) {
+            if (plugin.settingsViewTemplate) {
+                $state.go('plugin-settings-' + plugin.identifier);
+            }
+        };
+
         var pluginSelectionSnapshot = null;
 
         $scope.isPluginsDirty = function () {

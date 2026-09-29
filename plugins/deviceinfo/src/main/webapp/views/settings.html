@@ -19,47 +19,68 @@
   ~
   -->
 
-<div class="width-1000 modern-page" ng-controller="PluginDeviceInfoSettingsController">
-    <div class="text-center">
-        <h4 localized-change-tracking>plugin.deviceinfo.title</h4>
+<div class="width-800 modern-page deviceinfo-settings-page" ng-controller="PluginDeviceInfoSettingsController">
+
+    <plugin-settings-header
+            icon="glyphicon-info-sign"
+            name="{{pluginName}}"
+            subtitle="{{pluginSubtitle}}"
+            breadcrumb-label="{{pluginBreadcrumbLabel}}"
+            plugin-state="plugin-deviceinfo"
+            is-dirty="isDirty()"
+            on-reset="reset()"
+            on-save="save()"
+            saving="savingSettings">
+    </plugin-settings-header>
+
+    <div ng-show='successMessage' class='device-details-inline-success'><span>{{successMessage}}</span></div>
+    <div ng-show='errorMessage' class='device-details-inline-error'><span>{{errorMessage}}</span></div>
+
+    <div class="device-details-card">
+        <div class="device-details-card-header" localized>plugin.deviceinfo.settings.collection.title</div>
+
+        <div class="design-field">
+            <div class="settings-field-row">
+                <label class="design-field-label" for="c1" localized-change-tracking>plugin.deviceinfo.settings.send.data</label>
+                <span class="modern-toggle">
+                    <input id="c1" type="checkbox" class="modern-toggle-input" ng-model='settings.sendData'>
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
+            </div>
+            <div class="field-hint" localized>plugin.deviceinfo.settings.send.data.hint</div>
+            <div class="settings-caution" ng-if="!settings.sendData" localized>plugin.deviceinfo.settings.send.data.off.note</div>
+        </div>
+
+        <div class="design-field">
+            <label class="design-field-label" for="c2" localized-change-tracking>plugin.deviceinfo.settings.interval.mins</label>
+            <select class='form-control modern-select settings-input' ng-disabled="!settings.sendData"
+                    title="{{!settings.sendData ? ('plugin.deviceinfo.settings.interval.disabled.tooltip' | localize) : ''}}"
+                    id="c2"
+                    ng-model='settings.intervalMins'
+                    ng-options="opt.value as opt.label for opt in intervalOptions">
+            </select>
+            <div class="field-hint" localized>plugin.deviceinfo.settings.interval.hint</div>
+            <div class="field-hint" localized>plugin.deviceinfo.settings.interval.battery.hint</div>
+        </div>
     </div>
 
-    <div>
-        <form class='form-horizontal modern-toolbar'>
-            <div class='form-group'>
-                <div ng-show='successMessage' class='success'><span>{{successMessage}}</span></div>
-                <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
-            </div>
+    <div class="device-details-card">
+        <div class="device-details-card-header" localized>plugin.deviceinfo.settings.storage.title</div>
 
-            <div class='form-group'>
-                <label class='col-sm-5 control-label' for="c0" localized-change-tracking>plugin.deviceinfo.settings.data.preserve.period</label>
-                <div class='col-sm-2'>
-                    <input id="c0" ng-model='settings.dataPreservePeriod' type='number' min="1" class='form-control'/>
-                </div>
+        <div class="design-field">
+            <label class="design-field-label" for="c0" localized-change-tracking>plugin.deviceinfo.settings.data.preserve.period</label>
+            <div class="deviceinfo-storage-input-wrap">
+                <input id="c0" ng-model='settings.dataPreservePeriod' type='number' min="1" step="1"
+                       class='form-control logs-input settings-input-narrow deviceinfo-storage-input'
+                       ng-class="{'modern-input-invalid': storagePeriodInvalid()}"/>
+                <span class="deviceinfo-storage-suffix" localized>plugin.deviceinfo.settings.data.preserve.period.suffix</span>
             </div>
+            <div class="field-hint" ng-if="!storagePeriodInvalid()" localized>plugin.deviceinfo.settings.data.preserve.period.hint</div>
+            <div class="design-field-error" ng-if="storagePeriodInvalid()" localized>plugin.deviceinfo.settings.data.preserve.period.error</div>
+        </div>
+    </div>
 
-            <div class="form-group">
-                <label class='col-sm-5 control-label' for="c1" localized-change-tracking>plugin.deviceinfo.settings.send.data</label>
-                <div class='col-sm-1'>
-                    <input id="c1" ng-model='settings.sendData' type='checkbox' class='form-control'/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class='col-sm-5 control-label' for="c2" localized-change-tracking>plugin.deviceinfo.settings.interval.mins</label>
-                <div class='col-sm-2'>
-                    <select class='form-control' ng-disabled="loading" id="c2"
-                            ng-model='settings.intervalMins'
-                            ng-options="opt.value as opt.label for opt in intervalOptions">
-                    </select>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <div class='col-sm-offset-5 col-sm-5 padding-right'>
-                    <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' localized-change-tracking>button.save</button>
-                </div>
-            </div>
-        </form>
+    <div class="modern-toast" ng-if="settingsToast" ng-class="'modern-toast-' + settingsToast.type">
+        {{settingsToast.message}}
     </div>
 </div>

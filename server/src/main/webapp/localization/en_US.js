@@ -677,6 +677,8 @@ document.localization['en_US'] = {
     'form.settings.plugins.status.enabled': 'Enabled',
     'form.settings.plugins.status.disabled': 'Disabled',
     'form.settings.plugins.open': 'Open',
+    'form.settings.plugins.open.plugin': 'Open plugin',
+    'form.settings.plugins.settings': 'Settings',
     'form.settings.plugins.audit.warning': "Turning off Audit stops recording user activity.",
     'form.settings.plugins.desc.audit': 'Record of user activity in the admin panel',
     'form.settings.plugins.desc.deviceinfo': 'Full device details and installation status',

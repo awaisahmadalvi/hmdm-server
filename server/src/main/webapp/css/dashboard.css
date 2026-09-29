@@ -4157,9 +4157,19 @@
   margin-top: auto;
 }
 
+.plugin-card-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .plugin-card-open {
   font-size: 13px;
   font-weight: 600;
+}
+
+.plugin-card-settings {
+  font-size: 14px;
 }
 
 .plugin-card-disabled .plugin-card-name,
@@ -4188,5 +4198,103 @@
 
   .plugins-page .logs-page-header-actions {
     width: 100%;
+  }
+}
+
+/* =========================================================
+   <plugin-settings-header> directive (app/shared/directives.js +
+   app/shared/view/pluginSettingsHeader.html). Generic chrome for any
+   plugin's own settings page: breadcrumb back to the Plugins list, icon +
+   name + subtitle, an optional "Open plugin" link, and the same Reset/
+   Save/unsaved-changes behavior as the other redesigned Settings pages.
+   Reuses .logs-page-header, .columns-sticky-header, .design-header-
+   actions/.design-unsaved-indicator/.logs-btn-reset and .action-link
+   instead of duplicating them.
+   ========================================================= */
+
+.plugin-settings-breadcrumb {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin-bottom: 6px;
+}
+
+.plugin-settings-breadcrumb a {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.plugin-settings-breadcrumb-sep {
+  margin: 0 6px;
+}
+
+.plugin-settings-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plugin-settings-title-row h4 {
+  margin: 0;
+}
+
+.plugin-settings-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(var(--brand-dark-rgb), 0.1);
+  color: var(--brand-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex: 0 0 auto;
+}
+
+.plugin-settings-open-link {
+  font-weight: 600;
+  font-size: 13px;
+  margin-right: 4px;
+}
+
+/* =========================================================
+   Detailed information plugin settings page. Reuses .device-details-card
+   (-header), .design-field(-label)(-error), .settings-field-row,
+   .settings-input(-narrow), .modern-select, .modern-toggle, .field-hint,
+   .settings-caution, .modern-input-invalid and .modern-toast instead of
+   duplicating any of them - only the "days" suffix-in-input treatment is
+   new here.
+   ========================================================= */
+
+.deviceinfo-storage-input-wrap {
+  position: relative;
+  max-width: 160px;
+}
+
+.deviceinfo-storage-input {
+  max-width: none;
+  padding-right: 48px !important;
+}
+
+.deviceinfo-storage-suffix {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+}
+
+@media (max-width: 600px) {
+  .deviceinfo-settings-page .logs-page-header {
+    flex-direction: column;
+  }
+
+  .deviceinfo-settings-page .logs-page-header-actions {
+    width: 100%;
+  }
+
+  .deviceinfo-settings-page {
+    padding-bottom: 70px;
   }
 }

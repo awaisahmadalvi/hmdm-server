@@ -107,4 +107,28 @@ angular.module('headwind-kiosk')
                 }, 200);
             }
         };
+    })
+    // Reusable header for a plugin's own settings page (breadcrumb back to
+    // the Plugins list, icon + name + subtitle, an optional "Open plugin"
+    // link to its Functions page, and the same Reset/Save/unsaved-changes
+    // behavior used across the redesigned Settings pages). Built for the
+    // Detailed Information plugin settings page; any other plugin settings
+    // page that is a genuine load-then-save settings form (not a one-time
+    // action, not a settings+CRUD-table page) can reuse it as-is.
+    .directive('pluginSettingsHeader', function () {
+        return {
+            restrict: 'E',
+            scope: {
+                icon: '@',
+                name: '@',
+                subtitle: '@',
+                breadcrumbLabel: '@',
+                pluginState: '@',
+                isDirty: '&',
+                onReset: '&',
+                onSave: '&',
+                saving: '='
+            },
+            templateUrl: 'app/shared/view/pluginSettingsHeader.html'
+        };
     });

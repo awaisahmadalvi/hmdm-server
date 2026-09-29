@@ -213,7 +213,7 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
             },
         });
     })
-    .controller('PluginDeviceInfoSettingsController', function ($scope, $rootScope, pluginDeviceInfoService, localization) {
+    .controller('PluginDeviceInfoSettingsController', function ($scope, $rootScope, $timeout, pluginDeviceInfoService, localization) {
         $scope.successMessage = undefined;
         $scope.errorMessage = undefined;
 
@@ -222,14 +222,57 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
 
         $scope.settings = {};
 
+        $scope.pluginName = localization.localize('plugin.deviceinfo.title');
+        $scope.pluginSubtitle = localization.localize('plugin.deviceinfo.settings.subtitle');
+        $scope.pluginBreadcrumbLabel = localization.localize('breadcrumb.plugin.deviceinfo.main');
+
         var intervalOptionValues = [15, 30, 60, 120, 360, 720, 1440];
         $scope.intervalOptions = intervalOptionValues.map(function (value, index) {
             return {value: value, label: localization.localize('plugin.deviceinfo.intervalMins.option.' + (index + 1))};
         });
 
+        var settingsSnapshot = null;
+
+        $scope.isDirty = function () {
+            return !!settingsSnapshot && !angular.equals($scope.settings, settingsSnapshot);
+        };
+
+        $scope.reset = function () {
+            if (settingsSnapshot) {
+                $scope.settings = angular.copy(settingsSnapshot);
+            }
+            $scope.successMessage = undefined;
+            $scope.errorMessage = undefined;
+        };
+
+        // Whole positive number, respecting the existing min="1" - no
+        // server-side max exists (checked DeviceInfoPluginSettings.java),
+        // so none is enforced here either.
+        $scope.storagePeriodInvalid = function () {
+            var value = $scope.settings.dataPreservePeriod;
+            if (value === undefined || value === null || value === '') {
+                return true;
+            }
+            var num = Number(value);
+            return isNaN(num) || !Number.isInteger(num) || num < 1;
+        };
+
+        $scope.savingSettings = false;
+        $scope.settingsToast = null;
+
+        var showSettingsToast = function (type, message) {
+            $scope.settingsToast = {type: type, message: message};
+            $timeout(function () {
+                if ($scope.settingsToast && $scope.settingsToast.message === message) {
+                    $scope.settingsToast = null;
+                }
+            }, 3000);
+        };
+
         pluginDeviceInfoService.getSettings(function (response) {
             if (response.status === 'OK') {
                 $scope.settings = response.data;
+                settingsSnapshot = angular.copy($scope.settings);
             } else {
                 $scope.errorMessage = localization.localize('error.internal.server');
             }
@@ -239,12 +282,26 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
             $scope.successMessage = undefined;
             $scope.errorMessage = undefined;
 
+            if ($scope.storagePeriodInvalid()) {
+                $scope.errorMessage = localization.localize('plugin.deviceinfo.settings.data.preserve.period.error');
+                return;
+            }
+
+            $scope.savingSettings = true;
             pluginDeviceInfoService.saveSettings($scope.settings, function (response) {
+                $scope.savingSettings = false;
                 if (response.status === 'OK') {
                     $scope.successMessage = localization.localize('success.plugin.deviceinfo.settings.saved');
+                    settingsSnapshot = angular.copy($scope.settings);
+                    showSettingsToast('success', $scope.successMessage);
                 } else {
                     $scope.errorMessage = localization.localizeServerResponse(response);
+                    showSettingsToast('error', $scope.errorMessage);
                 }
+            }, function () {
+                $scope.savingSettings = false;
+                $scope.errorMessage = localization.localize('error.internal.server');
+                showSettingsToast('error', $scope.errorMessage);
             });
         }
     })
