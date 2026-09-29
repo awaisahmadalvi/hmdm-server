@@ -72,6 +72,7 @@
             <label class='col-sm-4 control-label' localized>plugin.messaging.label.message</label>
             <div class='col-sm-8'>
                 <textarea ng-model='message.message' class='form-control no-resize' rows="5"></textarea>
+                <div class="messaging-char-count">{{message.message.length || 0}} {{'plugin.messaging.char.count.label' | localize}}</div>
             </div>
         </div>
 

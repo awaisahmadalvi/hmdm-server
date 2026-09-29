@@ -2247,6 +2247,40 @@
   }
 }
 
+/* =========================================================
+   Messaging plugin page
+   Almost entirely reuses the Logs page's .logs-* components (filter
+   card, date range, chips, results card, table, empty state, skeleton)
+   - only the 2 things genuinely unique to this page get their own
+   rules: the success banner and the new-message modal's char counter.
+   ========================================================= */
+
+.messaging-success {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  font-size: 13px;
+}
+
+.messaging-badge-sent {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.messaging-badge-delivered {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.messaging-char-count {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  text-align: right;
+  margin-top: 4px;
+}
+
 .modern-page .custom-pagination-wrapper {
   margin-top: 14px;
 }

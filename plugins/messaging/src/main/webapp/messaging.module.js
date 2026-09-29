@@ -163,6 +163,62 @@ angular.module('plugin-messaging', ['ngResource', 'ui.bootstrap', 'ui.router', '
             }
         };
 
+        // message.status is numeric (0 Sent / 1 Delivered / 2 Read - see
+        // the 'status' filter above) - only these 3 values actually exist,
+        // there is no "Failed" status in this data model.
+        $scope.statusBadgeClass = function (status) {
+            if (status === 1 || status === 2) {
+                return 'messaging-badge-delivered';
+            }
+            return 'messaging-badge-sent';
+        };
+
+        var statusFilterKeys = { 0: 'sent', 1: 'delivered', 2: 'read' };
+        $scope.statusFilterKeySuffix = function (value) {
+            return statusFilterKeys[value] || '';
+        };
+
+        $scope.hasActiveFilters = function () {
+            return !!($scope.paging.deviceFilter || $scope.paging.messageFilter ||
+                $scope.paging.status > -1 || $scope.paging.dateFrom || $scope.paging.dateTo);
+        };
+
+        $scope.clearFilter = function (name) {
+            if (name === 'status') {
+                $scope.paging.status = -1;
+            } else if (name === 'dateFrom' || name === 'dateTo') {
+                $scope.paging[name] = null;
+            } else {
+                $scope.paging[name] = '';
+            }
+            $scope.search();
+        };
+
+        $scope.resetFilters = function () {
+            $scope.paging.deviceFilter = '';
+            $scope.paging.messageFilter = '';
+            $scope.paging.status = -1;
+            $scope.paging.dateFrom = null;
+            $scope.paging.dateTo = null;
+            $scope.search();
+        };
+
+        $scope.resultsRangeStart = function () {
+            if (!$scope.paging.totalItems) {
+                return 0;
+            }
+            return (($scope.paging.pageNum - 1) * $scope.paging.pageSize) + 1;
+        };
+
+        $scope.resultsRangeEnd = function () {
+            return Math.min($scope.paging.pageNum * $scope.paging.pageSize, $scope.paging.totalItems || 0);
+        };
+
+        $scope.expandedMessage = null;
+        $scope.toggleExpand = function (message) {
+            $scope.expandedMessage = ($scope.expandedMessage === message) ? null : message;
+        };
+
         $scope.search = function () {
             $scope.errorMessage = undefined;
 
@@ -202,13 +258,14 @@ angular.module('plugin-messaging', ['ngResource', 'ui.bootstrap', 'ui.router', '
         var loading = false;
         var loadData = function () {
             $scope.errorMessage = undefined;
-            
+
             if (loading) {
                 console.log("Skipping query for message list since a previous request is pending");
                 return;
             }
 
             loading = true;
+            $scope.loading = true;
 
             var request = {};
             for (var p in $scope.paging) {
@@ -221,6 +278,7 @@ angular.module('plugin-messaging', ['ngResource', 'ui.bootstrap', 'ui.router', '
 
             pluginMessagingService.getMessages(request, function (response) {
                 loading = false;
+                $scope.loading = false;
                 if (response.status === 'OK') {
                     $scope.messages = response.data.items;
                     $scope.paging.totalItems = response.data.totalItemsCount;
@@ -229,6 +287,7 @@ angular.module('plugin-messaging', ['ngResource', 'ui.bootstrap', 'ui.router', '
                 }
             }, function () {
                 loading = false;
+                $scope.loading = false;
                 $scope.errorMessage = localization.localize('error.request.failure');
             })
         };

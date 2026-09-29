@@ -39,7 +39,12 @@
   "plugin.messaging.scope.all": "All devices",
   "plugin.messaging.label.group": "Group",
   "plugin.messaging.label.configuration": "Configuration",
-  "": "",
-  "": "",
-  "": ""
+
+  "plugin.messaging.subtitle": "Messages sent to devices",
+  "plugin.messaging.empty.subtitle": "Send a message to one or more devices to get started",
+  "plugin.messaging.empty.filtered.title": "No messages match your filters",
+  "plugin.messaging.results.showing": "Showing",
+  "plugin.messaging.results.of": "of",
+  "plugin.messaging.button.reset": "Reset",
+  "plugin.messaging.char.count.label": "characters"
 }
