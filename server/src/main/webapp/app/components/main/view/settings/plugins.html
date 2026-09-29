@@ -20,36 +20,67 @@
   -->
 
 <!-- Localization completed -->
-<div class="width-1000 modern-page" ng-controller="PluginsTabController">
-    <div class="text-center">
-        <h4 localized>form.settings.plugins.title</h4>
+<div class="width-1200 modern-page plugins-page" ng-controller="PluginsTabController">
+
+    <div class="logs-page-header columns-sticky-header">
+        <div>
+            <h4 localized>form.settings.plugins.title</h4>
+            <div class="logs-page-subtitle" localized>form.settings.plugins.subtitle</div>
+        </div>
+        <div class="logs-page-header-actions design-header-actions">
+            <span class="design-unsaved-indicator" ng-if="isPluginsDirty()" localized>form.settings.design.unsaved</span>
+            <button type="button" class="logs-btn-reset" ng-disabled="!isPluginsDirty()"
+                    ng-click="resetPluginSelection()" localized>form.settings.design.reset</button>
+            <button type="button" class="btn btn-modern-primary" ng-disabled="loading"
+                    ng-click="save()">
+                <span ng-if="!savingPlugins" localized>form.settings.design.save</span>
+                <span ng-if="savingPlugins" localized>form.settings.design.saving</span>
+            </button>
+        </div>
     </div>
 
-    <div>
-        <div class='form-group' ng-if='errorMessage'>
-            <div class='error'><span>{{errorMessage}}</span></div>
-        </div>
-        <div class='form-group' ng-if='successMessage'>
-            <div class='success'><span>{{successMessage}}</span></div>
+    <div class="logs-results-count plugins-summary" ng-if="plugins && pluginSelection">
+        {{enabledPluginCount()}} {{'form.settings.plugins.summary.of' | localize}} {{plugins.length}} {{'form.settings.plugins.summary.suffix' | localize}}
+    </div>
+
+    <div ng-show='successMessage' class='device-details-inline-success'><span>{{successMessage}}</span></div>
+    <div ng-show='errorMessage' class='device-details-inline-error'><span>{{errorMessage}}</span></div>
+
+    <div class="columns-grid" ng-if="loading && !(plugins && pluginSelection)">
+        <div class="device-details-skeleton device-details-skeleton-card"></div>
+        <div class="device-details-skeleton device-details-skeleton-card"></div>
+        <div class="device-details-skeleton device-details-skeleton-card"></div>
+    </div>
+
+    <div class="columns-grid" ng-if="plugins && pluginSelection">
+        <div class="device-details-card plugin-card" ng-repeat="plugin in plugins"
+             ng-class="{'plugin-card-disabled': !pluginSelection[plugin.id], 'plugin-card-browsemore': isBrowseMorePlugin(plugin)}"
+             ng-click="pluginSelection[plugin.id] = !pluginSelection[plugin.id]">
+
+            <div class="plugin-card-header">
+                <span class="glyphicon plugin-card-icon" ng-class="pluginIcon(plugin)"></span>
+                <span class="plugin-card-name">{{plugin.localizedName}}</span>
+                <span class="modern-toggle" ng-click="$event.stopPropagation()">
+                    <input type="checkbox" class="modern-toggle-input" ng-model="pluginSelection[plugin.id]" ng-disabled="loading">
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
+            </div>
+
+            <div class="plugin-card-desc">{{pluginDescription(plugin)}}</div>
+
+            <div class="plugin-card-warning" ng-if="plugin.identifier === 'audit' && !pluginSelection[plugin.id]" localized>form.settings.plugins.audit.warning</div>
+
+            <div class="plugin-card-footer">
+                <span class="device-details-badge" ng-class="pluginSelection[plugin.id] ? 'device-details-badge-ok' : 'users-role-neutral'">
+                    {{(pluginSelection[plugin.id] ? 'form.settings.plugins.status.enabled' : 'form.settings.plugins.status.disabled') | localize}}
+                </span>
+                <a class="action-link plugin-card-open" ng-if="pluginSelection[plugin.id] && plugin.functionsViewTemplate"
+                   ng-click="openPlugin(plugin); $event.stopPropagation()" localized>form.settings.plugins.open</a>
+            </div>
         </div>
     </div>
 
-    <form class="form-horizontal margin-top-40 modern-toolbar" ng-if="plugins && pluginSelection">
-        <div class="form-group" ng-repeat="plugin in plugins">
-            <div class="col-sm-6 text-right">
-                <label for="pl{{plugin.id}}">{{plugin.localizedName}}</label>
-            </div>
-            <div class="col-sm-1">
-                <input type="checkbox" id="pl{{plugin.id}}" ng-disabled="loading"
-                       ng-model="pluginSelection[plugin.id]" class="form-control"/>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <div class="col-sm-offset-6">
-                <button class="btn btn-default btn-modern-primary" ng-click="save()" ng-disabled="loading"
-                        localized>button.save</button>
-            </div>
-        </div>
-    </form>
+    <div class="modern-toast" ng-if="pluginsToast" ng-class="'modern-toast-' + pluginsToast.type">
+        {{pluginsToast.message}}
+    </div>
 </div>
