@@ -19,15 +19,13 @@
   --color-canvas: var(--brand-dark);
   --color-surface: #1e293b;
   --color-surface-hover: #273347;
-  --color-surface-muted: #0f172a;
+  --color-surface-muted: var(--brand-dark);
   --color-border: #334155;
   --color-border-subtle: #1e293b;
   --color-text-primary: #f1f5f9;
   --color-text-secondary: #cbd5e1;
   --color-text-tertiary: #94a3b8;
   --color-text-disabled: #64748b;
-  --color-accent-strong: #6366f1;
-  --color-accent-strong-hover: #818cf8;
   --color-danger-bg: rgba(248, 113, 113, 0.12);
   --color-danger: #f87171;
   --color-success-bg: rgba(74, 222, 128, 0.12);
@@ -316,14 +314,14 @@
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.28);
+  box-shadow: 0 8px 20px rgba(var(--brand-dark-rgb), 0.28);
   transition: box-shadow var(--duration-base) var(--ease-standard),
     transform var(--duration-base) var(--ease-standard),
     opacity var(--duration-base) var(--ease-standard);
 }
 
 .login-submit:hover:not(:disabled) {
-  box-shadow: 0 10px 26px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 10px 26px rgba(var(--brand-dark-rgb), 0.4);
   transform: translateY(-1px);
 }
 
@@ -333,7 +331,7 @@
 
 .login-submit:focus-visible {
   outline: none;
-  box-shadow: var(--shadow-focus), 0 8px 20px rgba(79, 70, 229, 0.28);
+  box-shadow: var(--shadow-focus), 0 8px 20px rgba(var(--brand-dark-rgb), 0.28);
 }
 
 .login-submit:disabled {

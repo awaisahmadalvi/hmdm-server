@@ -770,10 +770,9 @@
   border-bottom-color: var(--color-border);
 }
 
-/* Active-tab underline uses the login page's indigo (var(--brand-dark)) instead
-   of the old teal var(--brand-dark), so the accent still echoes the login
-   theme even though this part of the header sits on white, not the
-   purple badge. */
+/* Active-tab underline uses var(--brand-dark) - the login page's own dark
+   navy background color - so the accent still echoes the login theme
+   even though this part of the header sits on white, not the badge. */
 .app-nav-tabset > .nav-tabs > li.active > a,
 .app-nav-tabset > .nav-tabs > li.active > a:hover,
 .app-nav-tabset > .nav-tabs > li.active > a:focus {

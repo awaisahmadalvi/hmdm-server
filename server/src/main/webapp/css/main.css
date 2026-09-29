@@ -109,7 +109,12 @@
 
 .login-logo .logo {
   font-size: 30px;
-  color: #4c788c;
+  /* Was the old pre-redesign teal (#4c788c) - this renders on the
+     login panel's dark background (.login-page overrides
+     --color-text-primary to a light value), so it needs to be a light
+     text color here, not the literal --brand-dark navy (which would be
+     invisible against that same-colored background). */
+  color: var(--color-text-primary);
 }
 
 .login-footer {
