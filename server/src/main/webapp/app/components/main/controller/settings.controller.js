@@ -2,7 +2,8 @@
 angular.module('headwind-kiosk')
     .controller('SettingsTabController', function ($scope, $rootScope, $timeout, $modal, hintService, settingsService,
                                                    localization, authService, userService, confirmModal, Idle,
-                                                   groupService, configurationService, twoFactorAuthService, $state) {
+                                                   groupService, configurationService, twoFactorAuthService,
+                                                   $transitions, $q, $state) {
         $scope.settings = {};
         $scope.userRoleSettings = {};
         $scope.loading = false;
@@ -11,6 +12,151 @@ angular.module('headwind-kiosk')
 
         $scope.formData = {
             userRoleId: authService.getUser().userRole.id
+        };
+
+        // Devices-table column config: which userRoleSettings.columnDisplayed*
+        // flag belongs to which card group on the redesigned "Visible
+        // columns" page, and in what order they appear in the real Devices
+        // table (used for the live preview). One config object driving a
+        // single ng-repeat'd row template, instead of one hardcoded row of
+        // markup per column.
+        var COLUMN_DEFS = [
+            {key: 'columnDisplayedDeviceStatus', labelKey: 'form.settings.common.status', group: 'status'},
+            {key: 'columnDisplayedDeviceDate', labelKey: 'form.settings.common.date', group: 'status'},
+            {key: 'columnDisplayedDeviceNumber', labelKey: 'form.settings.common.device.number', group: 'identity'},
+            {key: 'columnDisplayedDeviceImei', labelKey: 'form.settings.common.imei', group: 'hardware'},
+            {key: 'columnDisplayedDevicePhone', labelKey: 'form.settings.common.phone.number', group: 'hardware'},
+            {key: 'columnDisplayedDeviceModel', labelKey: 'form.settings.common.phone.model', group: 'hardware'},
+            {key: 'columnDisplayedDevicePermissionsStatus', labelKey: 'form.settings.common.status.permissions', group: 'compliance'},
+            {key: 'columnDisplayedDeviceAppInstallStatus', labelKey: 'form.settings.common.status.installation', group: 'compliance'},
+            {key: 'columnDisplayedDeviceFilesStatus', labelKey: 'form.settings.common.status.files', group: 'compliance'},
+            {key: 'columnDisplayedDeviceConfiguration', labelKey: 'form.settings.common.config', group: 'identity'},
+            {key: 'columnDisplayedDeviceDesc', labelKey: 'form.settings.common.desc', group: 'identity'},
+            {key: 'columnDisplayedDeviceGroup', labelKey: 'form.settings.common.group', group: 'identity'},
+            {key: 'columnDisplayedLauncherVersion', labelKey: 'form.settings.common.launcher.version', group: 'launcher'},
+            {key: 'columnDisplayedBatteryLevel', labelKey: 'form.settings.common.battery.level', group: 'hardware'},
+            {key: 'columnDisplayedMdmMode', labelKey: 'form.settings.common.mdm.mode', group: 'launcher'},
+            {key: 'columnDisplayedKioskMode', labelKey: 'form.settings.common.kiosk.mode', group: 'launcher'},
+            {key: 'columnDisplayedDefaultLauncher', labelKey: 'form.settings.common.default.launcher', group: 'launcher'},
+            {key: 'columnDisplayedAndroidVersion', labelKey: 'form.settings.common.android.version', group: 'hardware'},
+            {key: 'columnDisplayedEnrollmentDate', labelKey: 'form.settings.common.enrollment.date', group: 'status'},
+            {key: 'columnDisplayedSerial', labelKey: 'form.settings.common.serial', group: 'hardware'},
+            {key: 'columnDisplayedPublicIp', labelKey: 'form.settings.common.publicip', group: 'status'},
+            {key: 'columnDisplayedCustom1', customProp: 'customPropertyName1', group: 'identity'},
+            {key: 'columnDisplayedCustom2', customProp: 'customPropertyName2', group: 'identity'},
+            {key: 'columnDisplayedCustom3', customProp: 'customPropertyName3', group: 'identity'}
+        ];
+
+        $scope.columnGroups = [
+            {id: 'status', titleKey: 'form.settings.common.group.status'},
+            {id: 'identity', titleKey: 'form.settings.common.group.identity'},
+            {id: 'hardware', titleKey: 'form.settings.common.group.hardware'},
+            {id: 'compliance', titleKey: 'form.settings.common.group.compliance'},
+            {id: 'launcher', titleKey: 'form.settings.common.group.launcher'}
+        ];
+
+        var columnDefApplies = function (def) {
+            return !def.customProp || !!($scope.settings && $scope.settings[def.customProp]);
+        };
+
+        $scope.columnLabel = function (def) {
+            return def.customProp ? $scope.settings[def.customProp] : localization.localize(def.labelKey);
+        };
+
+        $scope.groupColumns = function (groupId) {
+            return COLUMN_DEFS.filter(function (def) {
+                return def.group === groupId && columnDefApplies(def);
+            });
+        };
+
+        $scope.orderedColumnDefs = function () {
+            return COLUMN_DEFS.filter(columnDefApplies);
+        };
+
+        $scope.enabledColumnDefs = function () {
+            return $scope.orderedColumnDefs().filter(function (def) {
+                return $scope.userRoleSettings && $scope.userRoleSettings[def.key];
+            });
+        };
+
+        $scope.totalColumnCount = function () {
+            return $scope.orderedColumnDefs().length;
+        };
+
+        $scope.enabledColumnCount = function () {
+            return $scope.enabledColumnDefs().length;
+        };
+
+        $scope.groupEnabledCount = function (groupId) {
+            return $scope.groupColumns(groupId).filter(function (def) {
+                return $scope.userRoleSettings && $scope.userRoleSettings[def.key];
+            }).length;
+        };
+
+        $scope.setGroupAll = function (groupId, value) {
+            $scope.groupColumns(groupId).forEach(function (def) {
+                $scope.userRoleSettings[def.key] = value;
+            });
+        };
+
+        var columnsSnapshot = null;
+
+        $scope.isColumnsDirty = function () {
+            return !!columnsSnapshot && !angular.equals($scope.userRoleSettings, columnsSnapshot);
+        };
+
+        $scope.resetColumnsSettings = function () {
+            if (!columnsSnapshot) {
+                return;
+            }
+            angular.forEach(columnsSnapshot, function (value, key) {
+                $scope.userRoleSettings[key] = value;
+            });
+        };
+
+        $scope.currentRoleName = function () {
+            var role = null;
+            angular.forEach($scope.userRoles, function (r) {
+                if (r.id === $scope.formData.userRoleId) {
+                    role = r;
+                }
+            });
+            return role ? role.name : '';
+        };
+
+        $scope.roleDropdownProxy = $scope.formData.userRoleId;
+
+        $scope.requestRoleChange = function (roleId) {
+            if (roleId === $scope.formData.userRoleId) {
+                $scope.roleDropdownProxy = $scope.formData.userRoleId;
+                return;
+            }
+            var applyChange = function () {
+                $scope.formData.userRoleId = roleId;
+                $scope.roleDropdownProxy = roleId;
+                $scope.userRoleChanged();
+            };
+            if ($scope.isColumnsDirty()) {
+                confirmModal.getUserConfirmation(localization.localize('form.settings.common.unsaved.role.confirm'), applyChange);
+                // On cancel, revert the dropdown fallback's proxy value back
+                // to the still-active role (the pill buttons never mutated
+                // formData.userRoleId to begin with, so nothing to revert there).
+                $scope.roleDropdownProxy = $scope.formData.userRoleId;
+            } else {
+                applyChange();
+            }
+        };
+
+        $scope.savingColumns = false;
+        $scope.columnsToast = null;
+
+        var showColumnsToast = function (type, message) {
+            $scope.columnsToast = {type: type, message: message};
+            $timeout(function () {
+                if ($scope.columnsToast && $scope.columnsToast.message === message) {
+                    $scope.columnsToast = null;
+                }
+            }, 3000);
         };
 
         var onRequestFailure = function () {
@@ -144,6 +290,7 @@ angular.module('headwind-kiosk')
                 if (response.status === 'OK') {
                     $scope.userRoleSettings = response.data;
                     userRoleSettings[roleId] = response.data;
+                    columnsSnapshot = angular.copy($scope.userRoleSettings);
 
                     userService.getUserRoles(function (response) {
                         if (response.status === 'OK') {
@@ -169,6 +316,7 @@ angular.module('headwind-kiosk')
                     if (response.status === 'OK') {
                         $scope.userRoleSettings = response.data;
                         userRoleSettings[roleId] = response.data;
+                        columnsSnapshot = angular.copy($scope.userRoleSettings);
                     } else {
                         $scope.errorMessage = localization.localizeServerResponse(response);
                     }
@@ -176,6 +324,7 @@ angular.module('headwind-kiosk')
                 }, onRequestFailure);
             } else {
                 $scope.userRoleSettings = userRoleSettings[roleId];
+                columnsSnapshot = angular.copy($scope.userRoleSettings);
             }
         };
 
@@ -344,21 +493,45 @@ angular.module('headwind-kiosk')
             });
         };
 
-        var stateChangeGuardActive = true;
-
-        $scope.$on('$stateChangeStart', function (event, toState, toParams) {
-            if (!stateChangeGuardActive || !$scope.isDesignDirty()) {
-                return;
-            }
-            event.preventDefault();
-            confirmModal.getUserConfirmation(localization.localize('form.settings.design.unsaved.confirm'), function () {
-                stateChangeGuardActive = false;
-                $state.transitionTo(toState.name, toParams);
+        // This controller is shared by every Settings tab (Common/Language/
+        // Hints/Design), each its own instance/scope - only guard
+        // navigation when this instance is actually the Design tab, so the
+        // design-specific confirmation text can't show up while leaving a
+        // different settings tab.
+        // Also: this app's ui-router is v1.x, which no longer broadcasts
+        // the legacy $stateChangeStart event (that's an optional add-on
+        // this app doesn't load) - the supported hook point is $transitions.
+        if ($state.current.name === 'designSettings') {
+            var deregisterTransitionHook = $transitions.onStart({}, function () {
+                if (!$scope.isDesignDirty()) {
+                    return true;
+                }
+                var deferred = $q.defer();
+                confirmModal.getUserConfirmation(localization.localize('form.settings.design.unsaved.confirm'), function () {
+                    deferred.resolve(true);
+                });
+                return deferred.promise;
             });
-        });
+            $scope.$on('$destroy', deregisterTransitionHook);
+        }
+
+        if ($state.current.name === 'commonSettings') {
+            var deregisterColumnsTransitionHook = $transitions.onStart({}, function () {
+                if (!$scope.isColumnsDirty()) {
+                    return true;
+                }
+                var deferred = $q.defer();
+                confirmModal.getUserConfirmation(localization.localize('form.settings.common.unsaved.confirm'), function () {
+                    deferred.resolve(true);
+                });
+                return deferred.promise;
+            });
+            $scope.$on('$destroy', deregisterColumnsTransitionHook);
+        }
 
         $scope.saveCommonSettings = function () {
             clearMessages();
+            $scope.savingColumns = true;
             var settings = [];
             for (var p in userRoleSettings) {
                 if (userRoleSettings.hasOwnProperty(p)) {
@@ -367,15 +540,23 @@ angular.module('headwind-kiosk')
             }
 
             settingsService.updateUserRolesCommonSettings(settings, function (response) {
+                $scope.savingColumns = false;
                 if (response.status === 'OK') {
                     $scope.successMessage = localization.localize('success.settings.common.saved');
                     $timeout(function () {
                         $scope.successMessage = '';
                     }, 2000);
                     $rootScope.$broadcast('aero_COMMON_SETTINGS_UPDATED', settings);
+                    columnsSnapshot = angular.copy($scope.userRoleSettings);
+                    showColumnsToast('success', localization.localize('form.settings.common.toast.saved.prefix') + ' ' + $scope.currentRoleName());
                 } else {
                     $scope.errorMessage = localization.localizeServerResponse(response);
+                    showColumnsToast('error', $scope.errorMessage);
                 }
+            }, function () {
+                $scope.savingColumns = false;
+                $scope.errorMessage = localization.localize('error.request.failure');
+                showColumnsToast('error', $scope.errorMessage);
             });
         };
 
