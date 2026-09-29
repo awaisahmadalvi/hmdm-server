@@ -72,6 +72,16 @@
    the curve itself stays visible as a shape while the very end of the
    fade still lands on transparent pixels (no abrupt cut). */
 .header {
+  /* Explicit, not just inherited from Bootstrap's .navbar-fixed-top class -
+     verified live (Playwright, computed style) that position/z-index were
+     already correct via that class (fixed / 1030) with an opaque white
+     background, so no live bleed-through reproduced. Made explicit here
+     anyway per instruction, so this can never silently regress if that
+     class is ever removed/renamed on the header element - the solid
+     background + stacking order this page's content relies on shouldn't
+     depend on a Bootstrap utility class staying present by coincidence. */
+  position: fixed;
+  z-index: 1030;
   background-color: var(--color-surface);
   border-bottom: 1px solid var(--color-border-subtle);
   box-shadow: 0 1px 6px rgba(15, 23, 42, 0.06);
@@ -1540,108 +1550,377 @@
   white-space: normal;
 }
 
-/* Detailed Information (deviceinfo plugin) - device summary banner above
-   the grouped property list, replacing the old flat 20-row table with no
-   visual hierarchy at all. */
-.deviceinfo-header {
+/* =========================================================
+   Detailed Information (deviceinfo plugin) - "Device Details" page
+   Scoped entirely under .device-details so nothing here leaks onto any
+   other page. Complete visual/layout revamp - all Angular bindings this
+   sits on top of are unchanged (see info.html); this is chrome only.
+   ========================================================= */
+
+.device-details-page-header {
+  margin-bottom: 16px;
+}
+
+.device-details-page-header h4 {
+  margin-bottom: 2px;
+}
+
+.device-details-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* ---------- Search card ---------- */
+
+.device-details-search-card {
+  position: relative;
+}
+
+.device-details-search-input-wrap {
+  position: relative;
+}
+
+.device-details-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.device-details-search-input {
+  padding-left: 36px !important;
+}
+
+.device-details-inline-error {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
+/* ---------- Empty state ---------- */
+
+.device-details-empty {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--color-text-tertiary);
+}
+
+.device-details-empty-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.device-details-empty-title {
+  font-size: 14px;
+}
+
+/* ---------- Loading skeleton ---------- */
+
+.device-details-skeleton-group {
+  margin-top: 20px;
+}
+
+.device-details-skeleton {
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--color-surface-hover) 25%, var(--color-surface-muted) 37%, var(--color-surface-hover) 63%);
+  background-size: 400% 100%;
+  animation: device-details-shimmer 1.4s ease infinite;
+}
+
+.device-details-skeleton-hero {
+  height: 108px;
+  margin-bottom: 20px;
+}
+
+.device-details-skeleton-card {
+  height: 180px;
+}
+
+@keyframes device-details-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* ---------- Hero card ---------- */
+
+.device-details-hero {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
   background: var(--color-surface);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
-  padding: 20px 24px;
+  padding: 24px;
   margin-top: 20px;
+  margin-bottom: 24px;
   animation: summary-card-in 0.4s ease both;
 }
 
-.deviceinfo-header-icon {
+.device-details-hero-main {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.device-details-hero-icon {
   flex: 0 0 auto;
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: rgba(var(--brand-dark-rgb), 0.08);
   color: var(--brand-dark);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 26px;
 }
 
-.deviceinfo-header-title {
-  font-size: 20px;
+.device-details-hero-number {
+  font-size: 22px;
   font-weight: 700;
   color: var(--color-text-primary);
 }
 
-.deviceinfo-header-sub {
+.device-details-hero-desc {
   font-size: 13px;
   color: var(--color-text-secondary);
   margin-top: 2px;
 }
 
-/* Permission yes/no pills, replacing plain colored text - and a neutral
-   variant for accessibility permission, which (per the original template)
-   was never flagged red/green either way. */
-.deviceinfo-badge {
+.device-details-hero-groups {
+  margin-top: 8px;
+}
+
+.device-details-hero-lastseen {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin-top: 8px;
+}
+
+.device-details-hero-stats {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.device-details-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-tertiary);
+  margin-bottom: 4px;
+}
+
+.device-details-stat-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* ---------- Chips ---------- */
+
+.device-details-chip {
+  display: inline-block;
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 6px 6px 0;
+}
+
+.device-details-chip-sm {
+  font-size: 11px;
+  padding: 2px 9px;
+}
+
+/* ---------- Info cards grid ---------- */
+
+.device-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .device-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.device-details-card {
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  padding: 20px 24px;
+  animation: summary-card-in 0.4s ease both;
+}
+
+.device-details-card-full {
+  grid-column: 1 / -1;
+  margin-bottom: 24px;
+}
+
+.device-details-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.device-details-card-header .glyphicon {
+  color: var(--brand-dark);
+  font-size: 13px;
+}
+
+.device-details-card-header-split {
+  justify-content: space-between;
+}
+
+.device-details-permissions-summary {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.device-details-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.device-details-row {
+  display: grid;
+  grid-template-columns: 45% 55%;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.device-details-row-label {
+  color: var(--color-text-tertiary);
+}
+
+.device-details-row-value {
+  color: var(--color-text-primary);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* ---------- Permissions card ---------- */
+
+.device-details-permission-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border-subtle);
+  font-size: 13px;
+}
+
+.device-details-permission-row:first-of-type {
+  border-top: none;
+}
+
+.device-details-permission-label {
+  color: var(--color-text-primary);
+}
+
+/* ---------- Badges (permissions granted/not, mismatch, install status) ---------- */
+
+.device-details-badge {
   display: inline-block;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
-.deviceinfo-badge-yes {
+.device-details-badge-ok {
   background: var(--color-success-bg);
   color: var(--color-success-text);
 }
 
-.deviceinfo-badge-no {
+.device-details-badge-bad {
   background: var(--color-danger-bg);
   color: var(--color-danger);
 }
 
-.deviceinfo-badge-neutral {
-  background: var(--color-surface-muted);
-  color: var(--color-text-secondary);
+.device-details-badge-warn {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  margin-left: 6px;
 }
 
-/* Battery charge as a small track + fill bar instead of a bare number. */
-.deviceinfo-battery {
+/* ---------- Battery bar (hero stat) ---------- */
+
+.device-details-battery {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.deviceinfo-battery-track {
-  width: 120px;
+.device-details-battery-track {
+  width: 90px;
   height: 8px;
   border-radius: 999px;
   background: var(--color-surface-muted);
   overflow: hidden;
 }
 
-.deviceinfo-battery-fill {
+.device-details-battery-fill {
   height: 100%;
   border-radius: 999px;
   background: var(--color-success);
   transition: width 0.3s ease;
 }
 
-.deviceinfo-battery-fill.deviceinfo-battery-mid {
+.device-details-battery-fill.device-details-battery-mid {
   background: var(--color-warning);
 }
 
-.deviceinfo-battery-fill.deviceinfo-battery-low {
+.device-details-battery-fill.device-details-battery-low {
   background: var(--color-danger);
 }
 
-.deviceinfo-battery-text {
+/* ---------- Installation status table ---------- */
+
+.device-details-install-table .table {
+  margin-bottom: 0;
+}
+
+.device-details-app-name {
   font-weight: 600;
   color: var(--color-text-primary);
-  min-width: 34px;
+}
+
+.device-details-app-pkg {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
 }
 
 .modern-page .custom-pagination-wrapper {

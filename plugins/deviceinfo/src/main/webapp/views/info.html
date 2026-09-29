@@ -1,26 +1,27 @@
-<div class="width-1000 modern-page" ng-controller="PluginDeviceInfoController">
-    <div class="text-center row">
-        <h4 localized>plugin.deviceinfo.tab.title</h4>
+<div class="width-1200 modern-page device-details" ng-controller="PluginDeviceInfoController">
+
+    <div class="device-details-page-header">
+        <h4 localized>plugin.deviceinfo.search.title</h4>
+        <div class="device-details-subtitle" localized>plugin.deviceinfo.search.subtitle</div>
     </div>
 
-    <div class='form-group' ng-if='errorMessage'>
-        <div class='error'><span>{{errorMessage}}</span></div>
-    </div>
-
-    <form class="form-horizontal row modern-toolbar">
+    <form class="form-horizontal row modern-toolbar device-details-search-card">
         <div class="col-sm-8">
-            <input type="text"
-                   ng-model="formData.deviceNumber"
-                   ng-enter='search()'
-                   localized-placeholder="search.placeholder.device"
-                   autocomplete="off"
-                   class="form-control"
-                   typeahead="address for address in searchDevices($viewValue)"
-                   typeahead-loading="loadingDevices"
-                   typeahead-wait-ms="300"
-                   typeahead-focus-first="false"
-                   typeahead-input-formatter="deviceLookupFormatter($model)"
-                   typeahead-no-results="noResults">
+            <div class="device-details-search-input-wrap">
+                <span class="glyphicon glyphicon-search device-details-search-icon"></span>
+                <input type="text"
+                       ng-model="formData.deviceNumber"
+                       ng-enter='search()'
+                       localized-placeholder="search.placeholder.device"
+                       autocomplete="off"
+                       class="form-control device-details-search-input"
+                       typeahead="address for address in searchDevices($viewValue)"
+                       typeahead-loading="loadingDevices"
+                       typeahead-wait-ms="300"
+                       typeahead-focus-first="false"
+                       typeahead-input-formatter="deviceLookupFormatter($model)"
+                       typeahead-no-results="noResults">
+            </div>
         </div>
 
         <div class="col-sm-4 text-right">
@@ -28,196 +29,287 @@
             <button type='button' class='btn btn-default' ng-if="deviceInfo"
                     ng-click='viewDynamicData()' localized>button.plugin.deviceinfo.dynamic</button>
         </div>
+
+        <div class="col-sm-12" ng-if='errorMessage'>
+            <div class='device-details-inline-error'><span>{{errorMessage}}</span></div>
+        </div>
     </form>
 
-    <div ng-if="deviceInfo" class="deviceinfo-header">
-        <div class="deviceinfo-header-icon">
-            <span class="glyphicon glyphicon-phone"></span>
-        </div>
-        <div>
-            <div class="deviceinfo-header-title">{{deviceInfo.deviceNumber}}</div>
-            <div class="deviceinfo-header-sub">
-                <span ng-if="deviceInfo.model">{{deviceInfo.model}}</span>
-                <span ng-if="deviceInfo.model && deviceInfo.osVersion"> &middot; </span>
-                <span ng-if="deviceInfo.osVersion">{{deviceInfo.osVersion}}</span>
-                <span ng-if="!deviceInfo.model && !deviceInfo.osVersion">&nbsp;</span>
-            </div>
+    <div ng-if="loading" class="device-details-skeleton-group">
+        <div class="device-details-skeleton device-details-skeleton-hero"></div>
+        <div class="device-details-grid">
+            <div class="device-details-skeleton device-details-skeleton-card"></div>
+            <div class="device-details-skeleton device-details-skeleton-card"></div>
+            <div class="device-details-skeleton device-details-skeleton-card"></div>
+            <div class="device-details-skeleton device-details-skeleton-card"></div>
         </div>
     </div>
 
-    <div ng-if="deviceInfo" class="row margin-top-40">
-        <div ng-class="{'col-sm-5': latestDynamicData, 'col-sm-12': !latestDynamicData}">
-            <div class="modern-proplist">
-            <table class='table'>
-                <tr>
-                    <th colspan="2" localized class="text-center">plugin.deviceinfo.section.identity</th>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.time</th>
-                    <td>
+    <div class="device-details-empty" ng-if="!loading && !deviceInfo && !errorMessage">
+        <span class="glyphicon glyphicon-phone device-details-empty-icon"></span>
+        <div class="device-details-empty-title" localized>plugin.deviceinfo.empty.title</div>
+    </div>
+
+    <div ng-if="!loading && deviceInfo">
+
+        <div class="device-details-hero">
+            <div class="device-details-hero-main">
+                <div class="device-details-hero-icon">
+                    <span class="glyphicon glyphicon-phone"></span>
+                </div>
+                <div>
+                    <div class="device-details-hero-number">{{deviceInfo.deviceNumber}}</div>
+                    <div class="device-details-hero-desc" ng-if="deviceInfo.description" ng-bind-html="formatMultiLine(deviceInfo.description)"></div>
+                    <div class="device-details-hero-groups" ng-if="deviceInfo.groups && deviceInfo.groups.length > 0">
+                        <span class="device-details-chip" ng-repeat="group in deviceInfo.groups">{{group.name}}</span>
+                    </div>
+                    <div class="device-details-hero-lastseen" ng-if="deviceInfo.latestUpdateTime">
+                        <span localized>plugin.deviceinfo.last.seen</span>:
                         {{deviceInfo.latestUpdateTime | date:'dd.MM.yy HH:mm:ss'}}
-                        <span ng-if="deviceInfo.latestUpdateTime">
+                        <span ng-if="deviceInfo.latestUpdateInterval">
                             ({{deviceInfo.latestUpdateInterval}}
                             {{('plugin.deviceinfo.enum.time.' + deviceInfo.latestUpdateIntervalType) | localize}})
                         </span>
-                    </td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.deviceNumber</th>
-                    <td>{{deviceInfo.deviceNumber}}</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.description</th>
-                    <td ng-bind-html="formatMultiLine(deviceInfo.description)"></td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.groups</th>
-                    <td>
-                        <span ng-repeat="group in deviceInfo.groups">
-                            {{group.name}}<br/>
-                        </span>
-                    </td>
-                </tr>
+                    </div>
+                </div>
+            </div>
 
-                <tr>
-                    <th colspan="2" localized class="text-center">plugin.deviceinfo.section.identifiers</th>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.imei.required</th>
-                    <td>{{deviceInfo.imeiRequired}}</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.imei</th>
-                    <td>{{deviceInfo.imeiActual}}</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.phone.required</th>
-                    <td>{{deviceInfo.phoneNumberRequired}}</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.phone</th>
-                    <td>{{deviceInfo.phoneNumberActual}}</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.iccid</th>
-                    <td>{{deviceInfo.iccid}}</td>
-                </tr>
-                <tr ng-if="deviceInfo.imsi">
-                    <th localized>plugin.deviceinfo.title.imsi</th>
-                    <td>{{deviceInfo.imsi}}</td>
-                </tr>
-                <tr ng-if="deviceInfo.imei2">
-                    <th localized>plugin.deviceinfo.title.imei2</th>
-                    <td>{{deviceInfo.imei2}}</td>
-                </tr>
-                <tr ng-if="deviceInfo.phone2">
-                    <th localized>plugin.deviceinfo.title.phone2</th>
-                    <td>{{deviceInfo.phone2}}</td>
-                </tr>
-                <tr ng-if="deviceInfo.iccid2">
-                    <th localized>plugin.deviceinfo.title.iccid2</th>
-                    <td>{{deviceInfo.iccid2}}</td>
-                </tr>
-                <tr ng-if="deviceInfo.imsi2">
-                    <th localized>plugin.deviceinfo.title.imsi2</th>
-                    <td>{{deviceInfo.imsi}}</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.serial</th>
-                    <td>{{deviceInfo.serial}}</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.mac</th>
-                    <td>{{deviceInfo.mac}}</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.cpu</th>
-                    <td>{{deviceInfo.cpu}}</td>
-                </tr>
-
-                <tr>
-                    <th colspan="2" localized class="text-center">plugin.deviceinfo.section.permissions</th>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.permission.1</th>
-                    <td>
-                        <span class="deviceinfo-badge" ng-class="deviceInfo.adminPermission ? 'deviceinfo-badge-yes' : 'deviceinfo-badge-no'">
-                            {{('plugin.deviceinfo.title.permission.' + deviceInfo.adminPermission) | localize}}
-                        </span>
-                    </td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.permission.2</th>
-                    <td>
-                        <span class="deviceinfo-badge" ng-class="deviceInfo.overlapPermission ? 'deviceinfo-badge-yes' : 'deviceinfo-badge-no'">
-                            {{('plugin.deviceinfo.title.permission.' + deviceInfo.overlapPermission) | localize}}
-                        </span>
-                    </td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.permission.3</th>
-                    <td>
-                        <span class="deviceinfo-badge" ng-class="deviceInfo.historyPermission ? 'deviceinfo-badge-yes' : 'deviceinfo-badge-no'">
-                            {{('plugin.deviceinfo.title.permission.' + deviceInfo.historyPermission) | localize}}
-                        </span>
-                    </td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.permission.4</th>
-                    <td>
-                        <span class="deviceinfo-badge deviceinfo-badge-neutral">
-                            {{('plugin.deviceinfo.title.permission.' + !!deviceInfo.accessibilityPermission) | localize}}
-                        </span>
-                    </td>
-                </tr>
-
-                <tr>
-                    <th colspan="2" localized class="text-center">plugin.deviceinfo.section.state</th>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.model</th>
-                    <td>{{deviceInfo.model}}</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.os.version</th>
-                    <td>{{deviceInfo.osVersion}}</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.battery.level</th>
-                    <td>
-                        <div class="deviceinfo-battery" ng-if="deviceInfo.batteryLevel">
-                            <div class="deviceinfo-battery-track">
-                                <div class="deviceinfo-battery-fill"
-                                     ng-class="{'deviceinfo-battery-low': deviceInfo.batteryLevel < 20, 'deviceinfo-battery-mid': deviceInfo.batteryLevel >= 20 && deviceInfo.batteryLevel < 50}"
-                                     ng-style="{width: deviceInfo.batteryLevel + '%'}"></div>
-                            </div>
-                            <span class="deviceinfo-battery-text" ng-class="{'device-data-mismatch': deviceInfo.batteryLevel < 20}">{{deviceInfo.batteryLevel}}%</span>
+            <div class="device-details-hero-stats">
+                <div class="device-details-stat">
+                    <div class="device-details-stat-label" localized>plugin.deviceinfo.title.model</div>
+                    <div class="device-details-stat-value">{{deviceInfo.model || '—'}}</div>
+                </div>
+                <div class="device-details-stat">
+                    <div class="device-details-stat-label" localized>plugin.deviceinfo.title.os.version</div>
+                    <div class="device-details-stat-value">{{deviceInfo.osVersion || '—'}}</div>
+                </div>
+                <div class="device-details-stat" ng-if="deviceInfo.batteryLevel">
+                    <div class="device-details-stat-label" localized>plugin.deviceinfo.title.battery.level</div>
+                    <div class="device-details-battery">
+                        <div class="device-details-battery-track">
+                            <div class="device-details-battery-fill"
+                                 ng-class="{'device-details-battery-low': deviceInfo.batteryLevel < 20, 'device-details-battery-mid': deviceInfo.batteryLevel >= 20 && deviceInfo.batteryLevel < 50}"
+                                 ng-style="{width: deviceInfo.batteryLevel + '%'}"></div>
                         </div>
+                        <span class="device-details-stat-value">{{deviceInfo.batteryLevel}}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="device-details-grid">
+
+            <div class="device-details-card">
+                <div class="device-details-card-header">
+                    <span class="glyphicon glyphicon-user"></span>
+                    <span localized>plugin.deviceinfo.section.identity</span>
+                </div>
+                <div class="device-details-rows">
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.deviceNumber</div>
+                        <div class="device-details-row-value">{{deviceInfo.deviceNumber || '—'}}</div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.description</div>
+                        <div class="device-details-row-value" ng-bind-html="formatMultiLine(deviceInfo.description) || '&mdash;'"></div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.groups</div>
+                        <div class="device-details-row-value">
+                            <span ng-if="!deviceInfo.groups || deviceInfo.groups.length === 0">&mdash;</span>
+                            <span class="device-details-chip device-details-chip-sm" ng-repeat="group in deviceInfo.groups">{{group.name}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="device-details-card">
+                <div class="device-details-card-header">
+                    <span class="glyphicon glyphicon-hdd"></span>
+                    <span localized>plugin.deviceinfo.section.hardware</span>
+                </div>
+                <div class="device-details-rows">
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.model</div>
+                        <div class="device-details-row-value">{{deviceInfo.model || '—'}}</div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.serial</div>
+                        <div class="device-details-row-value">{{deviceInfo.serial || '—'}}</div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.cpu</div>
+                        <div class="device-details-row-value">{{deviceInfo.cpu || '—'}}</div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.mac</div>
+                        <div class="device-details-row-value">{{deviceInfo.mac || '—'}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="device-details-card">
+                <div class="device-details-card-header">
+                    <span class="glyphicon glyphicon-signal"></span>
+                    <span localized>plugin.deviceinfo.section.connectivity</span>
+                </div>
+                <div class="device-details-rows">
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.imei.required</div>
+                        <div class="device-details-row-value">{{deviceInfo.imeiRequired || '—'}}</div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.imei</div>
+                        <div class="device-details-row-value">
+                            {{deviceInfo.imeiActual || '—'}}
+                            <span class="device-details-badge device-details-badge-warn"
+                                  ng-if="deviceInfo.imeiRequired && deviceInfo.imeiActual && deviceInfo.imeiRequired !== deviceInfo.imeiActual"
+                                  localized>plugin.deviceinfo.mismatch</span>
+                        </div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.phone.required</div>
+                        <div class="device-details-row-value">{{deviceInfo.phoneNumberRequired || '—'}}</div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.phone</div>
+                        <div class="device-details-row-value">
+                            {{deviceInfo.phoneNumberActual || '—'}}
+                            <span class="device-details-badge device-details-badge-warn"
+                                  ng-if="deviceInfo.phoneNumberRequired && deviceInfo.phoneNumberActual && deviceInfo.phoneNumberRequired !== deviceInfo.phoneNumberActual"
+                                  localized>plugin.deviceinfo.mismatch</span>
+                        </div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.iccid</div>
+                        <div class="device-details-row-value">{{deviceInfo.iccid || '—'}}</div>
+                    </div>
+                    <div class="device-details-row" ng-if="deviceInfo.imsi">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.imsi</div>
+                        <div class="device-details-row-value">{{deviceInfo.imsi}}</div>
+                    </div>
+                    <div class="device-details-row" ng-if="deviceInfo.imei2">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.imei2</div>
+                        <div class="device-details-row-value">{{deviceInfo.imei2}}</div>
+                    </div>
+                    <div class="device-details-row" ng-if="deviceInfo.phone2">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.phone2</div>
+                        <div class="device-details-row-value">{{deviceInfo.phone2}}</div>
+                    </div>
+                    <div class="device-details-row" ng-if="deviceInfo.iccid2">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.iccid2</div>
+                        <div class="device-details-row-value">{{deviceInfo.iccid2}}</div>
+                    </div>
+                    <div class="device-details-row" ng-if="deviceInfo.imsi2">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.imsi2</div>
+                        <div class="device-details-row-value">{{deviceInfo.imsi}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="device-details-card">
+                <div class="device-details-card-header">
+                    <span class="glyphicon glyphicon-cog"></span>
+                    <span localized>plugin.deviceinfo.section.management</span>
+                </div>
+                <div class="device-details-rows">
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.mdm.mode</div>
+                        <div class="device-details-row-value" ng-if="deviceInfo.mdmMode !== undefined">{{('plugin.deviceinfo.boolean.' + deviceInfo.mdmMode) | localize}}</div>
+                        <div class="device-details-row-value" ng-if="deviceInfo.mdmMode === undefined">&mdash;</div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.kiosk.mode</div>
+                        <div class="device-details-row-value" ng-if="deviceInfo.kioskMode !== undefined">{{('plugin.deviceinfo.boolean.' + deviceInfo.kioskMode) | localize}}</div>
+                        <div class="device-details-row-value" ng-if="deviceInfo.kioskMode === undefined">&mdash;</div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.launcher.type</div>
+                        <div class="device-details-row-value">{{deviceInfo.launcherType || '—'}}</div>
+                    </div>
+                    <div class="device-details-row">
+                        <div class="device-details-row-label" localized>plugin.deviceinfo.title.default.launcher</div>
+                        <div class="device-details-row-value">
+                            {{deviceInfo.launcherPackage || '—'}}
+                            <span class="device-details-badge device-details-badge-warn" ng-if="deviceInfo.defaultLauncher === false" localized>plugin.deviceinfo.mismatch</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="device-details-card device-details-card-full">
+            <div class="device-details-card-header device-details-card-header-split">
+                <div>
+                    <span class="glyphicon glyphicon-lock"></span>
+                    <span localized>plugin.deviceinfo.section.permissions</span>
+                </div>
+                <div class="device-details-permissions-summary">
+                    {{permissionsGrantedCount()}} / 4 {{'plugin.deviceinfo.permissions.granted.label' | localize}}
+                </div>
+            </div>
+            <div class="device-details-permission-row">
+                <div class="device-details-permission-label" localized>plugin.deviceinfo.title.permission.1</div>
+                <span class="device-details-badge" ng-class="deviceInfo.adminPermission ? 'device-details-badge-ok' : 'device-details-badge-bad'">
+                    {{(deviceInfo.adminPermission ? 'plugin.deviceinfo.permission.granted' : 'plugin.deviceinfo.permission.not.granted') | localize}}
+                </span>
+            </div>
+            <div class="device-details-permission-row">
+                <div class="device-details-permission-label" localized>plugin.deviceinfo.title.permission.2</div>
+                <span class="device-details-badge" ng-class="deviceInfo.overlapPermission ? 'device-details-badge-ok' : 'device-details-badge-bad'">
+                    {{(deviceInfo.overlapPermission ? 'plugin.deviceinfo.permission.granted' : 'plugin.deviceinfo.permission.not.granted') | localize}}
+                </span>
+            </div>
+            <div class="device-details-permission-row">
+                <div class="device-details-permission-label" localized>plugin.deviceinfo.title.permission.3</div>
+                <span class="device-details-badge" ng-class="deviceInfo.historyPermission ? 'device-details-badge-ok' : 'device-details-badge-bad'">
+                    {{(deviceInfo.historyPermission ? 'plugin.deviceinfo.permission.granted' : 'plugin.deviceinfo.permission.not.granted') | localize}}
+                </span>
+            </div>
+            <div class="device-details-permission-row">
+                <div class="device-details-permission-label" localized>plugin.deviceinfo.title.permission.4</div>
+                <span class="device-details-badge" ng-class="deviceInfo.accessibilityPermission ? 'device-details-badge-ok' : 'device-details-badge-bad'">
+                    {{(deviceInfo.accessibilityPermission ? 'plugin.deviceinfo.permission.granted' : 'plugin.deviceinfo.permission.not.granted') | localize}}
+                </span>
+            </div>
+        </div>
+
+        <div class="device-details-card device-details-card-full" ng-if="deviceInfo.applications && deviceInfo.applications.length > 0">
+            <div class="device-details-card-header">
+                <span class="glyphicon glyphicon-list-alt"></span>
+                <span localized>plugin.deviceinfo.title.apps.status</span>
+            </div>
+            <div class="modern-table-wrap device-details-install-table">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th localized>plugin.deviceinfo.title.apps.name</th>
+                    <th localized>plugin.deviceinfo.title.apps.ver1</th>
+                    <th localized>plugin.deviceinfo.title.apps.ver2</th>
+                    <th localized>plugin.deviceinfo.title.apps.status.column</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="app in deviceInfo.applications">
+                    <td>
+                        <div class="device-details-app-name">{{app.applicationName}}</div>
+                        <div class="device-details-app-pkg">{{app.applicationPkg}}</div>
+                    </td>
+                    <td>{{app.versionInstalled || '—'}}</td>
+                    <td>{{app.versionRequired || '—'}}</td>
+                    <td>
+                        <span class="device-details-badge device-details-badge-ok" ng-if="app.versionInstalled && app.versionValid" localized>plugin.deviceinfo.install.status.uptodate</span>
+                        <span class="device-details-badge device-details-badge-warn" ng-if="app.versionInstalled && !app.versionValid" localized>plugin.deviceinfo.install.status.update</span>
+                        <span class="device-details-badge device-details-badge-bad" ng-if="!app.versionInstalled" localized>plugin.deviceinfo.install.status.notinstalled</span>
                     </td>
                 </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.mdm.mode</th>
-                    <td ng-if="deviceInfo.mdmMode !== undefined">{{('plugin.deviceinfo.boolean.' + deviceInfo.mdmMode) | localize}}</td>
-                    <td ng-if="deviceInfo.mdmMode === undefined">&nbsp;</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.kiosk.mode</th>
-                    <td ng-if="deviceInfo.kioskMode !== undefined">{{('plugin.deviceinfo.boolean.' + deviceInfo.kioskMode) | localize}}</td>
-                    <td ng-if="deviceInfo.kioskMode === undefined">&nbsp;</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.launcher.type</th>
-                    <td>{{deviceInfo.launcherType}}</td>
-                </tr>
-                <tr>
-                    <th localized>plugin.deviceinfo.title.default.launcher</th>
-                    <td ng-class="{'device-data-mismatch': deviceInfo.defaultLauncher === false}">{{deviceInfo.launcherPackage}}</td>
-                </tr>
+                </tbody>
             </table>
             </div>
         </div>
 
-        <div class="col-sm-offset-2 col-sm-5" ng-if="latestDynamicData">
+        <div class="device-details-card device-details-card-full" ng-if="latestDynamicData">
             <div class="modern-proplist">
             <table class='table'>
                 <tr>
@@ -325,33 +417,6 @@
 
             </table>
             </div>
-        </div>
-    </div>
-
-    <div ng-if="deviceInfo" class="row margin-top-40">
-        <div class="text-center">
-            <h5 localized>plugin.deviceinfo.title.apps.status</h5>
-        </div>
-
-        <div class="modern-table-wrap">
-        <table class="table">
-            <thead>
-            <tr>
-                <th localized>plugin.deviceinfo.title.apps.name</th>
-                <th localized>plugin.deviceinfo.title.apps.pkg</th>
-                <th localized>plugin.deviceinfo.title.apps.ver1</th>
-                <th localized>plugin.deviceinfo.title.apps.ver2</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat="app in deviceInfo.applications">
-                <td>{{app.applicationName}}</td>
-                <td>{{app.applicationPkg}}</td>
-                <td ng-class="{'device-data-mismatch': !app.versionValid}">{{app.versionInstalled}}</td>
-                <td ng-class="{'device-data-mismatch': !app.versionInstalled && app.versionRequired !== '0'}">{{app.versionRequired}}</td>
-            </tr>
-            </tbody>
-        </table>
         </div>
 
     </div>

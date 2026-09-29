@@ -277,7 +277,9 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
         $scope.dynamicDataMobile2FieldsOrder = [].concat(MOBILE2_PARAMS);
 
         var loadData = function () {
+            $scope.loading = true;
             pluginDeviceInfoService.getDeviceInfo({"deviceNumber": deviceLookupFormatter($scope.formData.deviceNumber)}, function (response) {
+                $scope.loading = false;
                 if (response.status === 'OK') {
                     $scope.deviceInfo = response.data;
                     $scope.latestDynamicData = response.data.latestDynamicData;
@@ -291,9 +293,12 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
                         $scope.dynamicMobile2Data = data.mobile2Data;
                     }
                 } else {
+                    $scope.deviceInfo = undefined;
                     $scope.errorMessage = localization.localizeServerResponse(response);
                 }
             }, function () {
+                $scope.loading = false;
+                $scope.deviceInfo = undefined;
                 $scope.errorMessage = localization.localize("error.request.failure");
             });
         };
@@ -365,6 +370,18 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
             } else {
                 return text.replace(/\n/g, "<br/>");
             }
+        };
+
+        $scope.permissionsGrantedCount = function () {
+            if (!$scope.deviceInfo) {
+                return 0;
+            }
+            return [
+                $scope.deviceInfo.adminPermission,
+                $scope.deviceInfo.overlapPermission,
+                $scope.deviceInfo.historyPermission,
+                $scope.deviceInfo.accessibilityPermission
+            ].filter(Boolean).length;
         };
 
         if (deviceNumber) {
