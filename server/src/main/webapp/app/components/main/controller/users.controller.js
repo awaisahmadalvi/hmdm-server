@@ -1,7 +1,7 @@
 // Localization completed
 angular.module('headwind-kiosk')
     .controller('UsersTabController', function ($scope, $rootScope, $timeout, $state, userService, $modal, confirmModal,
-                                                alertService, authService, $window, localization) {
+                                                alertService, authService, $window, localization, utils) {
 
         $scope.search = {};
 
@@ -60,21 +60,11 @@ angular.module('headwind-kiosk')
             return !!($scope.currentUser && user && $scope.currentUser.id === user.id);
         };
 
-        var ROLE_BADGE_PALETTE = ['users-role-blue', 'users-role-purple', 'users-role-teal', 'users-role-amber'];
-
+        // Shared with the User roles page (utils.roleBadgeClass) so a role
+        // reads as the same color on both pages.
         $scope.roleBadgeClass = function (user) {
             var name = user.userRole && user.userRole.name;
-            if (user.superAdmin || name === 'Admin') {
-                return 'users-role-admin';
-            }
-            if (!name) {
-                return 'users-role-neutral';
-            }
-            var hash = 0;
-            for (var i = 0; i < name.length; i++) {
-                hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-            }
-            return ROLE_BADGE_PALETTE[hash % ROLE_BADGE_PALETTE.length];
+            return utils.roleBadgeClass(name, user.superAdmin);
         };
 
         $scope.loading = false;

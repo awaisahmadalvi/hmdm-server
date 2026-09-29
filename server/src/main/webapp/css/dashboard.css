@@ -3364,3 +3364,141 @@
     width: 100%;
   }
 }
+
+/* =========================================================
+   User roles page (Settings -> User roles) and its add/edit dialog.
+   Scoped under .roles-page. Reuses .logs-page-header, .columns-grid (3/2/1
+   card grid), .device-details-card(-header)(-header-split), .device-
+   details-empty-icon/-title, .device-details-skeleton(-card), .users-
+   role-* (role pill colors, kept consistent with the Users page) and
+   .users-you-badge, .logs-chip, .logs-btn-reset, .action-link, .users-
+   row-menu, .modern-toast, .modern-form-section, .modern-toggle,
+   .columns-row(-label), .columns-group-count/-toggle-links(-sep) instead
+   of duplicating any of them.
+   ========================================================= */
+
+.roles-card {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.roles-card-builtin {
+  cursor: default;
+}
+
+.roles-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.roles-role-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+/* .users-role-* classes (Users page) set both a pale .background and a
+   saturated .color for the pill text - for a small solid dot, take the
+   saturated color as the fill instead via currentColor. Compound
+   selectors so this wins regardless of stylesheet order. */
+.roles-role-dot.users-role-admin,
+.roles-role-dot.users-role-blue,
+.roles-role-dot.users-role-purple,
+.roles-role-dot.users-role-teal,
+.roles-role-dot.users-role-amber,
+.roles-role-dot.users-role-neutral {
+  background: currentColor;
+}
+
+.roles-role-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.roles-card-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 10px;
+}
+
+.roles-card-desc-muted {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+.roles-card-summary {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  margin-bottom: 10px;
+}
+
+.roles-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex: 1 1 auto;
+}
+
+.roles-card-footer {
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 10px;
+  margin-top: auto;
+}
+
+.roles-empty-card {
+  grid-column: 1 / -1;
+  text-align: center;
+  cursor: default;
+}
+
+/* ---------- Add/edit role dialog ---------- */
+
+.role-permissions-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.role-permissions-search {
+  flex: 1 1 0;
+}
+
+.role-permissions-summary {
+  white-space: nowrap;
+}
+
+.roles-permission-group + .roles-permission-group {
+  margin-top: 14px;
+}
+
+.roles-permission-group-header {
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .roles-page .logs-page-header {
+    flex-direction: column;
+  }
+
+  .roles-page .logs-page-header-actions {
+    width: 100%;
+  }
+
+  .roles-page .logs-page-header-actions .btn {
+    width: 100%;
+  }
+}

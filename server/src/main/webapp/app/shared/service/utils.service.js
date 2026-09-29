@@ -31,6 +31,26 @@ angular.module('headwind-kiosk')
                 } else if (v1n.length > v2n.length) {
                     return 1;
                 }
-                return 0;            }
+                return 0;            },
+
+            // Shared by the Users and User roles pages so a role reads as
+            // the same color everywhere it appears: the admin role always
+            // gets the brand color, everything else is deterministically
+            // hashed onto a small neutral palette (so custom roles stay
+            // visually distinct from each other without hardcoding names).
+            roleBadgeClass: function (name, isAdmin) {
+                if (isAdmin || name === 'Admin') {
+                    return 'users-role-admin';
+                }
+                if (!name) {
+                    return 'users-role-neutral';
+                }
+                var palette = ['users-role-blue', 'users-role-purple', 'users-role-teal', 'users-role-amber'];
+                var hash = 0;
+                for (var i = 0; i < name.length; i++) {
+                    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+                }
+                return palette[hash % palette.length];
+            }
         }
     });

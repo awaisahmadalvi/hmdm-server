@@ -1,32 +1,83 @@
-<div ng-show='errorMessage' class='modal-header'>
-    <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
+<div class="modern-modal-header">
+    <div class="modern-modal-icon">
+        <span class="glyphicon glyphicon-list-alt"></span>
+    </div>
+    <h4 class="modern-modal-title" ng-if="!role.id" localized>form.role.modal.title.add</h4>
+    <h4 class="modern-modal-title" ng-if="role.id">{{'form.role.modal.title.edit.prefix' | localize}} {{role.name}}</h4>
+    <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
 </div>
-<div class='modal-body'>
+
+<div class='modal-body modern-modal-body'>
+
+    <div ng-show='errorMessage' class='device-details-inline-error'><span>{{errorMessage}}</span></div>
+
     <form class='form-horizontal'>
 
         <div class='form-group'>
             <label class='col-sm-3 control-label' localized>form.role.name</label>
             <div class='col-sm-9'>
-                <input ng-model='role.name' required type='text' class='form-control'
+                <input ng-model='role.name' required type='text' class='form-control logs-input'
                        localized-placeholder='form.role.name.placeholder'>
             </div>
         </div>
 
         <div class='form-group'>
-            <label class='col-sm-3 control-label' localized>form.role.permissions</label>
+            <label class='col-sm-3 control-label' localized>form.role.description</label>
             <div class='col-sm-9'>
-                <div ng-dropdown-multiselect
-                     options='permissionList'
-                     translation-texts='tablePermissionTexts'
-                     selected-model='permissionSelection'
-                     class='left margin-right-half custom-multi-select limited-multi-select'></div>
+                <input ng-model='role.description' type='text' class='form-control logs-input'
+                       localized-placeholder='form.role.description.placeholder'>
             </div>
         </div>
 
-        <div class='form-group'>
-            <div class='col-sm-offset-2 col-sm-10'>
-                <button type='submit' class='btn btn-default' ng-click='save()' localized>button.save</button>
+        <div class="modern-form-section" localized>form.role.permissions</div>
+
+        <div class="role-permissions-toolbar">
+            <div class="logs-input-icon-wrap role-permissions-search">
+                <span class="glyphicon glyphicon-search logs-input-icon"></span>
+                <input type="text" class="form-control logs-input" ng-model="permissionSearch"
+                       localized-placeholder="form.role.permissions.search.placeholder">
+            </div>
+            <span class="logs-results-count role-permissions-summary">
+                {{permissionSelection.length}} {{'form.role.permissions.of' | localize}} {{permissionList.length}} {{'form.role.permissions.enabled.suffix' | localize}}
+            </span>
+        </div>
+
+        <div class="device-details-card roles-permission-group" ng-repeat="group in visibleGroups()">
+            <div class="device-details-card-header device-details-card-header-split roles-permission-group-header"
+                 ng-click="toggleGroupCollapsed(group.id)">
+                <span>
+                    <span class="glyphicon" ng-class="collapsedGroups[group.id] ? 'glyphicon-triangle-right' : 'glyphicon-triangle-bottom'"></span>
+                    {{group.titleKey | localize}}
+                </span>
+                <span class="columns-group-count">{{groupEnabledCount(group)}}/{{group.permissions.length}}</span>
+            </div>
+
+            <div class="columns-group-toggle-links" ng-if="!collapsedGroups[group.id]">
+                <a class="action-link" ng-click="setGroupAll(group, true)">{{'form.settings.common.group.all' | localize}}</a>
+                <span class="columns-group-toggle-sep">/</span>
+                <a class="action-link" ng-click="setGroupAll(group, false)">{{'form.settings.common.group.none' | localize}}</a>
+            </div>
+
+            <div ng-if="!collapsedGroups[group.id]">
+                <label class="columns-row" ng-repeat="perm in group.permissions" ng-click="togglePermission(perm.id)">
+                    <span class="columns-row-label">{{perm.label}}</span>
+                    <span class="modern-toggle">
+                        <input type="checkbox" class="modern-toggle-input"
+                               ng-checked="isPermissionSelected(perm.id)" ng-click="$event.preventDefault()">
+                        <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class='form-group modern-modal-actions'>
+            <div class='col-sm-offset-3 col-sm-9'>
                 <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
+                <button type='submit' class='btn btn-modern-primary' ng-disabled="savingRole" ng-click='save()'>
+                    <span ng-if="!savingRole && role.id" localized>button.save</span>
+                    <span ng-if="!savingRole && !role.id" localized>form.role.create</span>
+                    <span ng-if="savingRole" localized>form.role.saving</span>
+                </button>
             </div>
         </div>
     </form>

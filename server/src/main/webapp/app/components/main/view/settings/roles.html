@@ -1,45 +1,76 @@
 <!-- Localization completed -->
-<div class="width-1000 modern-page" ng-controller="RolesTabController">
+<div class="width-1200 modern-page roles-page" ng-controller="RolesTabController">
 
-    <div class="text-center">
-        <h4 localized>form.settings.roles.title</h4>
+    <div class="logs-page-header">
+        <div>
+            <h4 localized>form.settings.roles.title</h4>
+            <div class="logs-page-subtitle" localized>form.settings.roles.subtitle</div>
+        </div>
+        <div class="logs-page-header-actions">
+            <button type="button" class="btn btn-modern-primary" ng-click="editRole({})">
+                <span class="glyphicon glyphicon-plus"></span> <span localized>form.settings.roles.add</span>
+            </button>
+        </div>
     </div>
 
-    <div>
-        <div class='form-group modern-toolbar'>
-            <div class='configurations-search-buttons'>
-                <button type='button' class='btn btn-default btn-modern-primary' ng-click='editRole( {} )' localized>button.add</button>
+    <div class="columns-grid" ng-if="loading">
+        <div class="device-details-skeleton device-details-skeleton-card"></div>
+        <div class="device-details-skeleton device-details-skeleton-card"></div>
+        <div class="device-details-skeleton device-details-skeleton-card"></div>
+    </div>
+
+    <div class="columns-grid" ng-if="!loading">
+
+        <div class="device-details-card roles-card roles-card-builtin" ng-if="builtInRole">
+            <div class="roles-card-header">
+                <span class="roles-role-dot" ng-class="roleBadgeClass(builtInRole)"></span>
+                <span class="roles-role-name">{{builtInRole.name}}</span>
+                <span class="users-you-badge" localized>form.role.builtin.badge</span>
+            </div>
+            <div class="roles-card-desc roles-card-desc-muted" localized>form.role.builtin.summary</div>
+        </div>
+
+        <div class="device-details-card roles-card" ng-repeat="role in roles" ng-click="editRole(role)">
+            <div class="roles-card-header">
+                <span class="roles-role-dot" ng-class="roleBadgeClass(role)"></span>
+                <span class="roles-role-name">{{role.name}}</span>
+                <div class="users-row-menu" uib-dropdown ng-click="$event.stopPropagation()">
+                    <button type="button" class="btn btn-default" uib-dropdown-toggle>
+                        <span class="glyphicon glyphicon-option-vertical"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu>
+                        <li><a ng-click="removeRole(role)" localized>form.role.action.delete</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="roles-card-desc" ng-class="{'roles-card-desc-muted': !role.description}">
+                {{role.description || ('form.role.no.description' | localize)}}
+            </div>
+
+            <div class="roles-card-summary">
+                {{role.permissions.length || 0}} {{'form.role.permissions.count.suffix' | localize}}
+            </div>
+
+            <div class="roles-chips" ng-if="role.permissions.length > 0">
+                <span class="logs-chip" ng-repeat="label in roleChips(role, 4).shown">{{label}}</span>
+                <span class="logs-chip" ng-if="roleChips(role, 4).more > 0">+{{roleChips(role, 4).more}} {{'form.role.more.chips' | localize}}</span>
+            </div>
+
+            <div class="roles-card-footer" ng-click="$event.stopPropagation()">
+                <button type="button" class="logs-btn-reset" ng-click="editRole(role)" localized>form.role.action.edit</button>
             </div>
         </div>
 
-        <div class="modern-table-wrap" ng-if='roles && roles.length > 0'>
-        <table class='table'>
-            <thead>
-            <tr>
-                <th localized>table.heading.role.name</th>
-                <th class='actions-column' localized>table.heading.role.actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat='role in roles'>
-                <td>{{role.name}}</td>
-                <td>
-                    <div>
-                        <button type='button' class='btn btn-default' ng-click='editRole(role)'>
-                            <span class='glyphicon glyphicon-pencil'></span>
-                        </button>
-                        <button type='button'
-                                class='btn btn-default'
-                                ng-click='removeRole(role)'>
-                            <span class='glyphicon glyphicon-trash'></span>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="device-details-card roles-card roles-empty-card" ng-if="!loading && roles.length === 0">
+            <span class="glyphicon glyphicon-list-alt device-details-empty-icon"></span>
+            <div class="device-details-empty-title" localized>form.role.empty.title</div>
+            <div class="logs-empty-subtitle" localized>form.role.empty.subtitle</div>
+            <button type="button" class="btn btn-default btn-modern-primary margin-top" ng-click="editRole({})" localized>form.settings.roles.add</button>
         </div>
+    </div>
 
-        <div ng-if='roles && roles.length === 0' class='center' localized>notfound.roles</div>
+    <div class="modern-toast" ng-if="rolesToast" ng-class="'modern-toast-' + rolesToast.type">
+        {{rolesToast.message}}
     </div>
 </div>
