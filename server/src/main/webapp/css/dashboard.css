@@ -1923,6 +1923,330 @@
   margin-top: 2px;
 }
 
+/* =========================================================
+   Logs (devicelog plugin) page
+   Scoped under .logs-page. Reuses several generic components already
+   built for the Device Details redesign instead of duplicating them:
+   .modern-toolbar (filter card chrome), .summary-card (results card
+   chrome), .modern-table-wrap (table chrome), .device-details-inline-error,
+   .device-details-empty*, .device-details-badge (pill shape - this page
+   only adds its own color variants), .device-details-app-pkg (monospace
+   muted package id), .device-details-skeleton (shimmer animation).
+   ========================================================= */
+
+.logs-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.logs-page-header h4 {
+  margin-bottom: 2px;
+}
+
+.logs-page-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.logs-page-header-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* ---------- Filter card ---------- */
+
+.logs-filter-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.logs-filter-row-3 > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.logs-filter-row-actions {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.logs-input-icon-wrap {
+  position: relative;
+}
+
+.logs-input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.logs-input {
+  height: 40px;
+  padding-left: 34px !important;
+}
+
+.logs-date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.logs-date-input .logs-input {
+  width: 140px;
+}
+
+.logs-date-sep {
+  color: var(--color-text-tertiary);
+}
+
+.logs-severity-select {
+  height: 40px;
+  width: auto;
+  flex: 0 0 180px;
+}
+
+.logs-filter-buttons {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.logs-btn-reset {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.logs-btn-reset:hover {
+  color: var(--color-text-primary);
+}
+
+.logs-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.logs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  border-radius: 999px;
+  padding: 4px 6px 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.logs-chip-remove {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.logs-chip-remove:hover {
+  background: var(--color-border-subtle);
+  color: var(--color-text-primary);
+}
+
+/* ---------- Results card ---------- */
+
+.logs-results-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.logs-results-toolbar-bottom {
+  justify-content: flex-end;
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.logs-results-count {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* A sticky thead needs its OWN scrolling box - .modern-table-wrap's
+   overflow-x:auto (for the mobile horizontal-scroll requirement) forces
+   overflow-y to compute as auto too (same coupling noted where
+   .modern-table-wrap is defined), but with no height cap that box never
+   actually scrolls internally, so a plain "top:50px" stuck-to-the-page
+   header would be inert. Capping the height here gives it a real
+   internal vertical scroll to stick within. */
+.logs-table-wrap {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.logs-table-wrap thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-surface-hover);
+}
+
+.logs-row {
+  cursor: pointer;
+}
+
+.logs-time {
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.logs-message {
+  max-width: 420px;
+}
+
+.logs-message-clamped {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logs-message-expanded {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--color-surface-muted);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--color-text-primary);
+  margin: 0;
+  max-width: 640px;
+}
+
+.logs-empty-subtitle {
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+.logs-skeleton-row {
+  height: 44px;
+  margin-bottom: 8px;
+}
+
+/* ---------- Severity pill colors ---------- */
+
+.logs-badge-error {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.logs-badge-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.logs-badge-info {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.logs-badge-debug {
+  background: var(--color-surface-muted);
+  color: #6b7280;
+}
+
+.logs-badge-neutral {
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .logs-filter-row-3 {
+    flex-wrap: wrap;
+  }
+
+  .logs-filter-row-3 > * {
+    flex: 1 1 45%;
+  }
+
+  .logs-filter-row-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .logs-date-range {
+    flex-wrap: wrap;
+  }
+
+  .logs-severity-select {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .logs-filter-buttons {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .logs-page-header {
+    flex-direction: column;
+  }
+
+  .logs-page-header-actions {
+    width: 100%;
+  }
+
+  .logs-page-header-actions .btn {
+    flex: 1 1 0;
+  }
+
+  .logs-filter-row-3 > * {
+    flex: 1 1 100%;
+  }
+
+  .logs-date-range {
+    width: 100%;
+  }
+
+  .logs-date-input {
+    flex: 1 1 0;
+  }
+
+  .logs-date-input .logs-input {
+    width: 100%;
+  }
+
+  .logs-filter-buttons {
+    width: 100%;
+  }
+
+  .logs-filter-buttons .btn {
+    flex: 1 1 0;
+  }
+}
+
 .modern-page .custom-pagination-wrapper {
   margin-top: 14px;
 }

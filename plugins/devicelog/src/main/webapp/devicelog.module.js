@@ -177,6 +177,66 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
             }
         };
 
+        // Severity is a numeric filter level (paging.severity, -1..5) but
+        // each log row's own severity (log.severity) is the descriptive
+        // string the server already returns (ERROR/WARNING/...) - kept
+        // as two separate lookups since they're two different values.
+        var severityFilterLabels = { '-1': '', 0: 'NONE', 1: 'ERROR', 2: 'WARNING', 3: 'INFO', 4: 'DEBUG', 5: 'VERBOSE' };
+        $scope.severityLabel = function (value) {
+            return severityFilterLabels[value] || '';
+        };
+
+        $scope.severityBadgeClass = function (severity) {
+            var s = (severity || '').toString().toUpperCase();
+            if (s === 'ERROR') return 'logs-badge-error';
+            if (s === 'WARNING') return 'logs-badge-warning';
+            if (s === 'INFO') return 'logs-badge-info';
+            if (s === 'DEBUG') return 'logs-badge-debug';
+            return 'logs-badge-neutral';
+        };
+
+        $scope.hasActiveFilters = function () {
+            return !!($scope.paging.deviceFilter || $scope.paging.applicationFilter || $scope.paging.messageFilter ||
+                $scope.paging.severity > -1 || $scope.paging.dateFrom || $scope.paging.dateTo);
+        };
+
+        $scope.clearFilter = function (name) {
+            if (name === 'severity') {
+                $scope.paging.severity = -1;
+            } else if (name === 'dateFrom' || name === 'dateTo' || name === 'applicationFilter') {
+                $scope.paging[name] = null;
+            } else {
+                $scope.paging[name] = '';
+            }
+            $scope.search();
+        };
+
+        $scope.resetFilters = function () {
+            $scope.paging.deviceFilter = '';
+            $scope.paging.applicationFilter = null;
+            $scope.paging.messageFilter = '';
+            $scope.paging.severity = -1;
+            $scope.paging.dateFrom = null;
+            $scope.paging.dateTo = null;
+            $scope.search();
+        };
+
+        $scope.resultsRangeStart = function () {
+            if (!$scope.paging.totalItems) {
+                return 0;
+            }
+            return (($scope.paging.pageNum - 1) * $scope.paging.pageSize) + 1;
+        };
+
+        $scope.resultsRangeEnd = function () {
+            return Math.min($scope.paging.pageNum * $scope.paging.pageSize, $scope.paging.totalItems || 0);
+        };
+
+        $scope.expandedLog = null;
+        $scope.toggleExpand = function (log) {
+            $scope.expandedLog = ($scope.expandedLog === log) ? null : log;
+        };
+
         $scope.search = function () {
             $scope.errorMessage = undefined;
 
@@ -239,6 +299,7 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
             }
 
             loading = true;
+            $scope.loading = true;
 
             var request = {};
             for (var p in $scope.paging) {
@@ -251,6 +312,7 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
 
             pluginDeviceLogService.getLogs(request, function (response) {
                 loading = false;
+                $scope.loading = false;
                 if (response.status === 'OK') {
                     $scope.logs = response.data.items;
                     $scope.paging.totalItems = response.data.totalItemsCount;
@@ -260,6 +322,7 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
                 }
             }, function () {
                 loading = false;
+                $scope.loading = false;
                 $scope.errorMessage = localization.localize('error.request.failure');
             })
         };

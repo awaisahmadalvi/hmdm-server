@@ -54,5 +54,12 @@
 
   "success.plugin.devicelog.settings.saved": "Settings saved successfully",
   "error.plugin.devicelog.date.range.invalid": "Invalid date interval",
-  "notfound.common.plugin.devicelog.logs": "No log records found. Try a different query."
+  "notfound.common.plugin.devicelog.logs": "No log records found. Try a different query.",
+
+  "plugin.devicelog.subtitle": "Device and application log records",
+  "plugin.devicelog.empty.title": "No logs found",
+  "plugin.devicelog.empty.subtitle": "Try adjusting your filters or date range",
+  "plugin.devicelog.results.showing": "Showing",
+  "plugin.devicelog.results.of": "of",
+  "plugin.devicelog.button.reset": "Reset"
 }

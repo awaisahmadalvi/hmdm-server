@@ -1,23 +1,33 @@
 <!-- Localization completed -->
-<div class="width-1000 modern-page" ng-controller="PluginDeviceLogTabController">
-    <div class="text-center">
-        <h4 localized>plugin.devicelog.tab.title</h4>
+<div class="width-1200 modern-page logs-page" ng-controller="PluginDeviceLogTabController">
+
+    <div class="logs-page-header">
+        <div>
+            <h4 localized>plugin.devicelog.tab.title</h4>
+            <div class="logs-page-subtitle" localized>plugin.devicelog.subtitle</div>
+        </div>
+        <div class="logs-page-header-actions">
+            <button type="button" class="btn btn-default" ng-click="exportFile()">
+                <span class="glyphicon glyphicon-download-alt"></span> <span localized>button.export</span>
+            </button>
+            <button type="button" class="btn btn-default" ng-click="newMessage()">
+                <span class="glyphicon glyphicon-plus"></span> <span localized>plugin.push.button.newMessage</span>
+            </button>
+        </div>
     </div>
 
-    <div>
-        <div class='form-group'>
-            <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
-        </div>
+    <div class='device-details-inline-error' ng-show='errorMessage'><span>{{errorMessage}}</span></div>
 
-        <div class="modern-toolbar">
-        <div class='form-group'>
-            <div class="col-sm-3">
+    <form class="modern-toolbar logs-filter-card">
+        <div class="logs-filter-row logs-filter-row-3">
+            <div class="logs-input-icon-wrap">
+                <span class="glyphicon glyphicon-phone logs-input-icon"></span>
                 <input type="text"
                        ng-model="paging.deviceFilter"
                        ng-enter='search()'
                        localized-placeholder="search.placeholder.device"
                        autocomplete="off"
-                       class="form-control"
+                       class="form-control logs-input"
                        typeahead="device for device in getDevices($viewValue)"
                        typeahead-loading="loadingDevices"
                        typeahead-wait-ms="300"
@@ -25,78 +35,106 @@
                        typeahead-input-formatter="deviceLookupFormatter($model)"
                        typeahead-no-results="noResults">
             </div>
-            <div class="col-sm-3">
+            <div class="logs-input-icon-wrap">
+                <span class="glyphicon glyphicon-th-large logs-input-icon"></span>
                 <input type="text"
                        ng-model="paging.applicationFilter"
                        ng-enter='search()'
                        localized-placeholder="search.placeholder.application"
                        autocomplete="off"
-                       class="form-control"
+                       class="form-control logs-input"
                        typeahead="app for app in getApplications($viewValue)"
                        typeahead-loading="loadingApps"
                        typeahead-wait-ms="300"
                        typeahead-focus-first="false"
                        typeahead-no-results="noResults">
             </div>
-            <div class="col-sm-6">
+            <div class="logs-input-icon-wrap">
+                <span class="glyphicon glyphicon-search logs-input-icon"></span>
                 <input type="text"
                        ng-model="paging.messageFilter"
                        ng-enter='search()'
                        localized-placeholder="search.placeholder.message"
-                       class="form-control">
+                       class="form-control logs-input">
             </div>
         </div>
 
-        <br/>
-        <br/>
-
-        <div class="form-group">
-            <div class='col-sm-3'>
-                <div class='min-padding date-picker date-picker-input'>
-                    <input class='form-control' datepicker-popup='{{dateFormat}}' localized-placeholder="search.placeholder.from"
+        <div class="logs-filter-row logs-filter-row-actions">
+            <div class="logs-date-range">
+                <div class="logs-input-icon-wrap logs-date-input">
+                    <span class="glyphicon glyphicon-calendar logs-input-icon"></span>
+                    <input class="form-control logs-input" datepicker-popup='{{dateFormat}}'
+                           localized-placeholder="search.placeholder.from"
+                           ng-enter='search()'
+                           ng-click='openDateCalendar($event, true)'
                            ng-model='paging.dateFrom' is-open='openDatePickers.dateFrom' show-button-bar='false'
                            datepicker-options='datePickerOptions'/>
                 </div>
-                <div class='min-padding date-picker date-picker-button'>
-                    <button type='button' class='btn btn-default' ng-click='openDateCalendar( $event, true )'>
-                        <span class='glyphicon glyphicon-calendar'></span>
-                    </button>
-                </div>
-            </div>
-            <div class='col-sm-3'>
-                <div class='min-padding date-picker date-picker-input'>
-                    <input class='form-control' datepicker-popup='{{dateFormat}}' localized-placeholder="search.placeholder.to"
+                <span class="logs-date-sep">&ndash;</span>
+                <div class="logs-input-icon-wrap logs-date-input">
+                    <span class="glyphicon glyphicon-calendar logs-input-icon"></span>
+                    <input class="form-control logs-input" datepicker-popup='{{dateFormat}}'
+                           localized-placeholder="search.placeholder.to"
+                           ng-enter='search()'
+                           ng-click='openDateCalendar($event, false)'
                            ng-model='paging.dateTo' is-open='openDatePickers.dateTo' show-button-bar='false'
                            datepicker-options='datePickerOptions'/>
                 </div>
-                <div class='min-padding date-picker date-picker-button'>
-                    <button type='button' class='btn btn-default' ng-click='openDateCalendar( $event, false )'>
-                        <span class='glyphicon glyphicon-calendar'></span>
-                    </button>
-                </div>
-            </div>
-            <div class="col-sm-3">
-                <select name="kdkdk" ng-model="paging.severity" class="form-control">
-                    <option ng-value="-1" ng-selected="paging.severity === -1" localized>plugin.devicelog.option.severyty.default</option>
-                    <option ng-value="0" ng-selected="paging.severity === 0">NONE</option>
-                    <option ng-value="1" ng-selected="paging.severity === 1">ERROR</option>
-                    <option ng-value="2" ng-selected="paging.severity === 2">WARNING</option>
-                    <option ng-value="3" ng-selected="paging.severity === 3">INFO</option>
-                    <option ng-value="4" ng-selected="paging.severity === 4">DEBUG</option>
-                    <option ng-value="5" ng-selected="paging.severity === 5">VERBOSE</option>
-                </select>
             </div>
 
-            <div class='col-sm-3 text-right'>
-                <button type="button" class="btn btn-default" ng-click="newMessage()" localized>plugin.push.button.newMessage</button>
+            <select name="kdkdk" ng-model="paging.severity" class="form-control logs-severity-select">
+                <option ng-value="-1" ng-selected="paging.severity === -1" localized>plugin.devicelog.option.severyty.default</option>
+                <option ng-value="0" ng-selected="paging.severity === 0">NONE</option>
+                <option ng-value="1" ng-selected="paging.severity === 1" style="color: #dc2626">ERROR</option>
+                <option ng-value="2" ng-selected="paging.severity === 2" style="color: #d97706">WARNING</option>
+                <option ng-value="3" ng-selected="paging.severity === 3" style="color: #2563eb">INFO</option>
+                <option ng-value="4" ng-selected="paging.severity === 4" style="color: #6b7280">DEBUG</option>
+                <option ng-value="5" ng-selected="paging.severity === 5">VERBOSE</option>
+            </select>
+
+            <div class="logs-filter-buttons">
+                <button type="button" class="btn logs-btn-reset" ng-click="resetFilters()" localized>plugin.devicelog.button.reset</button>
                 <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
-                <button type='button' class='btn btn-default' ng-click='exportFile()' localized>button.export</button>
             </div>
         </div>
-        </div>
 
-        <div class="text-center" ng-if="paging.totalItems > paging.pageSize">
+        <div class="logs-filter-chips" ng-if="hasActiveFilters()">
+            <span class="logs-chip" ng-if="paging.deviceFilter">
+                <span localized>search.placeholder.device</span>: {{paging.deviceFilter}}
+                <span class="logs-chip-remove" ng-click="clearFilter('deviceFilter')">&times;</span>
+            </span>
+            <span class="logs-chip" ng-if="paging.applicationFilter">
+                <span localized>search.placeholder.application</span>: {{paging.applicationFilter}}
+                <span class="logs-chip-remove" ng-click="clearFilter('applicationFilter')">&times;</span>
+            </span>
+            <span class="logs-chip" ng-if="paging.messageFilter">
+                <span localized>search.placeholder.message</span>: {{paging.messageFilter}}
+                <span class="logs-chip-remove" ng-click="clearFilter('messageFilter')">&times;</span>
+            </span>
+            <span class="logs-chip" ng-if="paging.severity > -1">
+                <span localized>table.heading.plugin.devicelog.severity</span>: {{severityLabel(paging.severity)}}
+                <span class="logs-chip-remove" ng-click="clearFilter('severity')">&times;</span>
+            </span>
+            <span class="logs-chip" ng-if="paging.dateFrom">
+                <span localized>search.placeholder.from</span>: {{paging.dateFrom | date:dateFormat}}
+                <span class="logs-chip-remove" ng-click="clearFilter('dateFrom')">&times;</span>
+            </span>
+            <span class="logs-chip" ng-if="paging.dateTo">
+                <span localized>search.placeholder.to</span>: {{paging.dateTo | date:dateFormat}}
+                <span class="logs-chip-remove" ng-click="clearFilter('dateTo')">&times;</span>
+            </span>
+        </div>
+    </form>
+
+    <div class="summary-card logs-results-card">
+
+        <div class="logs-results-toolbar" ng-if="!loading && logs && logs.length > 0">
+            <div class="logs-results-count">
+                {{'plugin.devicelog.results.showing' | localize}} {{resultsRangeStart()}}&ndash;{{resultsRangeEnd()}}
+                {{'plugin.devicelog.results.of' | localize}} {{paging.totalItems}}
+            </div>
             <pagination
+                    ng-if="paging.totalItems > paging.pageSize"
                     boundary-links='true' class='pagination-sm'
                     max-size='3'
                     ng-model='paging.pageNum'
@@ -106,7 +144,15 @@
                     last-text='&raquo;'></pagination>
         </div>
 
-        <div class="modern-table-wrap" ng-if='logs && logs.length > 0'>
+        <div class="device-details-skeleton-group" ng-if="loading">
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+        </div>
+
+        <div class="modern-table-wrap logs-table-wrap" ng-if="!loading && logs && logs.length > 0">
         <table class='table'>
             <thead>
             <tr>
@@ -114,30 +160,40 @@
                     <span localized>table.heading.plugin.devicelog.dateTime</span>
                     <span class="glyphicon glyphicon-sort-by-attributes-alt"></span>
                 </th>
+                <th localized>table.heading.plugin.devicelog.severity</th>
                 <th ng-click='sortByDeviceNumber()'>
                     <span localized>table.heading.plugin.devicelog.deviceNumber</span>
                     <span ng-if='paging.sortValue === "deviceNumber"' class="glyphicon glyphicon-sort-by-attributes"></span>
                 </th>
                 <th localized>table.heading.plugin.devicelog.app</th>
-                <th localized>table.heading.plugin.devicelog.severity</th>
                 <th localized>table.heading.plugin.devicelog.message</th>
             </tr>
             </thead>
             <tbody>
-            <tr ng-repeat='log in logs'>
-                <td>{{log.createTime | date:createTimeFormat}}.{{("00000" + (log.createTime % 1000)).slice(-3) }}</td>
+            <tr ng-repeat='log in logs' ng-click="toggleExpand(log)" class="logs-row">
+                <td class="logs-time">{{log.createTime | date:createTimeFormat}}.{{("00000" + (log.createTime % 1000)).slice(-3) }}</td>
+                <td><span class="device-details-badge" ng-class="severityBadgeClass(log.severity)">{{log.severity}}</span></td>
                 <td>{{log.deviceNumber}}</td>
-                <td>{{log.applicationPkg}}</td>
-                <td>{{log.severity}}</td>
-                <td>{{log.message}}</td>
+                <td>
+                    <div class="device-details-app-pkg">{{log.applicationPkg}}</div>
+                </td>
+                <td>
+                    <div class="logs-message logs-message-clamped" ng-if="expandedLog !== log">{{log.message}}</div>
+                    <pre class="logs-message-expanded" ng-if="expandedLog === log">{{log.message}}</pre>
+                </td>
             </tr>
             </tbody>
         </table>
         </div>
 
-        <div ng-if='logs && logs.length === 0' class='center' localized>notfound.common.plugin.devicelog.logs</div>
+        <div class="device-details-empty" ng-if="!loading && (!logs || logs.length === 0)">
+            <span class="glyphicon glyphicon-list-alt device-details-empty-icon"></span>
+            <div class="device-details-empty-title" localized>plugin.devicelog.empty.title</div>
+            <div class="logs-empty-subtitle" localized>plugin.devicelog.empty.subtitle</div>
+            <button type="button" class="btn btn-default margin-top" ng-click="resetFilters()" localized>plugin.devicelog.button.reset</button>
+        </div>
 
-        <div class="text-center" ng-if="paging.totalItems > paging.pageSize">
+        <div class="logs-results-toolbar logs-results-toolbar-bottom" ng-if="!loading && logs && logs.length > 0 && paging.totalItems > paging.pageSize">
             <pagination
                     boundary-links='true' class='pagination-sm'
                     max-size='3'
@@ -149,4 +205,5 @@
         </div>
 
     </div>
+
 </div>
