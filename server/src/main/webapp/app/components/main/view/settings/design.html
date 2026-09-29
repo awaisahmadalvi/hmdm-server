@@ -56,7 +56,7 @@
                                ng-change="applySwatchColor('backgroundColor')" />
                         <input ng-model='settings.backgroundColor' type='text'
                                class='form-control logs-input design-hex-input'
-                               ng-class="{'design-input-invalid': !isValidHex(settings.backgroundColor)}"
+                               ng-class="{'modern-input-invalid': !isValidHex(settings.backgroundColor)}"
                                localized-placeholder='form.settings.design.color.font.placeholder'/>
                     </div>
                     <div class="design-field-error" ng-if="!isValidHex(settings.backgroundColor)" localized>form.settings.design.color.invalid</div>
@@ -75,7 +75,7 @@
                                ng-change="applySwatchColor('textColor')" />
                         <input ng-model='settings.textColor' type='text'
                                class='form-control logs-input design-hex-input'
-                               ng-class="{'design-input-invalid': !isValidHex(settings.textColor)}"
+                               ng-class="{'modern-input-invalid': !isValidHex(settings.textColor)}"
                                localized-placeholder='form.settings.design.color.app.names.placeholder'/>
                     </div>
                     <div class="design-field-error" ng-if="!isValidHex(settings.textColor)" localized>form.settings.design.color.invalid</div>

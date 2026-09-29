@@ -22,10 +22,69 @@ angular.module('headwind-kiosk')
             }
         });
 
+        $scope.userRoles = [];
+        userService.getUserRoles(function (response) {
+            if (response.status === 'OK') {
+                $scope.userRoles = response.data;
+            }
+        });
+
+        $scope.roleFilter = null; // null = "All roles"
+
+        $scope.setRoleFilter = function (roleId) {
+            $scope.roleFilter = roleId;
+            $scope.paging.currentPage = 1;
+        };
+
+        $scope.filteredUsers = function () {
+            if (!$scope.roleFilter) {
+                return $scope.users;
+            }
+            return $scope.users.filter(function (user) {
+                return user.userRole && user.userRole.id === $scope.roleFilter;
+            });
+        };
+
+        $scope.pagedUsers = function () {
+            var list = $scope.filteredUsers();
+            var start = (($scope.paging.currentPage - 1) * $scope.paging.pageSize);
+            return list.slice(start, start + $scope.paging.pageSize);
+        };
+
+        $scope.userInitials = function (user) {
+            var source = user.name || user.login || '';
+            return source.substring(0, 1).toUpperCase();
+        };
+
+        $scope.isCurrentUser = function (user) {
+            return !!($scope.currentUser && user && $scope.currentUser.id === user.id);
+        };
+
+        var ROLE_BADGE_PALETTE = ['users-role-blue', 'users-role-purple', 'users-role-teal', 'users-role-amber'];
+
+        $scope.roleBadgeClass = function (user) {
+            var name = user.userRole && user.userRole.name;
+            if (user.superAdmin || name === 'Admin') {
+                return 'users-role-admin';
+            }
+            if (!name) {
+                return 'users-role-neutral';
+            }
+            var hash = 0;
+            for (var i = 0; i < name.length; i++) {
+                hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+            }
+            return ROLE_BADGE_PALETTE[hash % ROLE_BADGE_PALETTE.length];
+        };
+
+        $scope.loading = false;
+
         $scope.init = function () {
             $rootScope.settingsTabActive = true;
             $rootScope.pluginsTabActive = false;
+            $scope.loading = true;
             userService.getAll(function (response) {
+                $scope.loading = false;
                 if (response.data) {
                     $scope.users = response.data;
                 }
@@ -34,16 +93,52 @@ angular.module('headwind-kiosk')
         };
 
         $scope.search = function () {
+            $scope.loading = true;
             userService.getAll({filter: $scope.search.searchValue},
                 function (response) {
+                    $scope.loading = false;
                     $scope.users = response.data;
+                    $scope.paging.currentPage = 1;
                 });
+        };
+
+        $scope.clearSearch = function () {
+            $scope.search.searchValue = '';
+            $scope.search();
+        };
+
+        // Live search: debounce while typing, reusing the exact same
+        // search() the Enter key already triggers - not a separate
+        // search path.
+        var searchDebounceTimer = null;
+        $scope.$watch('search.searchValue', function (newVal, oldVal) {
+            if (newVal === oldVal) {
+                return;
+            }
+            if (searchDebounceTimer) {
+                $timeout.cancel(searchDebounceTimer);
+            }
+            searchDebounceTimer = $timeout(function () {
+                $scope.search();
+            }, 400);
+        });
+
+        $scope.usersToast = null;
+
+        var showUsersToast = function (type, message) {
+            $scope.usersToast = {type: type, message: message};
+            $timeout(function () {
+                if ($scope.usersToast && $scope.usersToast.message === message) {
+                    $scope.usersToast = null;
+                }
+            }, 3000);
         };
 
         $scope.editUser = function (user) {
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/user.html',
                 controller: 'UserModalController',
+                size: 'lg',
                 resolve: {
                     user: function () {
                         return user;
@@ -51,13 +146,20 @@ angular.module('headwind-kiosk')
                 }
             });
 
-            modalInstance.result.then(function () {
+            modalInstance.result.then(function (result) {
                 $scope.search();
+                if (result) {
+                    showUsersToast('success', localization.localize('success.user.saved'));
+                }
             });
         };
 
         $scope.removeUser = function (user) {
-            let localizedText = localization.localize('question.delete.user').replace('${username}', user.name);
+            if ($scope.isCurrentUser(user)) {
+                return;
+            }
+            let localizedText = localization.localize('question.delete.user').replace('${username}', user.name) +
+                ' ' + localization.localize('question.delete.user.warning');
             confirmModal.getUserConfirmation(localizedText, function () {
                 userService.remove({id: user.id}, function (response) {
                     if (response.status === 'OK') {
@@ -158,6 +260,18 @@ angular.module('headwind-kiosk')
             }
         }
 
+        // New users always need a password up front; existing users only
+        // see the password fields once they explicitly opt to change it.
+        $scope.changingPassword = !user.id;
+        $scope.showPassword = false;
+        $scope.showConfirm = false;
+
+        $scope.startChangingPassword = function () {
+            $scope.changingPassword = true;
+        };
+
+        $scope.savingUser = false;
+
         $scope.save = function () {
             $scope.errorMessage = '';
 
@@ -206,12 +320,17 @@ angular.module('headwind-kiosk')
                     request.configurations = $scope.configSelection;
                 }
 
+                $scope.savingUser = true;
                 userService.update(request, function (response) {
+                    $scope.savingUser = false;
                     if (response.status === 'OK') {
-                        $modalInstance.close();
+                        $modalInstance.close(true);
                     } else {
                         $scope.errorMessage = localization.localizeServerResponse(response);
                     }
+                }, function () {
+                    $scope.savingUser = false;
+                    $scope.errorMessage = localization.localize('error.request.failure');
                 });
             }
         };

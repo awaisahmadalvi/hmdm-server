@@ -1,82 +1,127 @@
 <!-- Localization completed -->
-<div class="width-1000 modern-page" ng-controller="UsersTabController">
-    <div class="text-center">
-        <h4 localized>form.settings.users.title</h4>
+<div class="width-1200 modern-page logs-page users-page" ng-controller="UsersTabController">
+
+    <div class="logs-page-header">
+        <div>
+            <h4 localized>form.settings.users.title</h4>
+            <div class="logs-page-subtitle" localized>form.settings.users.subtitle</div>
+        </div>
+        <div class="logs-page-header-actions">
+            <button type="button" class="btn btn-modern-primary" ng-click="editUser({})">
+                <span class="glyphicon glyphicon-plus"></span> <span localized>form.settings.users.add</span>
+            </button>
+        </div>
     </div>
 
-    <div>
-        <div class='form-group modern-toolbar'>
-            <input type='text' ng-model='search.searchValue' ng-enter='search()'
-                   localized-placeholder='form.settings.users.search.placeholder'
-                   class='form-control configurations-search-input'>
+    <div class="summary-card logs-results-card">
 
-            <div class='configurations-search-buttons'>
-                <button type='button' class='btn btn-default btn-modern-primary' ng-click='search()' localized>button.search</button>
-                <button type='button' class='btn btn-default btn-modern-primary' ng-click='editUser( {} )' localized>button.add</button>
+        <div class="logs-filter-row logs-filter-row-actions users-toolbar">
+            <div class="logs-input-icon-wrap logs-filter-grow">
+                <span class="glyphicon glyphicon-search logs-input-icon"></span>
+                <input type="text" ng-model="search.searchValue" ng-enter="search()"
+                       localized-placeholder="form.settings.users.search.placeholder"
+                       class="form-control logs-input">
             </div>
+
+            <div class="modern-segmented" ng-if="userRoles.length > 0 && userRoles.length <= 5">
+                <button type="button" class="modern-segmented-option" ng-class="{active: !roleFilter}"
+                        ng-click="setRoleFilter(null)" localized>form.settings.users.role.all</button>
+                <button type="button" class="modern-segmented-option" ng-repeat="role in userRoles"
+                        ng-class="{active: roleFilter === role.id}"
+                        ng-click="setRoleFilter(role.id)">{{role.name}}</button>
+            </div>
+
+            <select class="form-control modern-select" ng-if="userRoles.length > 5"
+                    ng-model="roleFilter" ng-change="setRoleFilter(roleFilter)">
+                <option ng-value="null" localized>form.settings.users.role.all</option>
+                <option ng-repeat="role in userRoles" ng-value="role.id">{{role.name}}</option>
+            </select>
+
+            <div class="logs-results-count users-count">{{filteredUsers().length}} {{'form.settings.users.count.suffix' | localize}}</div>
         </div>
 
-        <div class="text-center" ng-if="users.length > paging.pageSize">
+        <div class="device-details-skeleton-group" ng-if="loading">
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+        </div>
+
+        <div class="modern-table-wrap" ng-if="!loading && filteredUsers().length > 0">
+            <table class="table users-table">
+                <thead>
+                <tr>
+                    <th localized>table.heading.users.name</th>
+                    <th localized>table.heading.users.role</th>
+                    <th class="actions-column" localized>table.heading.users.actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="logs-row" ng-repeat="user in pagedUsers()" ng-click="editUser(user)">
+                    <td data-label="{{'table.heading.users.name' | localize}}">
+                        <div class="users-cell">
+                            <span class="audit-avatar users-avatar">{{userInitials(user)}}</span>
+                            <div class="users-identity">
+                                <div class="users-name">
+                                    {{user.name}}
+                                    <span class="users-you-badge" ng-if="isCurrentUser(user)" localized>form.settings.users.you</span>
+                                </div>
+                                <div class="users-login">{{user.login}}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="{{'table.heading.users.role' | localize}}">
+                        <span class="device-details-badge users-role-pill" ng-class="roleBadgeClass(user)">{{user.userRole.name}}</span>
+                    </td>
+                    <td class="actions-column" data-label="{{'table.heading.users.actions' | localize}}" ng-click="$event.stopPropagation()">
+                        <button type="button" class="btn btn-default" localized-title="button.edit" ng-click="editUser(user)">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                        </button>
+                        <div class="dropdown users-row-menu" uib-dropdown ng-if="user.editable && !user.superAdmin">
+                            <button type="button" class="btn btn-default" uib-dropdown-toggle>
+                                <span class="glyphicon glyphicon-option-vertical"></span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu>
+                                <li><a ng-click="loginAs(user)" localized>form.settings.users.action.login.as</a></li>
+                                <li ng-class="{disabled: isCurrentUser(user)}"
+                                    title="{{isCurrentUser(user) ? ('form.settings.users.self.delete.hint' | localize) : ''}}">
+                                    <a ng-click="removeUser(user)" localized>form.settings.users.action.delete</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="device-details-empty" ng-if="!loading && users.length === 0">
+            <span class="glyphicon glyphicon-user device-details-empty-icon"></span>
+            <div class="device-details-empty-title" localized>form.settings.users.empty.title</div>
+            <div class="logs-empty-subtitle" localized>form.settings.users.empty.subtitle</div>
+        </div>
+
+        <div class="device-details-empty" ng-if="!loading && users.length > 0 && filteredUsers().length === 0">
+            <span class="glyphicon glyphicon-search device-details-empty-icon"></span>
+            <div class="device-details-empty-title">
+                {{'form.settings.users.empty.search.prefix' | localize}} "{{search.searchValue}}"
+            </div>
+            <button type="button" class="btn btn-default margin-top" ng-click="clearSearch()" localized>form.settings.users.empty.search.clear</button>
+        </div>
+
+        <div class="logs-results-toolbar logs-results-toolbar-bottom" ng-if="!loading && filteredUsers().length > paging.pageSize">
             <pagination
                     boundary-links='true' class='pagination-sm'
                     max-size='3'
                     ng-model='paging.currentPage'
-                    total-items='users.length'
+                    total-items='filteredUsers().length'
                     items-per-page='paging.pageSize'
                     previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
                     last-text='&raquo;'></pagination>
         </div>
+    </div>
 
-        <div class="modern-table-wrap" ng-if='users && users.length > 0'>
-        <table class='table'>
-            <thead>
-            <tr>
-                <th localized>table.heading.users.login</th>
-                <th localized>table.heading.users.name</th>
-                <th localized>table.heading.users.role</th>
-                <th class='actions-column' style="min-width: 150px" localized>table.heading.users.actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat='user in users.slice(((paging.currentPage-1)*paging.pageSize), ((paging.currentPage)*paging.pageSize))'>
-                <td>{{user.login}}</td>
-                <td>{{user.name}}</td>
-                <td>{{user.userRole.name}}</td>
-                <td>
-                    <div>
-                        <button
-                                type='button' class='btn btn-default' ng-click='editUser( user )'>
-                            <span class='glyphicon glyphicon-pencil'></span>
-                        </button>
-                        <button type='button' ng-if="user.editable && !user.superAdmin"
-                                class='btn btn-default' localized-title="button.login"
-                                ng-click='loginAs( user )'>
-                            <span class='glyphicon glyphicon-copy'></span>
-                        </button>
-                        <button type='button' ng-if="user.editable && !user.superAdmin"
-                                class='btn btn-default'
-                                ng-disabled='group.id === 1'
-                                ng-click='removeUser( user )'>
-                            <span class='glyphicon glyphicon-trash'></span>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-        </div>
-
-        <div ng-if='users && users.length === 0' class='center' localized>notfound.users</div>
-
-        <div class="text-center" ng-if="users.length > paging.pageSize">
-            <pagination
-                    boundary-links='true' class='pagination-sm'
-                    max-size='3'
-                    ng-model='paging.currentPage'
-                    total-items='users.length'
-                    items-per-page='paging.pageSize'
-                    previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
-                    last-text='&raquo;'></pagination>
-        </div>
+    <div class="modern-toast" ng-if="usersToast" ng-class="'modern-toast-' + usersToast.type">
+        {{usersToast.message}}
     </div>
 </div>
