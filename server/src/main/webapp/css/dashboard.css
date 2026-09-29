@@ -1210,6 +1210,12 @@
   padding: 40px 44px;
   text-align: center;
   animation: summary-card-in 0.5s ease both;
+  /* Page wrapper is now width-1200 (was width-700), to carry the same
+     shared .logs-page-header as every other Functions page - but this
+     card's 2-column feature list still reads best narrower, so it stays
+     capped and centered rather than stretching full-width. */
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 .xtra-promo-icon {
