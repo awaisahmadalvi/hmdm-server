@@ -114,7 +114,11 @@ angular.module('headwind-kiosk')
     // behavior used across the redesigned Settings pages). Built for the
     // Detailed Information plugin settings page; any other plugin settings
     // page that is a genuine load-then-save settings form (not a one-time
-    // action, not a settings+CRUD-table page) can reuse it as-is.
+    // action, not a settings+CRUD-table page) can reuse it as-is. The
+    // Reset/Save/unsaved-indicator group only renders when an on-save
+    // attribute is actually supplied - the Logs settings page has no single
+    // page-level save (retention and rules each save on their own), so it
+    // uses this header with only the "Open plugin" link.
     .directive('pluginSettingsHeader', function () {
         return {
             restrict: 'E',
@@ -129,6 +133,9 @@ angular.module('headwind-kiosk')
                 onSave: '&',
                 saving: '='
             },
-            templateUrl: 'app/shared/view/pluginSettingsHeader.html'
+            templateUrl: 'app/shared/view/pluginSettingsHeader.html',
+            link: function (scope, element, attrs) {
+                scope.hasSaveActions = angular.isDefined(attrs.onSave);
+            }
         };
     });

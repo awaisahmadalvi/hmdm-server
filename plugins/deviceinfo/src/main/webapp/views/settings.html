@@ -69,11 +69,11 @@
 
         <div class="design-field">
             <label class="design-field-label" for="c0" localized-change-tracking>plugin.deviceinfo.settings.data.preserve.period</label>
-            <div class="deviceinfo-storage-input-wrap">
+            <div class="number-suffix-input-wrap">
                 <input id="c0" ng-model='settings.dataPreservePeriod' type='number' min="1" step="1"
-                       class='form-control logs-input settings-input-narrow deviceinfo-storage-input'
+                       class='form-control logs-input settings-input-narrow number-suffix-input'
                        ng-class="{'modern-input-invalid': storagePeriodInvalid()}"/>
-                <span class="deviceinfo-storage-suffix" localized>plugin.deviceinfo.settings.data.preserve.period.suffix</span>
+                <span class="number-suffix" localized>plugin.deviceinfo.settings.data.preserve.period.suffix</span>
             </div>
             <div class="field-hint" ng-if="!storagePeriodInvalid()" localized>plugin.deviceinfo.settings.data.preserve.period.hint</div>
             <div class="design-field-error" ng-if="storagePeriodInvalid()" localized>plugin.deviceinfo.settings.data.preserve.period.error</div>

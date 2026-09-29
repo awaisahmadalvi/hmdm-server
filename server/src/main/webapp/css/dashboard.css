@@ -2223,6 +2223,13 @@
   color: #6b7280;
 }
 
+/* Used by the Logs plugin settings page for rule severity (not by the log
+   viewer's own severityBadgeClass, which has no VERBOSE case) */
+.logs-badge-verbose {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
 .logs-badge-neutral {
   background: var(--color-surface-muted);
   color: var(--color-text-secondary);
@@ -4262,20 +4269,21 @@
    .settings-input(-narrow), .modern-select, .modern-toggle, .field-hint,
    .settings-caution, .modern-input-invalid and .modern-toast instead of
    duplicating any of them - only the "days" suffix-in-input treatment is
-   new here.
+   new here (generic, since the Logs settings page's retention field
+   reuses it too - see .number-suffix-input-wrap below).
    ========================================================= */
 
-.deviceinfo-storage-input-wrap {
+.number-suffix-input-wrap {
   position: relative;
   max-width: 160px;
 }
 
-.deviceinfo-storage-input {
+.number-suffix-input {
   max-width: none;
   padding-right: 48px !important;
 }
 
-.deviceinfo-storage-suffix {
+.number-suffix {
   position: absolute;
   right: 14px;
   top: 50%;
@@ -4296,5 +4304,175 @@
 
   .deviceinfo-settings-page {
     padding-bottom: 70px;
+  }
+}
+
+/* =========================================================
+   Logs plugin settings page (Settings -> "Logs" plugin settings) and its
+   Add/Edit rule dialog. Reuses <plugin-settings-header>, .device-details-
+   card(-header), .design-field(-label)(-error), .settings-field-row,
+   .number-suffix-input(-wrap), .settings-input-narrow, .field-hint,
+   .modern-select, .modern-segmented(-option), .modern-toggle, .modern-
+   form-section, .modern-table-wrap, .modern-responsive-table, .logs-row,
+   .actions-column, .users-row-menu, .device-details-badge, .logs-badge-*,
+   .device-details-empty*, .device-details-skeleton*, .modern-toast,
+   .action-link, .modern-modal-* and Bootstrap's own .text-muted instead of
+   duplicating any of them. Only what's genuinely new to this page is
+   below: the retention row's own save action, the rules card's split
+   header, severity dots and the split dialog footer.
+   ========================================================= */
+
+.devicelog-retention-row {
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.devicelog-retention-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.devicelog-rules-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.devicelog-rules-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.devicelog-rules-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.devicelog-rules-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.devicelog-rules-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.devicelog-rule-name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.devicelog-severity-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.devicelog-severity-warning-icon {
+  color: var(--color-warning-text);
+  font-size: 12px;
+  cursor: default;
+}
+
+/* ---------- Severity dots (Add/Edit rule dialog segmented control) ---------- */
+
+.rule-severity-segmented {
+  flex-wrap: wrap;
+  border: none;
+  gap: 6px;
+}
+
+.rule-severity-segmented .modern-segmented-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+}
+
+.rule-severity-segmented .modern-segmented-option + .modern-segmented-option {
+  border-left: 1px solid var(--color-border-subtle);
+}
+
+.rule-severity-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--color-text-tertiary);
+}
+
+.rule-severity-dot-error { background: var(--color-danger); }
+.rule-severity-dot-warning { background: var(--color-warning-text); }
+.rule-severity-dot-info { background: #2563eb; }
+.rule-severity-dot-debug { background: #6b7280; }
+.rule-severity-dot-verbose { background: #7c3aed; }
+
+/* ---------- Add/Edit rule dialog footer (secondary "Devices" action on
+   the left, Cancel/Save on the right - .modern-modal-actions itself has
+   no flex layout since every other dialog only needs one aligned group) */
+
+.devicelog-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.devicelog-modal-actions-buttons .btn:last-child {
+  margin-right: 0;
+}
+
+@media (max-width: 700px) {
+  .devicelog-rules-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 600px) {
+  .devicelog-settings-page .logs-page-header {
+    flex-direction: column;
+  }
+
+  .devicelog-settings-page .logs-page-header-actions {
+    width: 100%;
+  }
+
+  .devicelog-retention-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .devicelog-retention-actions {
+    justify-content: space-between;
+    padding-top: 0;
+  }
+
+  .devicelog-modal-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .devicelog-modal-actions-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .devicelog-modal-actions-buttons .btn {
+    flex: 1 1 0;
+    margin-right: 0;
   }
 }

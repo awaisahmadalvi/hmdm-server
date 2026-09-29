@@ -11,13 +11,15 @@
         </div>
         <div class="logs-page-subtitle">{{subtitle}}</div>
     </div>
-    <div class="logs-page-header-actions design-header-actions">
+    <div class="logs-page-header-actions" ng-class="{'design-header-actions': hasSaveActions}">
         <a class="action-link plugin-settings-open-link" ng-if="pluginState" ui-sref="{{pluginState}}">{{'form.settings.plugins.open.plugin' | localize}}</a>
-        <span class="design-unsaved-indicator" ng-if="isDirty()" localized>form.settings.design.unsaved</span>
-        <button type="button" class="logs-btn-reset" ng-disabled="!isDirty()" ng-click="onReset()" localized>form.settings.design.reset</button>
-        <button type="button" class="btn btn-modern-primary" ng-disabled="saving" ng-click="onSave()">
-            <span ng-if="!saving" localized>form.settings.design.save</span>
-            <span ng-if="saving" localized>form.settings.design.saving</span>
-        </button>
+        <span ng-if="hasSaveActions">
+            <span class="design-unsaved-indicator" ng-if="isDirty()" localized>form.settings.design.unsaved</span>
+            <button type="button" class="logs-btn-reset" ng-disabled="!isDirty()" ng-click="onReset()" localized>form.settings.design.reset</button>
+            <button type="button" class="btn btn-modern-primary" ng-disabled="saving" ng-click="onSave()">
+                <span ng-if="!saving" localized>form.settings.design.save</span>
+                <span ng-if="saving" localized>form.settings.design.saving</span>
+            </button>
+        </span>
     </div>
 </div>

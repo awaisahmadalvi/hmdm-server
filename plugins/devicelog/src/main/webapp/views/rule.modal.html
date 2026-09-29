@@ -3,7 +3,8 @@
     <div class="modern-modal-icon">
         <span class="glyphicon glyphicon-filter"></span>
     </div>
-    <h4 class="modern-modal-title" localized>plugin.devicelog.setting.rules.title</h4>
+    <h4 class="modern-modal-title" ng-if="!rule.id" localized>plugin.devicelog.settings.dialog.add.title</h4>
+    <h4 class="modern-modal-title" ng-if="rule.id">{{'plugin.devicelog.settings.dialog.edit.title' | localize}}: {{rule.name}}</h4>
     <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
 </div>
 
@@ -11,100 +12,92 @@
     <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
 </div>
 <div class='modal-body modern-modal-body'>
-    <form class='form-horizontal'>
+    <form>
 
-        <div class='form-group'>
-            <label class='col-sm-3 control-label' localized>plugin.devicelog.settings.form.rule.name</label>
-            <div class='col-sm-9'>
-                <input ng-model='rule.name' required type='text' class='form-control'
-                       localized-placeholder='plugin.devicelog.settings.form.rule.name.placeholder'>
+        <div class="modern-form-section" localized>plugin.devicelog.settings.form.section.rule</div>
+
+        <div class="design-field">
+            <label class="design-field-label" localized>plugin.devicelog.settings.form.rule.name</label>
+            <input ng-model='rule.name' required type='text' class='form-control logs-input'
+                   localized-placeholder='plugin.devicelog.settings.form.rule.name.placeholder'>
+        </div>
+
+        <div class="design-field">
+            <div class="settings-field-row">
+                <label class="design-field-label" localized>plugin.devicelog.settings.form.rule.active</label>
+                <span class="modern-toggle">
+                    <input ng-model='rule.active' type='checkbox' class='modern-toggle-input'/>
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
             </div>
         </div>
 
-        <div class="form-group">
-            <label class='col-sm-3 control-label' localized>plugin.devicelog.settings.form.rule.active</label>
-            <div class='col-sm-1'>
-                <input ng-model='rule.active' type='checkbox' class='form-control'/>
+        <div class="modern-form-section" localized>plugin.devicelog.settings.form.section.collect</div>
+
+        <div class="design-field">
+            <label class="design-field-label" localized>plugin.devicelog.settings.form.rule.severity</label>
+            <div class="modern-segmented rule-severity-segmented">
+                <button type="button" class="modern-segmented-option" ng-repeat="level in severityOptions"
+                        ng-class="{active: rule.severity === level}" ng-click="rule.severity = level">
+                    <span class="rule-severity-dot" ng-class="'rule-severity-dot-' + level.toLowerCase()"></span>
+                    {{ruleSeverityLabel(level)}}
+                </button>
+            </div>
+            <div class="settings-caution" ng-if="ruleSeverityWarning(rule.severity)">
+                <span class="glyphicon glyphicon-warning-sign"></span>
+                <span localized>plugin.devicelog.settings.severity.verbose.warning</span>
             </div>
         </div>
 
-        <div class="form-group">
-            <label class='col-sm-3 control-label' localized>plugin.devicelog.settings.form.rule.filter</label>
-            <div class='col-sm-9'>
-                <input ng-model='rule.filter' type='text' class='form-control'
-                       localized-placeholder='plugin.devicelog.settings.form.rule.filter.placeholder'/>
-            </div>
+        <div class="design-field">
+            <label class="design-field-label" localized>plugin.devicelog.settings.form.rule.filter</label>
+            <input ng-model='rule.filter' type='text' class='form-control logs-input'
+                   localized-placeholder='plugin.devicelog.settings.form.rule.filter.placeholder'/>
+            <div class="field-hint" localized>plugin.devicelog.settings.form.rule.filter.hint</div>
         </div>
 
-        <div class="form-group">
-            <label class='col-sm-3 control-label' localized>plugin.devicelog.settings.form.rule.severity</label>
-            <div class='col-sm-9'>
-                <select name="kdkdk" required ng-model="rule.severity" class="form-control">
-                    <option>NONE</option>
-                    <option>ERROR</option>
-                    <option>WARNING</option>
-                    <option>INFO</option>
-                    <option>DEBUG</option>
-                    <option>VERBOSE</option>
-                </select>
-            </div>
+        <div class="modern-form-section" localized>plugin.devicelog.settings.form.section.apply</div>
+
+        <div class="design-field">
+            <label class="design-field-label" localized>plugin.devicelog.settings.form.rule.application</label>
+            <input type="text" required
+                   ng-model="rule.applicationPkg"
+                   localized-placeholder="plugin.devicelog.settings.form.rule.application.placeholder"
+                   autocomplete="off"
+                   class="form-control logs-input"
+                   typeahead="app for app in getApplications($viewValue)"
+                   typeahead-loading="loadingApps"
+                   typeahead-wait-ms="300"
+                   typeahead-focus-first="false"
+                   typeahead-no-results="noResults"/>
         </div>
 
-        <div class="form-group">
-            <label class='col-sm-3 control-label' localized>plugin.devicelog.settings.form.rule.application</label>
-            <div class="col-sm-9">
-                <input type="text" required
-                       ng-model="rule.applicationPkg"
-                       localized-placeholder="plugin.devicelog.settings.form.rule.application.placeholder"
-                       autocomplete="off"
-                       class="form-control"
-                       typeahead="app for app in getApplications($viewValue)"
-                       typeahead-loading="loadingApps"
-                       typeahead-wait-ms="300"
-                       typeahead-focus-first="false"
-                       typeahead-no-results="noResults"/>
-            </div>
+        <div class="design-field">
+            <label class="design-field-label" localized>plugin.devicelog.settings.form.rule.configuration</label>
+            <select class="form-control modern-select" ng-model="rule.configurationId"
+                    ng-options="c.id as c.name for c in configurations">
+                <option value="">{{'plugin.devicelog.settings.value.allConfigurations' | localize}}</option>
+            </select>
         </div>
 
-        <div class="form-group">
-            <label class='col-sm-3 control-label' localized>plugin.devicelog.settings.form.rule.group</label>
-            <div class="col-sm-9">
-                <input type="text"
-                       ng-model="rule.groupName"
-                       localized-placeholder="plugin.devicelog.settings.form.rule.group.placeholder"
-                       autocomplete="off"
-                       class="form-control"
-                       typeahead="app for app in getGroups($viewValue)"
-                       typeahead-loading="loadingGroups"
-                       typeahead-wait-ms="300"
-                       typeahead-focus-first="false"
-                       typeahead-no-results="noResults"/>
-            </div>
+        <div class="design-field">
+            <label class="design-field-label" localized>plugin.devicelog.settings.form.rule.group</label>
+            <select class="form-control modern-select" ng-model="rule.groupId"
+                    ng-options="g.id as g.name for g in groups">
+                <option value="">{{'plugin.devicelog.settings.value.allGroups' | localize}}</option>
+            </select>
         </div>
 
-        <div class="form-group">
-            <label class='col-sm-3 control-label' localized>plugin.devicelog.settings.form.rule.configuration</label>
-            <div class="col-sm-9">
-                <input type="text"
-                       ng-model="rule.configurationName"
-                       localized-placeholder="plugin.devicelog.settings.form.rule.configuration.placeholder"
-                       autocomplete="off"
-                       class="form-control"
-                       typeahead="app for app in getConfigurations($viewValue)"
-                       typeahead-loading="loadingConfigurations"
-                       typeahead-wait-ms="300"
-                       typeahead-focus-first="false"
-                       typeahead-no-results="noResults"/>
-            </div>
-        </div>
-
-
-        <div class='form-group modern-modal-actions'>
-            <div class='col-sm-offset-3 col-sm-9'>
+        <div class='modern-modal-actions devicelog-modal-actions'>
+            <a class="action-link" ng-click='editRuleDevices()' localized>plugin.devicelog.settings.button.devices</a>
+            <span class="devicelog-modal-actions-buttons">
                 <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
-                <button type='button' class='btn btn-default' ng-click='editRuleDevices()' localized>plugin.devicelog.settings.button.devices</button>
-                <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' ng-disabled="saving" localized>button.save</button>
-            </div>
+                <button type='submit' class='btn btn-modern-primary' ng-click='save()' ng-disabled="saving">
+                    <span ng-if="!saving && rule.id" localized>plugin.devicelog.settings.button.save.rule</span>
+                    <span ng-if="!saving && !rule.id" localized>plugin.devicelog.settings.button.add.rule</span>
+                    <span ng-if="saving" localized>form.settings.design.saving</span>
+                </button>
+            </span>
         </div>
     </form>
 </div>

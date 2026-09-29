@@ -455,7 +455,7 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
             $modalInstance.dismiss();
         };
     })
-    .controller('PluginDeviceLogSettingsController', function ($scope, $rootScope, $modal,
+    .controller('PluginDeviceLogSettingsController', function ($scope, $rootScope, $modal, $timeout,
         confirmModal, localization, pluginDeviceLogService) {
         $scope.successMessage = undefined;
         $scope.errorMessage = undefined;
@@ -464,21 +464,86 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
         $rootScope.pluginsTabActive = false;
 
         $scope.settings = {};
+        $scope.loadingSettings = true;
+        $scope.savingRetention = false;
+        $scope.togglingRuleId = null;
+        $scope.settingsToast = null;
+
+        var showSettingsToast = function (type, message) {
+            $scope.settingsToast = { type: type, message: message };
+            $timeout(function () {
+                if ($scope.settingsToast && $scope.settingsToast.message === message) {
+                    $scope.settingsToast = null;
+                }
+            }, 3000);
+        };
+
+        var retentionSnapshot = null;
+        $scope.isRetentionDirty = function () {
+            return retentionSnapshot !== null && $scope.settings.logsPreservePeriod !== retentionSnapshot;
+        };
+
+        $scope.retentionInvalid = function () {
+            var v = $scope.settings.logsPreservePeriod;
+            if (v === undefined || v === null || v === '') {
+                return true;
+            }
+            var num = Number(v);
+            return isNaN(num) || !Number.isInteger(num) || num < 1;
+        };
+
+        var SEVERITY_LABEL_KEYS = {
+            NONE: 'plugin.devicelog.settings.severity.none',
+            ERROR: 'plugin.devicelog.settings.severity.error',
+            WARNING: 'plugin.devicelog.settings.severity.warning',
+            INFO: 'plugin.devicelog.settings.severity.info',
+            DEBUG: 'plugin.devicelog.settings.severity.debug',
+            VERBOSE: 'plugin.devicelog.settings.severity.verbose'
+        };
+
+        $scope.ruleSeverityLabel = function (severity) {
+            var key = SEVERITY_LABEL_KEYS[(severity || '').toString().toUpperCase()];
+            return key ? localization.localize(key) : (severity || '');
+        };
+
+        $scope.ruleSeverityBadgeClass = function (severity) {
+            var s = (severity || '').toString().toUpperCase();
+            if (s === 'ERROR') return 'logs-badge-error';
+            if (s === 'WARNING') return 'logs-badge-warning';
+            if (s === 'INFO') return 'logs-badge-info';
+            if (s === 'DEBUG') return 'logs-badge-debug';
+            if (s === 'VERBOSE') return 'logs-badge-verbose';
+            return 'logs-badge-neutral';
+        };
+
+        $scope.ruleSeverityWarning = function (severity) {
+            var s = (severity || '').toString().toUpperCase();
+            return s === 'VERBOSE' || s === 'DEBUG';
+        };
 
         pluginDeviceLogService.getSettings(function (response) {
+            $scope.loadingSettings = false;
             if (response.status === 'OK') {
                 $scope.settings = response.data;
                 if (!$scope.settings.rules) {
                     $scope.settings.rules = [];
                 }
+                retentionSnapshot = $scope.settings.logsPreservePeriod;
             } else {
                 $scope.errorMessage = localization.localize(response.message);
             }
+        }, function () {
+            $scope.loadingSettings = false;
+            $scope.errorMessage = localization.localize('error.request.failure');
         });
 
         $scope.save = function () {
             $scope.successMessage = undefined;
             $scope.errorMessage = undefined;
+
+            if ($scope.retentionInvalid()) {
+                return;
+            }
 
             var copy = {};
             for (var p in $scope.settings) {
@@ -488,13 +553,42 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
             }
             delete copy.rules;
 
-
+            $scope.savingRetention = true;
             pluginDeviceLogService.saveSettings(copy, function (response) {
+                $scope.savingRetention = false;
                 if (response.status === 'OK') {
                     $scope.successMessage = localization.localize('success.plugin.devicelog.settings.saved');
+                    retentionSnapshot = $scope.settings.logsPreservePeriod;
+                    showSettingsToast('success', $scope.successMessage);
                 } else {
                     $scope.errorMessage = localization.localizeServerResponse(response);
+                    showSettingsToast('error', $scope.errorMessage);
                 }
+            }, function () {
+                $scope.savingRetention = false;
+                $scope.errorMessage = localization.localize('error.request.failure');
+                showSettingsToast('error', $scope.errorMessage);
+            });
+        };
+
+        $scope.toggleRuleActive = function (rule) {
+            var previousActive = !rule.active;
+            var payload = angular.copy(rule);
+            $scope.togglingRuleId = rule.id;
+            pluginDeviceLogService.saveSettingsRule(payload, function (response) {
+                $scope.togglingRuleId = null;
+                if (response.status === 'OK') {
+                    showSettingsToast('success', localization.localize(
+                        rule.active ? 'success.plugin.devicelog.settings.rule.activated' : 'success.plugin.devicelog.settings.rule.deactivated'
+                    ));
+                } else {
+                    rule.active = previousActive;
+                    showSettingsToast('error', localization.localizeServerResponse(response));
+                }
+            }, function () {
+                $scope.togglingRuleId = null;
+                rule.active = previousActive;
+                showSettingsToast('error', localization.localize('error.request.failure'));
             });
         };
 
@@ -504,9 +598,12 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
                 pluginDeviceLogService.deleteSettingsRule({ id: rule.id }, function (response) {
                     if (response.status === 'OK') {
                         refreshRules();
+                        showSettingsToast('success', localization.localize('success.plugin.devicelog.settings.rule.deleted'));
                     } else {
-                        alertService.showAlertMessage(localization.localize('error.internal.server'));
+                        showSettingsToast('error', localization.localizeServerResponse(response));
                     }
+                }, function () {
+                    showSettingsToast('error', localization.localize('error.request.failure'));
                 });
             });
         };
@@ -525,6 +622,7 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
             modalInstance.result.then(function (saved) {
                 if (saved) {
                     refreshRules();
+                    showSettingsToast('success', localization.localize('success.plugin.devicelog.settings.rule.saved'));
                 }
             });
         };
@@ -540,7 +638,7 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
         };
     })
     .controller('PluginDeviceLogEditRuleController', function ($scope, $modal, $modalInstance, $http,
-        localization, pluginDeviceLogService, rule) {
+        localization, pluginDeviceLogService, configurationService, groupService, rule) {
 
         var ruleCopy = {};
         for (var p in rule) {
@@ -552,9 +650,39 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
         $scope.rule = ruleCopy;
         $scope.saving = false;
 
+        $scope.severityOptions = ['NONE', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'VERBOSE'];
+
+        var SEVERITY_LABEL_KEYS = {
+            NONE: 'plugin.devicelog.settings.severity.none',
+            ERROR: 'plugin.devicelog.settings.severity.error',
+            WARNING: 'plugin.devicelog.settings.severity.warning',
+            INFO: 'plugin.devicelog.settings.severity.info',
+            DEBUG: 'plugin.devicelog.settings.severity.debug',
+            VERBOSE: 'plugin.devicelog.settings.severity.verbose'
+        };
+
+        $scope.ruleSeverityLabel = function (severity) {
+            var key = SEVERITY_LABEL_KEYS[(severity || '').toString().toUpperCase()];
+            return key ? localization.localize(key) : (severity || '');
+        };
+
+        $scope.ruleSeverityWarning = function (severity) {
+            var s = (severity || '').toString().toUpperCase();
+            return s === 'VERBOSE' || s === 'DEBUG';
+        };
+
+        $scope.configurations = [];
+        $scope.groups = [];
+
+        configurationService.getAllConfigurations(function (response) {
+            $scope.configurations = response.data;
+        });
+
+        groupService.getAllGroups(function (response) {
+            $scope.groups = response.data;
+        });
+
         var appCandidates = [];
-        var groupCandidates = [];
-        var configurationCandidates = [];
 
         $scope.getApplications = function (val) {
             return pluginDeviceLogService.lookupApplications(val).$promise.then(function (response) {
@@ -565,34 +693,6 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
                     });
                 } else {
                     appCandidates = [];
-                    return [];
-                }
-            });
-        };
-
-        $scope.getGroups = function (val) {
-            return pluginDeviceLogService.lookupGroups(val).$promise.then(function (response) {
-                if (response.status === 'OK') {
-                    groupCandidates = response.data;
-                    return response.data.map(function (item) {
-                        return item.name;
-                    });
-                } else {
-                    groupCandidates = [];
-                    return [];
-                }
-            });
-        };
-
-        $scope.getConfigurations = function (val) {
-            return pluginDeviceLogService.lookupConfigurations(val).$promise.then(function (response) {
-                if (response.status === 'OK') {
-                    configurationCandidates = response.data;
-                    return response.data.map(function (item) {
-                        return item.name;
-                    });
-                } else {
-                    configurationCandidates = [];
                     return [];
                 }
             });
@@ -628,10 +728,6 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
                 $scope.errorMessage = localization.localize('plugin.devicelog.settings.error.empty.rule.severity');
             } else if (!validateApplication()) {
                 $scope.errorMessage = localization.localize('plugin.devicelog.settings.error.invalid.app');
-            } else if (!validateGroup()) {
-                $scope.errorMessage = localization.localize('plugin.devicelog.settings.error.invalid.group');
-            } else if (!validateConfiguration()) {
-                $scope.errorMessage = localization.localize('plugin.devicelog.settings.error.invalid.configuration');
             } else {
                 $scope.saving = true;
                 pluginDeviceLogService.saveSettingsRule($scope.rule, function (response) {
@@ -667,52 +763,8 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
             return true;
         };
 
-        var validateGroup = function () {
-            if ($scope.rule.groupName) {
-                let foundItems = groupCandidates.filter(function (item) {
-                    return item.name === $scope.rule.groupName;
-                });
-
-                if (foundItems.length > 0) {
-                    $scope.rule.groupId = foundItems[0].id;
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                $scope.rule.groupId = null;
-            }
-
-            return true;
-        };
-
-        var validateConfiguration = function () {
-            if ($scope.rule.configurationName) {
-                let foundItems = configurationCandidates.filter(function (item) {
-                    return item.name === $scope.rule.configurationName;
-                });
-
-                if (foundItems.length > 0) {
-                    $scope.rule.configurationId = foundItems[0].id;
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                $scope.rule.configurationId = null;
-            }
-
-            return true;
-        };
-
         if ($scope.rule.applicationPkg) {
             $scope.getApplications($scope.rule.applicationPkg);
-        }
-        if ($scope.rule.groupName) {
-            $scope.getGroups($scope.rule.groupName);
-        }
-        if ($scope.rule.configurationName) {
-            $scope.getConfigurations($scope.rule.configurationName);
         }
 
     })
