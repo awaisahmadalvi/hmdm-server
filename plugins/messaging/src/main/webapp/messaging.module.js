@@ -299,7 +299,7 @@ angular.module('plugin-messaging', ['ngResource', 'ui.bootstrap', 'ui.router', '
             if (autoUpdateInterval) $interval.cancel(autoUpdateInterval);
         });
     })
-    .controller('PluginMessagingSettingsController', function ($scope, $rootScope, $modal,
+    .controller('PluginMessagingSettingsController', function ($scope, $rootScope, $modal, $timeout,
                                                                confirmModal, localization, pluginMessagingService) {
         $scope.successMessage = undefined;
         $scope.errorMessage = undefined;
@@ -311,20 +311,91 @@ angular.module('plugin-messaging', ['ngResource', 'ui.bootstrap', 'ui.router', '
             "messagingPurgePeriod": 7
         };
 
+        $scope.settingsToast = null;
+        var showSettingsToast = function (type, message) {
+            $scope.settingsToast = { type: type, message: message };
+            $timeout(function () {
+                if ($scope.settingsToast && $scope.settingsToast.message === message) {
+                    $scope.settingsToast = null;
+                }
+            }, 3000);
+        };
+
+        $scope.purgePeriodInvalid = function () {
+            var v = $scope.settings.messagingPurgePeriod;
+            if (v === undefined || v === null || v === '') {
+                return true;
+            }
+            var num = Number(v);
+            return isNaN(num) || !Number.isInteger(num) || num < 1;
+        };
+
+        $scope.purgeCutoffDate = function () {
+            var days = Number($scope.settings.messagingPurgePeriod);
+            if (isNaN(days) || days < 0) {
+                days = 0;
+            }
+            return new Date(Date.now() - days * 86400000);
+        };
+
         $scope.purge = function () {
             $scope.successMessage = undefined;
             $scope.errorMessage = undefined;
 
-            if (isNaN($scope.settings.messagingPurgePeriod)) {
+            if ($scope.purgePeriodInvalid()) {
                 $scope.errorMessage = localization.localize('plugin.messaging.settings.enter.number');
+                return;
             }
 
-            pluginMessagingService.purgeOldMessages({"days": $scope.settings.messagingPurgePeriod}, function (response) {
+            var days = $scope.settings.messagingPurgePeriod;
+            var modalInstance = $modal.open({
+                templateUrl: 'app/components/plugins/messaging/views/purge.confirm.modal.html',
+                controller: 'PluginMessagingPurgeConfirmController',
+                resolve: {
+                    days: function () {
+                        return days;
+                    },
+                    cutoffDate: function () {
+                        return $scope.purgeCutoffDate();
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (purged) {
+                if (purged) {
+                    $scope.successMessage = localization.localize('plugin.messaging.settings.message.purge.success').replace('${days}', days);
+                    showSettingsToast('success', $scope.successMessage);
+                }
+            });
+        };
+    })
+    .controller('PluginMessagingPurgeConfirmController', function ($scope, $modalInstance, $filter,
+                                                                   localization, pluginMessagingService, days, cutoffDate) {
+        $scope.days = days;
+        $scope.purging = false;
+        $scope.errorMessage = undefined;
+
+        var cutoffDateFormatted = $filter('date')(cutoffDate, localization.localize('format.date.plugin.messaging.purgeCutoff'));
+        $scope.confirmTitle = localization.localize('plugin.messaging.settings.confirm.title').replace('${days}', days);
+        $scope.confirmBody = localization.localize('plugin.messaging.settings.confirm.body').replace('${date}', cutoffDateFormatted);
+
+        $scope.closeModal = function () {
+            $modalInstance.dismiss();
+        };
+
+        $scope.confirmPurge = function () {
+            $scope.errorMessage = undefined;
+            $scope.purging = true;
+            pluginMessagingService.purgeOldMessages({ "days": days }, function (response) {
+                $scope.purging = false;
                 if (response.status === 'OK') {
-                    $scope.successMessage = localization.localize('plugin.messaging.settings.message.purge.success');
+                    $modalInstance.close(true);
                 } else {
                     $scope.errorMessage = localization.localizeServerResponse(response);
                 }
+            }, function () {
+                $scope.purging = false;
+                $scope.errorMessage = localization.localize('error.request.failure');
             });
         };
     })

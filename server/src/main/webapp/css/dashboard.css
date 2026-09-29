@@ -4476,3 +4476,110 @@
     margin-right: 0;
   }
 }
+
+/* =========================================================
+   Generic danger/destructive-action button pair, introduced for the
+   Messaging plugin settings page's purge action. Not page-prefixed - any
+   future irreversible action (outline trigger, solid confirm) can reuse
+   these instead of duplicating them.
+   ========================================================= */
+
+.btn-danger-outline {
+  background: transparent;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn-danger-outline:hover {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.btn-danger-outline:disabled,
+.btn-danger-outline[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-danger-solid {
+  background: var(--color-danger);
+  border: 1px solid var(--color-danger);
+  color: var(--color-surface);
+}
+
+.btn-danger-solid:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: var(--color-surface);
+}
+
+.btn-danger-solid:disabled,
+.btn-danger-solid[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* A red-tinted variant of .modern-modal-icon for destructive confirmation
+   dialogs (e.g. the purge-messages confirmation). */
+.modern-modal-icon-danger {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+/* =========================================================
+   Messaging plugin settings page (Settings -> "Messaging" plugin
+   settings) and its purge confirmation dialog. Reuses <plugin-settings-
+   header>, .device-details-card(-header), .design-field(-label)(-error),
+   .number-suffix-input(-wrap), .settings-input-narrow, .modern-input-
+   invalid, .modern-toast, .modern-modal-* and the .btn-danger-* pair
+   above instead of duplicating any of them. Only the "danger zone" card
+   tint and the inline input+button row are new here.
+   ========================================================= */
+
+.danger-zone-card {
+  border-left: 4px solid var(--color-danger);
+}
+
+.danger-zone-card-header {
+  color: var(--color-danger);
+}
+
+.danger-zone-card-header .glyphicon {
+  color: var(--color-danger);
+}
+
+.danger-zone-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: -4px 0 16px;
+}
+
+.danger-zone-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .messaging-settings-page .logs-page-header {
+    flex-direction: column;
+  }
+
+  .messaging-settings-page .logs-page-header-actions {
+    width: 100%;
+  }
+
+  .danger-zone-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .danger-zone-inline .number-suffix-input-wrap {
+    max-width: none;
+  }
+
+  .danger-zone-inline .btn-danger-outline {
+    width: 100%;
+  }
+}
