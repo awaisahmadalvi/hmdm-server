@@ -2599,6 +2599,10 @@
   cursor: not-allowed;
 }
 
+.modern-toggle-input:disabled + .modern-toggle-track {
+  opacity: 0.5;
+}
+
 /* =========================================================
    Devices table "Visible columns" page (Settings -> Visible columns).
    Scoped under .columns-page. Reuses .logs-page-header/.logs-btn-reset,
@@ -2608,11 +2612,11 @@
    new .modern-toggle above instead of duplicating any of them.
    ========================================================= */
 
-.columns-page .columns-sticky-header {
+/* Generic sticky page-header (not scoped to one page - now used by
+   Columns and General settings too): sticks right under .app-shell's
+   fixed 50px-tall top nav rather than under/behind it. */
+.columns-sticky-header {
   position: sticky;
-  /* .app-shell's fixed 50px-tall top nav (see its own padding-top: 50px
-     comment above) already reserves this height; stick right under it
-     rather than under/behind it. */
   top: 50px;
   z-index: 20;
   background: var(--color-surface);
@@ -2749,7 +2753,7 @@
 }
 
 @media (max-width: 600px) {
-  .columns-page .columns-sticky-header {
+  .columns-sticky-header {
     position: static;
   }
 
@@ -3172,7 +3176,8 @@
   }
 
   .design-page,
-  .columns-page {
+  .columns-page,
+  .settings-page {
     padding-bottom: 70px;
   }
 }
@@ -3851,6 +3856,337 @@
   }
 
   .icons-page .logs-page-header-actions .btn {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   General settings page (Settings -> Language/Misc/Security, one shared
+   form). Scoped under .settings-page. Reuses .logs-page-header,
+   .columns-sticky-header, .design-header-actions/.design-unsaved-
+   indicator/.logs-btn-reset (Default Design page's save UX), .device-
+   details-card(-header), .design-field(-label), .modern-toggle,
+   .modern-select, .field-hint, .device-details-inline-error/-success,
+   .modern-toast and the shared dropZone/toggle CSS instead of duplicating
+   any of them. Two small new generic components: .modern-radio-cards for
+   the password-strength choice, and .settings-field-row (a toggle's
+   label-left/switch-right line, distinct from .design-field's stacked
+   label-above-input layout used for text/select fields).
+   ========================================================= */
+
+.settings-body {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.settings-nav {
+  position: sticky;
+  top: 70px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-nav-link {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.settings-nav-link:hover,
+.settings-nav-link:focus {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.settings-nav-link.active {
+  background: rgba(var(--brand-dark-rgb), 0.1);
+  color: var(--brand-dark);
+}
+
+.settings-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.settings-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-field-row .design-field-label {
+  margin-bottom: 0;
+}
+
+.settings-input {
+  max-width: 480px;
+}
+
+.settings-input-narrow {
+  max-width: 140px;
+}
+
+.settings-example {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.settings-caution {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--color-warning-text);
+  background: var(--color-warning-bg);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.settings-custom-properties {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 18px 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.settings-custom-property-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.settings-custom-property-name {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.settings-custom-property-name .settings-input {
+  max-width: none;
+}
+
+.settings-custom-property-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.settings-custom-property-toggle-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* ---------- Radio cards (password strength) ---------- */
+
+.modern-radio-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 480px;
+}
+
+.modern-radio-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  margin: 0;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.modern-radio-card:hover {
+  background: var(--color-surface-hover);
+}
+
+.modern-radio-card input[type="radio"] {
+  accent-color: var(--brand-dark);
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.modern-radio-card.active {
+  border-color: var(--brand-dark);
+  background: rgba(var(--brand-dark-rgb), 0.05);
+  color: var(--color-text-primary);
+}
+
+/* ---------- Smooth reveal for conditional sections (ngAnimate) ---------- */
+
+.settings-reveal.ng-enter {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.settings-reveal.ng-enter.ng-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.settings-reveal.ng-leave {
+  transition: opacity 0.15s ease;
+  opacity: 1;
+}
+
+.settings-reveal.ng-leave.ng-leave-active {
+  opacity: 0;
+}
+
+@media (max-width: 900px) {
+  .settings-nav {
+    display: none;
+  }
+
+  .settings-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .settings-page .logs-page-header {
+    flex-direction: column;
+  }
+
+  .settings-page .logs-page-header-actions {
+    width: 100%;
+  }
+
+  .settings-custom-property-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+}
+
+/* =========================================================
+   Plugins page (Settings -> Plugins). Scoped under .plugins-page. Reuses
+   .logs-page-header, .columns-sticky-header, .design-header-actions/
+   .design-unsaved-indicator/.logs-btn-reset (save UX), .logs-results-count,
+   .columns-grid (3/2/1 card grid), .device-details-card, .device-details-
+   skeleton(-card), .device-details-badge(-ok), .users-role-neutral (grey
+   pill), .modern-toggle, .action-link, .device-details-inline-error/
+   -success and .modern-toast instead of duplicating any of them.
+   ========================================================= */
+
+.plugins-summary {
+  margin: -10px 0 16px;
+}
+
+.plugin-card {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.plugin-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.plugin-card-icon {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(var(--brand-dark-rgb), 0.1);
+  color: var(--brand-dark);
+  font-size: 15px;
+}
+
+.plugin-card-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plugin-card-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+  flex: 1 1 auto;
+}
+
+.plugin-card-warning {
+  font-size: 12px;
+  color: var(--color-warning-text);
+  background: var(--color-warning-bg);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.plugin-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-subtle);
+  margin-top: auto;
+}
+
+.plugin-card-open {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.plugin-card-disabled .plugin-card-name,
+.plugin-card-disabled .plugin-card-icon {
+  color: var(--color-text-tertiary);
+}
+
+.plugin-card-disabled .plugin-card-icon {
+  background: var(--color-surface-muted);
+}
+
+.plugin-card-disabled .plugin-card-desc {
+  color: var(--color-text-tertiary);
+}
+
+.plugin-card-browsemore {
+  border: 2px dashed var(--color-border-subtle);
+  box-shadow: none;
+  background: var(--color-surface-hover);
+}
+
+@media (max-width: 600px) {
+  .plugins-page .logs-page-header {
+    flex-direction: column;
+  }
+
+  .plugins-page .logs-page-header-actions {
     width: 100%;
   }
 }

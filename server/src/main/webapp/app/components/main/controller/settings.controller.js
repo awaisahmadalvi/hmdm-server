@@ -3,7 +3,7 @@ angular.module('headwind-kiosk')
     .controller('SettingsTabController', function ($scope, $rootScope, $timeout, $modal, hintService, settingsService,
                                                    localization, authService, userService, confirmModal, Idle,
                                                    groupService, configurationService, twoFactorAuthService,
-                                                   $transitions, $q, $state) {
+                                                   $transitions, $q, $state, $window) {
         $scope.settings = {};
         $scope.userRoleSettings = {};
         $scope.loading = false;
@@ -188,6 +188,7 @@ angular.module('headwind-kiosk')
                             $scope.settings = response.data;
                             $scope.initTwoFactor($scope.settings);
                             designSettingsSnapshot = angular.copy($scope.settings);
+                            generalSettingsSnapshot = angular.copy($scope.settings);
                         }
                         $scope.loading = false;
                     }, onRequestFailure);
@@ -570,6 +571,180 @@ angular.module('headwind-kiosk')
             });
         };
 
+        var generalSettingsSnapshot = null;
+
+        $scope.isGeneralSettingsDirty = function () {
+            return !!generalSettingsSnapshot && !angular.equals($scope.settings, generalSettingsSnapshot);
+        };
+
+        $scope.resetGeneralSettings = function () {
+            if (generalSettingsSnapshot) {
+                $scope.settings = angular.copy(generalSettingsSnapshot);
+            }
+            clearMessages();
+        };
+
+        // Phone number format uses '9' as a placeholder for any digit
+        // (see form.settings.misc.phone.format.placeholder) - purely a
+        // display helper for the live example, doesn't touch saved data.
+        $scope.phoneFormatExample = function () {
+            var mask = $scope.settings && $scope.settings.phoneNumberFormat;
+            if (!mask) {
+                return '';
+            }
+            var digit = 1;
+            return mask.replace(/9/g, function () {
+                var sample = digit % 10;
+                digit++;
+                return sample;
+            });
+        };
+
+        $scope.savingGeneralSettings = false;
+        $scope.generalSettingsToast = null;
+
+        var showGeneralSettingsToast = function (type, message) {
+            $scope.generalSettingsToast = {type: type, message: message};
+            $timeout(function () {
+                if ($scope.generalSettingsToast && $scope.generalSettingsToast.message === message) {
+                    $scope.generalSettingsToast = null;
+                }
+            }, 3000);
+        };
+
+        // Sticky section nav for the General settings page: highlights
+        // whichever section's card is currently crossing a thin band near
+        // the top of the viewport. Uses IntersectionObserver rather than
+        // manual offsetTop/scrollY math - this page's content is short
+        // enough that several cards can be on screen at once (especially
+        // at 1920x1080), which broke a naive "last section whose top has
+        // scrolled past a fixed offset" calculation: once scrolled to the
+        // bottom, the remaining cards' tops never actually crossed the
+        // threshold, so the nav kept the earlier section highlighted.
+        // IntersectionObserver doesn't have that failure mode.
+        $scope.settingsActiveSection = 'language';
+        var SETTINGS_SECTION_IDS = ['language', 'devicedata', 'security', 'enrollment'];
+        var SETTINGS_SCROLL_OFFSET = 90; // clears the sticky page header
+
+        // On a short page, two different sections' scroll targets can both
+        // clamp to the same max scroll position - once the smooth scroll
+        // from a click settles there, scroll-based detection alone would
+        // "correct" a valid click on an earlier section back to whichever
+        // section is actually last. Suppress auto-detection for a moment
+        // after a click so the clicked section wins.
+        var suppressAutoSection = false;
+        var suppressAutoSectionTimeout = null;
+
+        $scope.scrollToSettingsSection = function (id) {
+            $scope.settingsActiveSection = id;
+            suppressAutoSection = true;
+            if (suppressAutoSectionTimeout) {
+                $timeout.cancel(suppressAutoSectionTimeout);
+            }
+            suppressAutoSectionTimeout = $timeout(function () {
+                suppressAutoSection = false;
+            }, 1000);
+            var el = document.getElementById('settings-section-' + id);
+            if (el) {
+                $window.scrollTo({top: el.offsetTop - SETTINGS_SCROLL_OFFSET, behavior: 'smooth'});
+            }
+        };
+
+        var settingsSectionVisibility = {};
+        var settingsSectionObserver = null;
+
+        if (window.IntersectionObserver) {
+            settingsSectionObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    var id = entry.target.id.replace('settings-section-', '');
+                    settingsSectionVisibility[id] = entry.isIntersecting;
+                });
+                if (suppressAutoSection) {
+                    return;
+                }
+                var current = null;
+                SETTINGS_SECTION_IDS.forEach(function (id) {
+                    if (settingsSectionVisibility[id]) {
+                        current = id;
+                    }
+                });
+                if (current && $scope.settingsActiveSection !== current) {
+                    $scope.$apply(function () {
+                        $scope.settingsActiveSection = current;
+                    });
+                }
+            }, {
+                // Only count a section as "current" while its top is within
+                // the upper ~30% of the viewport, just below the sticky header.
+                rootMargin: '-' + SETTINGS_SCROLL_OFFSET + 'px 0px -70% 0px',
+                threshold: 0
+            });
+
+            $timeout(function () {
+                SETTINGS_SECTION_IDS.forEach(function (id) {
+                    var el = document.getElementById('settings-section-' + id);
+                    if (el) {
+                        settingsSectionObserver.observe(el);
+                    }
+                });
+            });
+        }
+
+        // This page's content is short enough (relative to a tall 1920x1080
+        // viewport) that the last section's top may never cross into the
+        // observer's top band at all - the page simply runs out of room to
+        // scroll before that happens. Standard scrollspy fix: once scrolled
+        // (almost) to the very bottom, force the last section active
+        // regardless of what the observer thinks.
+        var onSettingsScrollBottom = function () {
+            if (suppressAutoSection) {
+                return;
+            }
+            var atBottom = $window.scrollY + $window.innerHeight >= document.documentElement.scrollHeight - 2;
+            if (!atBottom) {
+                return;
+            }
+            // The enrollment card only renders for singleCustomer - find
+            // whichever section is actually last in the DOM, not just the
+            // last entry in the id list.
+            var last = null;
+            for (var i = SETTINGS_SECTION_IDS.length - 1; i >= 0; i--) {
+                if (document.getElementById('settings-section-' + SETTINGS_SECTION_IDS[i])) {
+                    last = SETTINGS_SECTION_IDS[i];
+                    break;
+                }
+            }
+            if (last && $scope.settingsActiveSection !== last) {
+                $scope.$apply(function () {
+                    $scope.settingsActiveSection = last;
+                });
+            }
+        };
+        angular.element($window).on('scroll', onSettingsScrollBottom);
+        $scope.$on('$destroy', function () {
+            angular.element($window).off('scroll', onSettingsScrollBottom);
+        });
+
+        $scope.$on('$destroy', function () {
+            if (settingsSectionObserver) {
+                settingsSectionObserver.disconnect();
+            }
+        });
+
+        if ($state.current.name === 'langSettings') {
+            var deregisterGeneralSettingsTransitionHook = $transitions.onStart({}, function () {
+                if (!$scope.isGeneralSettingsDirty()) {
+                    return true;
+                }
+                var deferred = $q.defer();
+                confirmModal.getUserConfirmation(localization.localize('form.settings.general.unsaved.confirm'), function () {
+                    deferred.resolve(true);
+                });
+                return deferred.promise;
+            });
+            $scope.$on('$destroy', deregisterGeneralSettingsTransitionHook);
+        }
+
         $scope.saveLanguageSettings = function () {
             clearMessages();
 
@@ -587,18 +762,37 @@ angular.module('headwind-kiosk')
                 Idle.unwatch();
             }
 
+            $scope.savingGeneralSettings = true;
             settingsService.updateMiscSettings($scope.settings, function (response) {
                 if (response.status === 'OK') {
                     settingsService.updateLanguageSettings($scope.settings, function (response) {
+                        $scope.savingGeneralSettings = false;
                         if (response.status === 'OK') {
                             $rootScope.$broadcast('aero_LANGUAGE_SETTINGS_UPDATED', $scope.settings);
                             $scope.successMessage = localization.localize('success.settings.saved');
                             $timeout(function () {
                                 $scope.successMessage = '';
                             }, 2000);
+                            generalSettingsSnapshot = angular.copy($scope.settings);
+                            showGeneralSettingsToast('success', localization.localize('success.settings.saved'));
+                        } else {
+                            $scope.errorMessage = localization.localizeServerResponse(response);
+                            showGeneralSettingsToast('error', $scope.errorMessage);
                         }
+                    }, function () {
+                        $scope.savingGeneralSettings = false;
+                        $scope.errorMessage = localization.localize('error.request.failure');
+                        showGeneralSettingsToast('error', $scope.errorMessage);
                     });
+                } else {
+                    $scope.savingGeneralSettings = false;
+                    $scope.errorMessage = localization.localizeServerResponse(response);
+                    showGeneralSettingsToast('error', $scope.errorMessage);
                 }
+            }, function () {
+                $scope.savingGeneralSettings = false;
+                $scope.errorMessage = localization.localize('error.request.failure');
+                showGeneralSettingsToast('error', $scope.errorMessage);
             });
         };
 
