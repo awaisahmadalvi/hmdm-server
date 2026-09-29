@@ -13,6 +13,40 @@ angular.module('headwind-kiosk')
             });
         };
     })
+    .directive('dropZone', function () {
+        // Purely presentational: adds a "drag-over" class while a file is
+        // dragged over the element and invokes the given expression on
+        // drop/click. Does not read or upload the dropped file itself -
+        // callers wire drop to whatever their existing upload action is.
+        return {
+            restrict: 'A',
+            scope: false,
+            link: function (scope, element, attrs) {
+                var stop = function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                };
+
+                element.on('dragover dragenter', function (event) {
+                    stop(event);
+                    element.addClass('drag-over');
+                });
+
+                element.on('dragleave dragend', function (event) {
+                    stop(event);
+                    element.removeClass('drag-over');
+                });
+
+                element.on('drop', function (event) {
+                    stop(event);
+                    element.removeClass('drag-over');
+                    scope.$apply(function () {
+                        scope.$eval(attrs.dropZone);
+                    });
+                });
+            }
+        };
+    })
     .directive('notificationMessage', function ($rootScope) {
         return {
             restrict: 'E',

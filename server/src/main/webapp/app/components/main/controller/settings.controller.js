@@ -2,7 +2,7 @@
 angular.module('headwind-kiosk')
     .controller('SettingsTabController', function ($scope, $rootScope, $timeout, $modal, hintService, settingsService,
                                                    localization, authService, userService, confirmModal, Idle,
-                                                   groupService, configurationService, twoFactorAuthService) {
+                                                   groupService, configurationService, twoFactorAuthService, $state) {
         $scope.settings = {};
         $scope.userRoleSettings = {};
         $scope.loading = false;
@@ -41,6 +41,7 @@ angular.module('headwind-kiosk')
                         if (response.data) {
                             $scope.settings = response.data;
                             $scope.initTwoFactor($scope.settings);
+                            designSettingsSnapshot = angular.copy($scope.settings);
                         }
                         $scope.loading = false;
                     }, onRequestFailure);
@@ -192,17 +193,169 @@ angular.module('headwind-kiosk')
             });
         };
 
+        $scope.removeBackgroundImage = function () {
+            $scope.settings.backgroundImageUrl = '';
+        };
+
+        $scope.backgroundImageFileName = function () {
+            var url = $scope.settings && $scope.settings.backgroundImageUrl;
+            if (!url) {
+                return '';
+            }
+            var parts = url.split('/');
+            return parts[parts.length - 1] || url;
+        };
+
+        var HEX_COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+        $scope.isValidHex = function (value) {
+            return !value || HEX_COLOR_RE.test(value);
+        };
+
+        $scope.designColorPresets = [
+            {label: localization.localize('form.settings.design.color.preset.navy'), value: '#0f172a'},
+            {label: localization.localize('form.settings.design.color.preset.white'), value: '#ffffff'},
+            {label: localization.localize('form.settings.design.color.preset.black'), value: '#000000'}
+        ];
+
+        $scope.applyColorPreset = function (field, value) {
+            $scope.settings[field] = value;
+        };
+
+        // The native <input type="color"> swatch only ever accepts a full
+        // 6-digit hex value, but settings.backgroundColor/textColor (the
+        // real, saved model) may be a 3-digit hex, empty, or momentarily
+        // invalid while the user is typing in the text field. Rather than
+        // binding the swatch straight to that field (which would let the
+        // browser silently coerce/overwrite it to #000000), mirror it
+        // through this normalized proxy so the swatch always shows a valid
+        // color and only writes back to the real field when the user
+        // actually picks a new one.
+        var expandHex = function (value) {
+            if (!HEX_COLOR_RE.test(value || '')) {
+                return null;
+            }
+            if (value.length === 4) {
+                return '#' + value[1] + value[1] + value[2] + value[2] + value[3] + value[3];
+            }
+            return value.toLowerCase();
+        };
+
+        $scope.colorSwatchProxy = {};
+
+        var syncSwatchProxy = function (field, fallback) {
+            $scope.colorSwatchProxy[field] = expandHex($scope.settings[field]) || fallback;
+        };
+
+        $scope.$watch('settings.backgroundColor', function () {
+            syncSwatchProxy('backgroundColor', '#0f172a');
+        });
+        $scope.$watch('settings.textColor', function () {
+            syncSwatchProxy('textColor', '#ffffff');
+        });
+
+        $scope.applySwatchColor = function (field) {
+            $scope.settings[field] = $scope.colorSwatchProxy[field];
+        };
+
+        // Fallback used only to keep the live preview rendering something
+        // sane while the user is mid-typing an invalid hex value; the
+        // actual saved value is never touched here.
+        $scope.previewColor = function (value, fallback) {
+            return $scope.isValidHex(value) && value ? value : fallback;
+        };
+
+        $scope.iconSizePreviewClass = function () {
+            var size = $scope.settings && $scope.settings.iconSize;
+            if (size === 'LARGE') {
+                return 'design-preview-icon-large';
+            }
+            if (size === 'MEDIUM') {
+                return 'design-preview-icon-medium';
+            }
+            return 'design-preview-icon-small';
+        };
+
+        $scope.previewHeaderText = function () {
+            var header = $scope.settings && $scope.settings.desktopHeader;
+            switch (header) {
+                case 'DEVICE_ID':
+                    return localization.localize('form.settings.design.preview.header.deviceid');
+                case 'DESCRIPTION':
+                    return localization.localize('form.settings.design.preview.header.description');
+                case 'TEMPLATE':
+                    return $scope.settings.desktopHeaderTemplate || localization.localize('form.settings.design.preview.header.custom');
+                case 'CUSTOM1':
+                case 'CUSTOM2':
+                case 'CUSTOM3':
+                    return localization.localize('form.settings.design.preview.header.custom');
+                default:
+                    return '';
+            }
+        };
+
+        $scope.previewAppNames = [1, 2, 3, 4, 5, 6];
+
+        var designSettingsSnapshot = null;
+
+        $scope.isDesignDirty = function () {
+            return !!designSettingsSnapshot && !angular.equals($scope.settings, designSettingsSnapshot);
+        };
+
+        $scope.resetDesignSettings = function () {
+            if (designSettingsSnapshot) {
+                $scope.settings = angular.copy(designSettingsSnapshot);
+            }
+            clearMessages();
+        };
+
+        $scope.savingDesign = false;
+        $scope.designToast = null;
+
+        var showDesignToast = function (type, message) {
+            $scope.designToast = {type: type, message: message};
+            $timeout(function () {
+                if ($scope.designToast && $scope.designToast.message === message) {
+                    $scope.designToast = null;
+                }
+            }, 3000);
+        };
+
         $scope.saveDefaultDesignSettings = function () {
             clearMessages();
+            $scope.savingDesign = true;
             settingsService.updateDefaultDesignSettings($scope.settings, function (response) {
+                $scope.savingDesign = false;
                 if (response.status === 'OK') {
                     $scope.successMessage = localization.localize('success.settings.design.saved');
                     $timeout(function () {
                         $scope.successMessage = '';
                     }, 2000);
+                    designSettingsSnapshot = angular.copy($scope.settings);
+                    showDesignToast('success', localization.localize('success.settings.design.saved'));
+                } else {
+                    $scope.errorMessage = localization.localizeServerResponse(response);
+                    showDesignToast('error', $scope.errorMessage);
                 }
+            }, function () {
+                $scope.savingDesign = false;
+                $scope.errorMessage = localization.localize('error.request.failure');
+                showDesignToast('error', $scope.errorMessage);
             });
         };
+
+        var stateChangeGuardActive = true;
+
+        $scope.$on('$stateChangeStart', function (event, toState, toParams) {
+            if (!stateChangeGuardActive || !$scope.isDesignDirty()) {
+                return;
+            }
+            event.preventDefault();
+            confirmModal.getUserConfirmation(localization.localize('form.settings.design.unsaved.confirm'), function () {
+                stateChangeGuardActive = false;
+                $state.transitionTo(toState.name, toParams);
+            });
+        });
 
         $scope.saveCommonSettings = function () {
             clearMessages();

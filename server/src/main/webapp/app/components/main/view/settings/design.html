@@ -1,58 +1,136 @@
+<!--
+  ~
+  ~ Headwind MDM: Open Source Android MDM Software
+  ~ https://h-mdm.com
+  ~
+  ~ Copyright (C) 2019 Headwind Solutions LLC (http://h-sms.com)
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
 <!-- Localization completed -->
-<div class="width-1000 modern-page" ng-controller="SettingsTabController">
-    <div class="text-center">
-        <h4 localized>form.settings.design.title</h4>
+<div class="width-1200 modern-page design-page" ng-controller="SettingsTabController">
+
+    <div class="logs-page-header">
+        <div>
+            <h4 localized>form.settings.design.title</h4>
+            <div class="logs-page-subtitle" localized>form.settings.design.subtitle</div>
+        </div>
+        <div class="logs-page-header-actions design-header-actions">
+            <span class="design-unsaved-indicator" ng-if="isDesignDirty()" localized>form.settings.design.unsaved</span>
+            <button type="button" class="logs-btn-reset" ng-disabled="!isDesignDirty()"
+                    ng-click="resetDesignSettings()" localized>form.settings.design.reset</button>
+            <button type="button" class="btn btn-modern-primary" ng-disabled="savingDesign"
+                    ng-click="saveDefaultDesignSettings()">
+                <span ng-if="!savingDesign" localized>form.settings.design.save</span>
+                <span ng-if="savingDesign" localized>form.settings.design.saving</span>
+            </button>
+        </div>
     </div>
 
-    <div>
-        <form class='form-horizontal modern-toolbar'>
-            <div class='form-group'>
-                <div ng-show='successMessage' class='success'><span>{{successMessage}}</span></div>
+    <div ng-show='successMessage' class='device-details-inline-success'><span>{{successMessage}}</span></div>
+    <div ng-show='errorMessage' class='device-details-inline-error'><span>{{errorMessage}}</span></div>
+
+    <div class="design-body">
+        <div class="design-form-col">
+
+            <div class="device-details-card design-card">
+                <div class="device-details-card-header" localized>form.settings.design.colors.title</div>
+
+                <div class="design-field">
+                    <label class="design-field-label" localized>form.settings.design.color.font</label>
+                    <div class="design-color-row">
+                        <input type="color" class="design-color-swatch"
+                               ng-model="colorSwatchProxy.backgroundColor"
+                               ng-change="applySwatchColor('backgroundColor')" />
+                        <input ng-model='settings.backgroundColor' type='text'
+                               class='form-control logs-input design-hex-input'
+                               ng-class="{'design-input-invalid': !isValidHex(settings.backgroundColor)}"
+                               localized-placeholder='form.settings.design.color.font.placeholder'/>
+                    </div>
+                    <div class="design-field-error" ng-if="!isValidHex(settings.backgroundColor)" localized>form.settings.design.color.invalid</div>
+                    <div class="design-presets">
+                        <button type="button" class="design-preset-swatch" ng-repeat="preset in designColorPresets"
+                                ng-style="{background: preset.value}" title="{{preset.label}}"
+                                ng-click="applyColorPreset('backgroundColor', preset.value)"></button>
+                    </div>
+                </div>
+
+                <div class="design-field">
+                    <label class="design-field-label" localized>form.settings.design.color.app.names</label>
+                    <div class="design-color-row">
+                        <input type="color" class="design-color-swatch"
+                               ng-model="colorSwatchProxy.textColor"
+                               ng-change="applySwatchColor('textColor')" />
+                        <input ng-model='settings.textColor' type='text'
+                               class='form-control logs-input design-hex-input'
+                               ng-class="{'design-input-invalid': !isValidHex(settings.textColor)}"
+                               localized-placeholder='form.settings.design.color.app.names.placeholder'/>
+                    </div>
+                    <div class="design-field-error" ng-if="!isValidHex(settings.textColor)" localized>form.settings.design.color.invalid</div>
+                    <div class="design-presets">
+                        <button type="button" class="design-preset-swatch" ng-repeat="preset in designColorPresets"
+                                ng-style="{background: preset.value}" title="{{preset.label}}"
+                                ng-click="applyColorPreset('textColor', preset.value)"></button>
+                    </div>
+                </div>
             </div>
 
-            <div class='form-group'>
-                <label class='col-sm-3 control-label' localized>form.settings.design.color.font</label>
-                <div class='col-sm-9'>
-                    <input ng-model='settings.backgroundColor' colorpicker type='text' class='form-control'
-                           localized-placeholder='form.settings.design.color.font.placeholder'/>
+            <div class="device-details-card design-card">
+                <div class="device-details-card-header" localized>form.settings.design.background.title</div>
+
+                <div class="design-upload-zone" drop-zone="uploadBackground()" ng-click="uploadBackground()">
+                    <span class="glyphicon glyphicon-cloud-upload design-upload-icon"></span>
+                    <div class="design-upload-text" localized>form.settings.design.background.dropzone</div>
                 </div>
-            </div>
-            <div class='form-group'>
-                <label class='col-sm-3 control-label' localized>form.settings.design.color.app.names</label>
-                <div class='col-sm-9'>
-                    <input ng-model='settings.textColor' colorpicker type='text' class='form-control'
-                           localized-placeholder='form.settings.design.color.app.names.placeholder'/>
-                </div>
-            </div>
-            <div class='form-group'>
-                <label class='col-sm-3 control-label' localized>form.settings.design.url.background.image</label>
-                <div class='col-sm-7'>
-                    <input ng-model='settings.backgroundImageUrl'
-                           type='text' class='form-control'
+
+                <div class="design-upload-alt-row">
+                    <span class="design-upload-alt" localized>form.settings.design.background.dropzone.alt</span>
+                    <input ng-model='settings.backgroundImageUrl' type='text' class='form-control logs-input'
                            localized-placeholder='form.settings.design.url.background.image.placeholder'>
                 </div>
-                <div class="col-sm-2 text-right">
-                    <button type="button" class="btn btn-default" ng-click="uploadBackground()"
-                            localized>form.configuration.settings.design.upload</button>
+
+                <div class="design-upload-preview" ng-if="settings.backgroundImageUrl">
+                    <div class="design-upload-thumb" ng-style="{'background-image': 'url(' + settings.backgroundImageUrl + ')'}"></div>
+                    <div class="design-upload-filename">{{backgroundImageFileName()}}</div>
+                    <button type="button" class="logs-btn-reset design-upload-remove"
+                            ng-click="removeBackgroundImage()" localized>form.settings.design.background.remove</button>
                 </div>
+                <div class="design-upload-empty" ng-if="!settings.backgroundImageUrl" localized>form.settings.design.background.none</div>
             </div>
-            <div class='form-group'>
-                <label class='col-sm-3 control-label' for="iconSize" localized>form.settings.design.size.icon</label>
-                <div class='col-sm-9'>
-                    <select class='form-control' id="iconSize" ng-model='settings.iconSize'>
-                        <option ng-value="'SMALL'" ng-selected="settings.iconSize === 'SMALL'"
-                                localized>form.settings.design.size.icon.small</option>
-                        <option ng-value="'MEDIUM'" ng-selected="settings.iconSize === 'MEDIUM'"
-                                localized>form.settings.design.size.icon.medium</option>
-                        <option ng-value="'LARGE'" ng-selected="settings.iconSize === 'LARGE'"
-                                localized>form.settings.design.size.icon.large</option>
-                    </select>
+
+            <div class="device-details-card design-card">
+                <div class="device-details-card-header" localized>form.settings.design.layout.title</div>
+
+                <div class="design-field">
+                    <label class="design-field-label" for="iconSize" localized>form.settings.design.size.icon</label>
+                    <div class="modern-segmented" id="iconSize">
+                        <button type="button" class="modern-segmented-option"
+                                ng-class="{active: settings.iconSize === 'SMALL'}"
+                                ng-click="settings.iconSize = 'SMALL'" localized>form.settings.design.size.icon.small</button>
+                        <button type="button" class="modern-segmented-option"
+                                ng-class="{active: settings.iconSize === 'MEDIUM'}"
+                                ng-click="settings.iconSize = 'MEDIUM'" localized>form.settings.design.size.icon.medium</button>
+                        <button type="button" class="modern-segmented-option"
+                                ng-class="{active: settings.iconSize === 'LARGE'}"
+                                ng-click="settings.iconSize = 'LARGE'" localized>form.settings.design.size.icon.large</button>
+                    </div>
                 </div>
-            </div>
-            <div class='form-group'>
-                <label class='col-sm-3 control-label' for="desktopHeader" localized>form.configuration.settings.design.desktop.header</label>
-                <div class='col-sm-9'>
-                    <select class='form-control' id="desktopHeader" ng-model='settings.desktopHeader'>
+
+                <div class="design-field">
+                    <label class="design-field-label" for="desktopHeader" localized>form.configuration.settings.design.desktop.header</label>
+                    <select class='form-control modern-select' id="desktopHeader" ng-model='settings.desktopHeader'>
                         <option ng-value="'NO_HEADER'" ng-selected="settings.desktopHeader === 'NO_HEADER'"
                                 localized>form.configuration.settings.design.desktop.header.no</option>
                         <option ng-value="'DEVICE_ID'" ng-selected="settings.desktopHeader === 'DEVICE_ID'"
@@ -65,24 +143,46 @@
                         <option ng-if="settings.customPropertyName2" ng-value="'CUSTOM2'" ng-selected="settings.desktopHeader === 'CUSTOM2'">{{settings.customPropertyName2}}</option>
                         <option ng-if="settings.customPropertyName3" ng-value="'CUSTOM3'" ng-selected="settings.desktopHeader === 'CUSTOM3'">{{settings.customPropertyName3}}</option>
                     </select>
-                    <div class='field-hint'  ng-if="settings.desktopHeader === 'DESCRIPTION' || settings.desktopHeader === 'CUSTOM1' || settings.desktopHeader === 'CUSTOM2' || settings.desktopHeader === 'CUSTOM3'" localized>form.configuration.settings.design.desktop.header.hint</div>
+                    <div class='field-hint' ng-if="settings.desktopHeader === 'DESCRIPTION' || settings.desktopHeader === 'CUSTOM1' || settings.desktopHeader === 'CUSTOM2' || settings.desktopHeader === 'CUSTOM3'" localized>form.configuration.settings.design.desktop.header.hint</div>
                 </div>
-            </div>
 
-            <div class='form-group' ng-if="settings.desktopHeader === 'TEMPLATE'">
-                <label class='col-sm-3 control-label' localized>form.configuration.settings.design.desktop.header.template</label>
-                <div class='col-sm-9'>
-                    <input ng-model='settings.desktopHeaderTemplate'
-                           type='text' class='form-control'
+                <div class="design-field" ng-if="settings.desktopHeader === 'TEMPLATE'">
+                    <label class="design-field-label" localized>form.configuration.settings.design.desktop.header.template</label>
+                    <input ng-model='settings.desktopHeaderTemplate' type='text' class='form-control logs-input'
                            placeholder='{{desktopHeaderTemplatePlaceholder}}'>
                 </div>
             </div>
-            <div class='form-group'>
-                <div class='col-sm-offset-3 col-sm-9 padding-left'>
-                    <button type='submit' class='btn btn-default btn-modern-primary' ng-click='saveDefaultDesignSettings()'
-                            localized>button.save</button>
+        </div>
+
+        <div class="design-preview-col">
+            <div class="device-details-card design-preview-card">
+                <div class="device-details-card-header" localized>form.settings.design.preview.title</div>
+
+                <div class="design-phone-frame">
+                    <div class="design-phone-notch"></div>
+                    <div class="design-phone-screen"
+                         ng-style="{background: previewColor(settings.backgroundColor, '#0f172a')}">
+                        <div class="design-phone-bg" ng-if="settings.backgroundImageUrl"
+                             ng-style="{'background-image': 'url(' + settings.backgroundImageUrl + ')'}"></div>
+
+                        <div class="design-phone-header" ng-if="previewHeaderText()"
+                             ng-style="{color: previewColor(settings.textColor, '#ffffff')}">{{previewHeaderText()}}</div>
+
+                        <div class="design-phone-grid">
+                            <div class="design-phone-app" ng-repeat="app in previewAppNames">
+                                <div class="design-phone-icon" ng-class="iconSizePreviewClass()"></div>
+                                <div class="design-phone-app-name"
+                                     ng-style="{color: previewColor(settings.textColor, '#ffffff')}"
+                                     localized>form.settings.design.preview.app</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </form>
+        </div>
+    </div>
+
+    <div class="modern-toast" ng-if="designToast" ng-class="'modern-toast-' + designToast.type">
+        {{designToast.message}}
     </div>
 </div>
