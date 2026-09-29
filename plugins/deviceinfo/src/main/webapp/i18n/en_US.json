@@ -49,6 +49,10 @@
   "plugin.deviceinfo.state.mobile2SimState.restricted": "Limited use",
 
   "plugin.deviceinfo.tab.title": "Detailed Information",
+  "plugin.deviceinfo.section.identity": "Identity",
+  "plugin.deviceinfo.section.identifiers": "Identifiers",
+  "plugin.deviceinfo.section.permissions": "Permissions",
+  "plugin.deviceinfo.section.state": "Device state",
   "plugin.deviceinfo.enum.time.min": "min ago",
   "plugin.deviceinfo.enum.time.hour": "hours ago",
   "plugin.deviceinfo.enum.time.day": "days ago",

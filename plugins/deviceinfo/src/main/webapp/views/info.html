@@ -30,10 +30,28 @@
         </div>
     </form>
 
+    <div ng-if="deviceInfo" class="deviceinfo-header">
+        <div class="deviceinfo-header-icon">
+            <span class="glyphicon glyphicon-phone"></span>
+        </div>
+        <div>
+            <div class="deviceinfo-header-title">{{deviceInfo.deviceNumber}}</div>
+            <div class="deviceinfo-header-sub">
+                <span ng-if="deviceInfo.model">{{deviceInfo.model}}</span>
+                <span ng-if="deviceInfo.model && deviceInfo.osVersion"> &middot; </span>
+                <span ng-if="deviceInfo.osVersion">{{deviceInfo.osVersion}}</span>
+                <span ng-if="!deviceInfo.model && !deviceInfo.osVersion">&nbsp;</span>
+            </div>
+        </div>
+    </div>
+
     <div ng-if="deviceInfo" class="row margin-top-40">
         <div ng-class="{'col-sm-5': latestDynamicData, 'col-sm-12': !latestDynamicData}">
             <div class="modern-proplist">
             <table class='table'>
+                <tr>
+                    <th colspan="2" localized class="text-center">plugin.deviceinfo.section.identity</th>
+                </tr>
                 <tr>
                     <th localized>plugin.deviceinfo.title.time</th>
                     <td>
@@ -59,6 +77,10 @@
                             {{group.name}}<br/>
                         </span>
                     </td>
+                </tr>
+
+                <tr>
+                    <th colspan="2" localized class="text-center">plugin.deviceinfo.section.identifiers</th>
                 </tr>
                 <tr>
                     <th localized>plugin.deviceinfo.title.imei.required</th>
@@ -112,10 +134,14 @@
                     <th localized>plugin.deviceinfo.title.cpu</th>
                     <td>{{deviceInfo.cpu}}</td>
                 </tr>
+
+                <tr>
+                    <th colspan="2" localized class="text-center">plugin.deviceinfo.section.permissions</th>
+                </tr>
                 <tr>
                     <th localized>plugin.deviceinfo.title.permission.1</th>
                     <td>
-                        <span ng-class="{'device-data-mismatch': !deviceInfo.adminPermission}">
+                        <span class="deviceinfo-badge" ng-class="deviceInfo.adminPermission ? 'deviceinfo-badge-yes' : 'deviceinfo-badge-no'">
                             {{('plugin.deviceinfo.title.permission.' + deviceInfo.adminPermission) | localize}}
                         </span>
                     </td>
@@ -123,7 +149,7 @@
                 <tr>
                     <th localized>plugin.deviceinfo.title.permission.2</th>
                     <td>
-                        <span ng-class="{'device-data-mismatch': !deviceInfo.overlapPermission}">
+                        <span class="deviceinfo-badge" ng-class="deviceInfo.overlapPermission ? 'deviceinfo-badge-yes' : 'deviceinfo-badge-no'">
                             {{('plugin.deviceinfo.title.permission.' + deviceInfo.overlapPermission) | localize}}
                         </span>
                     </td>
@@ -131,7 +157,7 @@
                 <tr>
                     <th localized>plugin.deviceinfo.title.permission.3</th>
                     <td>
-                        <span ng-class="{'device-data-mismatch': !deviceInfo.historyPermission}">
+                        <span class="deviceinfo-badge" ng-class="deviceInfo.historyPermission ? 'deviceinfo-badge-yes' : 'deviceinfo-badge-no'">
                             {{('plugin.deviceinfo.title.permission.' + deviceInfo.historyPermission) | localize}}
                         </span>
                     </td>
@@ -139,10 +165,14 @@
                 <tr>
                     <th localized>plugin.deviceinfo.title.permission.4</th>
                     <td>
-                        <span>
+                        <span class="deviceinfo-badge deviceinfo-badge-neutral">
                             {{('plugin.deviceinfo.title.permission.' + !!deviceInfo.accessibilityPermission) | localize}}
                         </span>
                     </td>
+                </tr>
+
+                <tr>
+                    <th colspan="2" localized class="text-center">plugin.deviceinfo.section.state</th>
                 </tr>
                 <tr>
                     <th localized>plugin.deviceinfo.title.model</th>
@@ -154,8 +184,15 @@
                 </tr>
                 <tr>
                     <th localized>plugin.deviceinfo.title.battery.level</th>
-                    <td ng-class="{'device-data-mismatch': deviceInfo.batteryLevel < 20}">
-                        {{deviceInfo.batteryLevel ? (deviceInfo.batteryLevel + '%') : undefined}}
+                    <td>
+                        <div class="deviceinfo-battery" ng-if="deviceInfo.batteryLevel">
+                            <div class="deviceinfo-battery-track">
+                                <div class="deviceinfo-battery-fill"
+                                     ng-class="{'deviceinfo-battery-low': deviceInfo.batteryLevel < 20, 'deviceinfo-battery-mid': deviceInfo.batteryLevel >= 20 && deviceInfo.batteryLevel < 50}"
+                                     ng-style="{width: deviceInfo.batteryLevel + '%'}"></div>
+                            </div>
+                            <span class="deviceinfo-battery-text" ng-class="{'device-data-mismatch': deviceInfo.batteryLevel < 20}">{{deviceInfo.batteryLevel}}%</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -295,7 +332,7 @@
         <div class="text-center">
             <h5 localized>plugin.deviceinfo.title.apps.status</h5>
         </div>
-        
+
         <div class="modern-table-wrap">
         <table class="table">
             <thead>
