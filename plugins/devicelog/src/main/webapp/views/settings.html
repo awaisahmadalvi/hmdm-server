@@ -113,12 +113,12 @@
                         <button type="button" class="btn btn-default" localized-title="button.edit" ng-click="editRule(rule)">
                             <span class="glyphicon glyphicon-pencil"></span>
                         </button>
-                        <div class="users-row-menu" uib-dropdown>
-                            <button type="button" class="btn btn-default" uib-dropdown-toggle>
+                        <div class="users-row-menu" app-actions-menu>
+                            <button type="button" class="btn btn-default">
                                 <span class="glyphicon glyphicon-option-vertical"></span>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu>
-                                <li><a ng-click="removeRule(rule)" localized>form.role.action.delete</a></li>
+                            <ul class="dropdown-menu dropdown-menu-right actions-menu-list">
+                                <li><a class="action-danger" ng-click="removeRule(rule)" localized>form.role.action.delete</a></li>
                             </ul>
                         </div>
                     </td>

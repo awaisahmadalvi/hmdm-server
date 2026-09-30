@@ -53,12 +53,12 @@
                         <button type="button" class="btn btn-default" localized-title="button.edit" ng-click="editGroup(group)">
                             <span class="glyphicon glyphicon-pencil"></span>
                         </button>
-                        <div class="users-row-menu" uib-dropdown ng-if="group.id !== 1">
-                            <button type="button" class="btn btn-default" uib-dropdown-toggle>
+                        <div class="users-row-menu" app-actions-menu ng-if="group.id !== 1">
+                            <button type="button" class="btn btn-default">
                                 <span class="glyphicon glyphicon-option-vertical"></span>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu>
-                                <li><a ng-click="removeGroup(group)" localized>form.role.action.delete</a></li>
+                            <ul class="dropdown-menu dropdown-menu-right actions-menu-list">
+                                <li><a class="action-danger" ng-click="removeGroup(group)" localized>form.role.action.delete</a></li>
                             </ul>
                         </div>
                     </td>

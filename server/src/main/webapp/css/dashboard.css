@@ -3388,6 +3388,70 @@
   pointer-events: none;
 }
 
+/* =========================================================
+   Shared "..." actions menu (appActionsMenu directive, app/shared/
+   directives.js). Self-contained on purpose: while open, this element is
+   re-parented onto <body> (see the directive for why), so it can't rely
+   on any .modern-page/.users-row-menu ancestor scoping the way a normal
+   uib-dropdown menu could - every visual rule it needs lives here.
+   ========================================================= */
+
+.actions-menu-list {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  min-width: 170px;
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  background: var(--color-surface);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  border: none;
+}
+
+.actions-menu-list.actions-menu-list-open {
+  display: block;
+}
+
+.actions-menu-list > li > a {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.actions-menu-list > li > a:hover,
+.actions-menu-list > li > a:focus {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.actions-menu-list > li.disabled > a {
+  color: var(--color-text-tertiary);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.actions-menu-list > li > a.action-danger {
+  color: var(--color-danger);
+}
+
+.actions-menu-list > li > a.action-danger:hover {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.actions-menu-list > li.disabled > a.action-danger {
+  color: var(--color-text-tertiary);
+}
+
 /* ---------- Add/edit user dialog ---------- */
 
 .users-password-row {

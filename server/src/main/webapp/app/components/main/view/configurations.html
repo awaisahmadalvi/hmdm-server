@@ -51,15 +51,15 @@
                     <span class="glyphicon glyphicon-qrcode"></span> <span localized>form.configurations.action.qr</span>
                 </a>
                 <button type="button" class="logs-btn-reset" ng-click="editConfiguration(configuration)" localized>button.change</button>
-                <div class="users-row-menu" uib-dropdown ng-if="hasPermission('copy_config')">
-                    <button type="button" class="btn btn-default" uib-dropdown-toggle>
+                <div class="users-row-menu" app-actions-menu ng-if="hasPermission('copy_config')">
+                    <button type="button" class="btn btn-default">
                         <span class="glyphicon glyphicon-option-vertical"></span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu>
+                    <ul class="dropdown-menu dropdown-menu-right actions-menu-list">
                         <li><a ng-click="copyConfiguration(configuration)" localized>form.configurations.action.duplicate</a></li>
-                        <li ng-if="configuration.id !== 1"><a ng-click="removeConfiguration(configuration)" localized>button.delete</a></li>
+                        <li ng-if="configuration.id !== 1"><a class="action-danger" ng-click="removeConfiguration(configuration)" localized>button.delete</a></li>
                         <li ng-if="configuration.id === 1" class="disabled">
-                            <a title="{{'form.configurations.protected.default.tooltip' | localize}}" localized>button.delete</a>
+                            <a class="action-danger" title="{{'form.configurations.protected.default.tooltip' | localize}}" localized>button.delete</a>
                         </li>
                     </ul>
                 </div>

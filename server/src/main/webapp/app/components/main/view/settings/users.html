@@ -77,15 +77,15 @@
                         <button type="button" class="btn btn-default" localized-title="button.edit" ng-click="editUser(user)">
                             <span class="glyphicon glyphicon-pencil"></span>
                         </button>
-                        <div class="dropdown users-row-menu" uib-dropdown ng-if="user.editable && !user.superAdmin">
-                            <button type="button" class="btn btn-default" uib-dropdown-toggle>
+                        <div class="dropdown users-row-menu" app-actions-menu ng-if="user.editable && !user.superAdmin">
+                            <button type="button" class="btn btn-default">
                                 <span class="glyphicon glyphicon-option-vertical"></span>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu>
+                            <ul class="dropdown-menu dropdown-menu-right actions-menu-list">
                                 <li><a ng-click="loginAs(user)" localized>form.settings.users.action.login.as</a></li>
                                 <li ng-class="{disabled: isCurrentUser(user)}"
                                     title="{{isCurrentUser(user) ? ('form.settings.users.self.delete.hint' | localize) : ''}}">
-                                    <a ng-click="removeUser(user)" localized>form.settings.users.action.delete</a>
+                                    <a class="action-danger" ng-click="removeUser(user)" localized>form.settings.users.action.delete</a>
                                 </li>
                             </ul>
                         </div>

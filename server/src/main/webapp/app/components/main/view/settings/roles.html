@@ -34,12 +34,12 @@
             <div class="roles-card-header">
                 <span class="roles-role-dot" ng-class="roleBadgeClass(role)"></span>
                 <span class="roles-role-name">{{role.name}}</span>
-                <div class="users-row-menu" uib-dropdown ng-click="$event.stopPropagation()">
-                    <button type="button" class="btn btn-default" uib-dropdown-toggle>
+                <div class="users-row-menu" app-actions-menu ng-click="$event.stopPropagation()">
+                    <button type="button" class="btn btn-default">
                         <span class="glyphicon glyphicon-option-vertical"></span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu>
-                        <li><a ng-click="removeRole(role)" localized>form.role.action.delete</a></li>
+                    <ul class="dropdown-menu dropdown-menu-right actions-menu-list">
+                        <li><a class="action-danger" ng-click="removeRole(role)" localized>form.role.action.delete</a></li>
                     </ul>
                 </div>
             </div>

@@ -87,18 +87,18 @@
                                 type="button" class="btn btn-default" ng-click="editFile(file)">
                             <span class="glyphicon glyphicon-pencil"></span>
                         </button>
-                        <div class="users-row-menu" uib-dropdown>
-                            <button type="button" class="btn btn-default" uib-dropdown-toggle>
+                        <div class="users-row-menu" app-actions-menu>
+                            <button type="button" class="btn btn-default">
                                 <span class="glyphicon glyphicon-option-vertical"></span>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu>
+                            <ul class="dropdown-menu dropdown-menu-right actions-menu-list">
                                 <li><a ng-click="copyLink(file)" localized>form.files.action.copy.link</a></li>
                                 <li><a ng-click="editConfiguration(file)" localized>form.files.action.configurations</a></li>
                                 <li ng-if="hasPermission('edit_files') && !file.removalDisabled">
-                                    <a ng-click="removeFile(file)" localized>form.role.action.delete</a>
+                                    <a class="action-danger" ng-click="removeFile(file)" localized>form.role.action.delete</a>
                                 </li>
                                 <li ng-if="hasPermission('edit_files') && file.removalDisabled" class="disabled">
-                                    <a title="{{file.removeButtonTooltip}}" localized>form.role.action.delete</a>
+                                    <a class="action-danger" title="{{file.removeButtonTooltip}}" localized>form.role.action.delete</a>
                                 </li>
                             </ul>
                         </div>

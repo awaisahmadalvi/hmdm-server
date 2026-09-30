@@ -317,4 +317,161 @@ angular.module('headwind-kiosk')
                 });
             }
         };
+    })
+    // Shared row/card "..." actions menu, replacing ui-bootstrap's
+    // uib-dropdown for this one use case across the redesigned pages
+    // (Configurations, Roles, Groups, Users, Files, the Logs plugin's
+    // rules table).
+    //
+    // Root cause of the bug this replaces: every .device-details-card
+    // (and .summary-kpi-card) plays a one-time intro animation
+    // (animation: summary-card-in ... both) whose final keyframe sets
+    // transform: translateY(0). Because of the "both" fill mode, that
+    // (visually inert, identity) transform value stays applied forever
+    // after the animation ends - and per spec, ANY non-"none" transform
+    // value, even an identity one, makes the element a new stacking
+    // context and a new containing block for position:fixed/absolute
+    // descendants. So every card became its own stacking context; a
+    // uib-dropdown menu positioned absolutely inside one card can never
+    // out-rank a *later* card in the same grid, no matter its z-index,
+    // because that z-index only wins comparisons *inside* its own card's
+    // context - the next card's whole context simply paints on top of it.
+    // (Separately, table-based rows do not have this transform, but their
+    // .modern-table-wrap sets overflow-x: auto, which per spec forces the
+    // paired overflow-y: visible to compute as auto too, so a uib-dropdown
+    // menu opened on a row near the bottom of the table can get clipped by
+    // that box exactly like a native <select> would.)
+    //
+    // Fix: don't fight either ancestor's containing-block/overflow rules -
+    // detach the <ul class="dropdown-menu actions-menu-list"> and
+    // re-parent it onto <body> while open, then position it with
+    // position: fixed from the trigger button's own getBoundingClientRect,
+    // right-aligned to the trigger and flipped upward when there isn't
+    // room below. document.body has no transform/filter/overflow of its
+    // own, so the menu is never clipped or out-stacked by ANY ancestor
+    // again, regardless of what that ancestor's CSS does today or later.
+    //
+    // Markup contract (see any of the pages above): a wrapper carrying
+    // this attribute, with exactly one <button> (the trigger) and one
+    // <ul class="dropdown-menu actions-menu-list"> (the menu) as children.
+    .factory('actionsMenuRegistry', function () {
+        var closeCurrent = null;
+        return {
+            open: function (closeFn) {
+                if (closeCurrent && closeCurrent !== closeFn) {
+                    closeCurrent();
+                }
+                closeCurrent = closeFn;
+            },
+            close: function (closeFn) {
+                if (closeCurrent === closeFn) {
+                    closeCurrent = null;
+                }
+            }
+        };
+    })
+    .directive('appActionsMenu', function ($document, $window, actionsMenuRegistry) {
+        return {
+            restrict: 'A',
+            link: function (scope, element) {
+                var toggleBtn = element[0].querySelector('button');
+                var menu = element[0].querySelector('.dropdown-menu');
+                if (!toggleBtn || !menu) {
+                    return;
+                }
+
+                var menuEl = angular.element(menu);
+                var originalParent = menu.parentNode;
+                var originalNextSibling = menu.nextSibling;
+                var open = false;
+
+                var positionMenu = function () {
+                    var rect = toggleBtn.getBoundingClientRect();
+                    var viewportHeight = $window.innerHeight;
+                    var viewportWidth = $window.innerWidth;
+
+                    menuEl.css({ top: 'auto', bottom: 'auto', right: (viewportWidth - rect.right) + 'px' });
+
+                    var menuHeight = menu.offsetHeight;
+                    var spaceBelow = viewportHeight - rect.bottom;
+                    if (spaceBelow < menuHeight + 8 && rect.top > menuHeight + 8) {
+                        menuEl.css({ bottom: (viewportHeight - rect.top + 4) + 'px', top: 'auto' });
+                    } else {
+                        menuEl.css({ top: (rect.bottom + 4) + 'px', bottom: 'auto' });
+                    }
+                };
+
+                var onDocumentClick = function (event) {
+                    if (menu.contains(event.target) || toggleBtn.contains(event.target)) {
+                        return;
+                    }
+                    scope.$apply(closeMenu);
+                };
+
+                var onKeydown = function (event) {
+                    if (event.key === 'Escape' || event.keyCode === 27) {
+                        scope.$apply(closeMenu);
+                    }
+                };
+
+                var onItemClick = function (event) {
+                    if (event.target.tagName === 'A') {
+                        scope.$apply(closeMenu);
+                    }
+                };
+
+                function closeMenu() {
+                    if (!open) {
+                        return;
+                    }
+                    open = false;
+                    element.removeClass('open');
+                    menuEl.removeClass('actions-menu-list-open');
+                    $document.off('click', onDocumentClick);
+                    $document.off('keydown', onKeydown);
+                    document.removeEventListener('scroll', closeMenu, true);
+                    angular.element($window).off('resize', positionMenu);
+                    actionsMenuRegistry.close(closeMenu);
+
+                    if (menu.parentNode === document.body) {
+                        if (originalNextSibling && originalNextSibling.parentNode === originalParent) {
+                            originalParent.insertBefore(menu, originalNextSibling);
+                        } else {
+                            originalParent.appendChild(menu);
+                        }
+                    }
+                }
+
+                var openMenu = function () {
+                    actionsMenuRegistry.open(closeMenu);
+                    document.body.appendChild(menu);
+                    menuEl.addClass('actions-menu-list-open');
+                    element.addClass('open');
+                    open = true;
+                    positionMenu();
+
+                    $document.on('click', onDocumentClick);
+                    $document.on('keydown', onKeydown);
+                    // capture: true - scroll events don't bubble, this is the
+                    // only way to hear a scroll on a nested container too
+                    // (e.g. .modern-table-wrap's horizontal scrollbar).
+                    document.addEventListener('scroll', closeMenu, true);
+                    angular.element($window).on('resize', positionMenu);
+                };
+
+                angular.element(toggleBtn).on('click', function (event) {
+                    event.stopPropagation();
+                    scope.$apply(open ? closeMenu : openMenu);
+                });
+
+                menuEl.on('click', onItemClick);
+
+                scope.$on('$destroy', function () {
+                    closeMenu();
+                    if (menu.parentNode) {
+                        menu.parentNode.removeChild(menu);
+                    }
+                });
+            }
+        };
     });
