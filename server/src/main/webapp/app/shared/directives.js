@@ -138,4 +138,183 @@ angular.module('headwind-kiosk')
                 scope.hasSaveActions = angular.isDefined(attrs.onSave);
             }
         };
+    })
+    // Reusable "purge old records" danger-zone card + confirmation dialog.
+    // Built for the Messaging plugin settings page, then extracted here so
+    // the Push plugin settings page (and any future one-time-purge plugin
+    // settings page) can reuse it instead of duplicating the card/dialog
+    // markup and validation/confirm/toast logic. Callers only provide:
+    // - title/description: the card's own localized copy
+    // - item-label: a localized noun ("messages", "push messages") spliced
+    //   into the generic form.settings.purge.* strings
+    // - days: two-way bound to the caller's own settings.xPurgePeriod
+    // - purge-action: an expression calling the caller's own service, e.g.
+    //   purge-action="doPurge(days, onSuccess, onError)" where doPurge just
+    //   forwards to pluginXService.purgeOldMessages({days: days}, ...) -
+    //   the directive never talks to a REST service directly
+    // - note (optional): an extra informational line in the confirmation
+    //   dialog, e.g. "Scheduled tasks are not affected."
+    .directive('pluginPurgeCard', function () {
+        return {
+            restrict: 'E',
+            scope: {
+                title: '@',
+                description: '@',
+                itemLabel: '@',
+                days: '=',
+                note: '@',
+                purgeAction: '&'
+            },
+            templateUrl: 'app/shared/view/pluginPurgeCard.html',
+            controller: function ($scope, $modal, $timeout, localization) {
+                $scope.periodInvalid = function () {
+                    var v = $scope.days;
+                    if (v === undefined || v === null || v === '') {
+                        return true;
+                    }
+                    var num = Number(v);
+                    return isNaN(num) || !Number.isInteger(num) || num < 1;
+                };
+
+                $scope.toast = null;
+                var showToast = function (type, message) {
+                    $scope.toast = { type: type, message: message };
+                    $timeout(function () {
+                        if ($scope.toast && $scope.toast.message === message) {
+                            $scope.toast = null;
+                        }
+                    }, 3000);
+                };
+
+                $scope.openConfirm = function () {
+                    if ($scope.periodInvalid()) {
+                        return;
+                    }
+
+                    var days = $scope.days;
+                    var cutoffDate = new Date(Date.now() - Number(days) * 86400000);
+
+                    var modalInstance = $modal.open({
+                        templateUrl: 'app/shared/view/pluginPurgeConfirm.modal.html',
+                        controller: 'PluginPurgeConfirmController',
+                        resolve: {
+                            days: function () { return days; },
+                            cutoffDate: function () { return cutoffDate; },
+                            itemLabel: function () { return $scope.itemLabel; },
+                            note: function () { return $scope.note; },
+                            purgeAction: function () { return $scope.purgeAction; }
+                        }
+                    });
+
+                    modalInstance.result.then(function (purged) {
+                        if (purged) {
+                            var item = $scope.itemLabel || '';
+                            var capitalized = item.charAt(0).toUpperCase() + item.slice(1);
+                            var message = localization.localize('form.settings.purge.success')
+                                .replace('${item}', capitalized)
+                                .replace('${days}', days);
+                            showToast('success', message);
+                        }
+                    }, function (error) {
+                        if (error) {
+                            showToast('error', error);
+                        }
+                    });
+                };
+            }
+        };
+    })
+    .controller('PluginPurgeConfirmController', function ($scope, $modalInstance, $filter,
+                                                           localization, days, cutoffDate, itemLabel, note, purgeAction) {
+        $scope.purging = false;
+        $scope.errorMessage = undefined;
+        $scope.note = note;
+
+        var cutoffDateFormatted = $filter('date')(cutoffDate, localization.localize('format.date.purge.cutoff'));
+        $scope.confirmTitle = localization.localize('form.settings.purge.confirm.title')
+            .replace('${item}', itemLabel).replace('${days}', days);
+        $scope.confirmBody = localization.localize('form.settings.purge.confirm.body')
+            .replace('${item}', itemLabel).replace('${date}', cutoffDateFormatted);
+
+        $scope.closeModal = function () {
+            $modalInstance.dismiss();
+        };
+
+        $scope.confirmPurge = function () {
+            $scope.errorMessage = undefined;
+            $scope.purging = true;
+            purgeAction({
+                days: days,
+                onSuccess: function (response) {
+                    $scope.purging = false;
+                    if (response.status === 'OK') {
+                        $modalInstance.close(true);
+                    } else {
+                        $scope.errorMessage = localization.localizeServerResponse(response);
+                    }
+                },
+                onError: function () {
+                    $scope.purging = false;
+                    $scope.errorMessage = localization.localize('error.request.failure');
+                }
+            });
+        };
+    })
+    // Adds real drag-and-drop to an element that already carries the
+    // (vendored, unmodified) uploadButton directive - that directive only
+    // reacts to its own hidden <input type="file">'s native "change" event
+    // (click-to-browse), it has no drop handling at all. On drop, this
+    // finds that sibling input and feeds it the dropped file via the
+    // standard DataTransfer/change-event trick so uploadButton's existing
+    // on-upload/on-progress/on-success wiring fires completely unchanged -
+    // this never talks to the upload REST endpoint itself. Reuses the same
+    // "drag-over" class name as the plain dropZone directive above so the
+    // existing .design-upload-zone.drag-over/.icons-empty-dropzone.drag-
+    // over styles apply without any new CSS.
+    .directive('dropUpload', function () {
+        return {
+            restrict: 'A',
+            link: function (scope, element) {
+                var stop = function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                };
+
+                element.on('dragover dragenter', function (event) {
+                    stop(event);
+                    element.addClass('drag-over');
+                });
+
+                element.on('dragleave', function (event) {
+                    stop(event);
+                    element.removeClass('drag-over');
+                });
+
+                element.on('drop', function (event) {
+                    stop(event);
+                    element.removeClass('drag-over');
+
+                    var dataTransfer = (event.originalEvent || event).dataTransfer;
+                    var files = dataTransfer && dataTransfer.files;
+                    if (!files || files.length === 0) {
+                        return;
+                    }
+
+                    var input = element[0].querySelector('input[type="file"]');
+                    if (!input || typeof DataTransfer === 'undefined') {
+                        return;
+                    }
+
+                    try {
+                        var transfer = new DataTransfer();
+                        transfer.items.add(files[0]);
+                        input.files = transfer.files;
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    } catch (e) {
+                        // DataTransfer construction unsupported in this browser -
+                        // the click-to-browse upload button still works fine.
+                    }
+                });
+            }
+        };
     });

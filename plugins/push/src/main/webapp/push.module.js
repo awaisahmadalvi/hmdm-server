@@ -440,11 +440,7 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
 
         loadData();
     })
-    .controller('PluginPushSettingsController', function ($scope, $rootScope, $modal,
-                                                               confirmModal, localization, pluginPushService) {
-        $scope.successMessage = undefined;
-        $scope.errorMessage = undefined;
-
+    .controller('PluginPushSettingsController', function ($scope, $rootScope, pluginPushService) {
         $rootScope.settingsTabActive = true;
         $rootScope.pluginsTabActive = false;
 
@@ -452,21 +448,11 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
             "pushPurgePeriod": 7
         };
 
-        $scope.purge = function () {
-            $scope.successMessage = undefined;
-            $scope.errorMessage = undefined;
-
-            if (isNaN($scope.settings.pushPurgePeriod)) {
-                $scope.errorMessage = localization.localize('plugin.push.settings.enter.number');
-            }
-
-            pluginPushService.purgeOldMessages({"days": $scope.settings.pushPurgePeriod}, function (response) {
-                if (response.status === 'OK') {
-                    $scope.successMessage = localization.localize('plugin.push.settings.message.purge.success');
-                } else {
-                    $scope.errorMessage = localization.localizeServerResponse(response);
-                }
-            });
+        // Bound to <plugin-purge-card>'s purge-action expression; the
+        // directive owns validation, the confirmation dialog and the
+        // toast, this just forwards to the plugin's own REST action.
+        $scope.doPurge = function (days, onSuccess, onError) {
+            pluginPushService.purgeOldMessages({ "days": days }, onSuccess, onError);
         };
     })
     .controller('NewPushMessageController', function ($scope, $rootScope, $modalInstance, configurationService, groupService,

@@ -2816,6 +2816,30 @@
   margin-top: 0;
 }
 
+/* Generic collapsible section for a modal form's rarely-used fields,
+   introduced for the Files add/edit dialog's "Advanced" group - not
+   page-prefixed, any future dialog can reuse it. */
+.modern-collapsible-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  padding: 10px 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.modern-collapsible-header .glyphicon {
+  font-size: 11px;
+}
+
+.modern-collapsible-body {
+  padding-top: 6px;
+}
+
 .modern-segmented {
   display: inline-flex;
   border: 1px solid var(--color-border-subtle);
@@ -2969,6 +2993,7 @@
 /* ---------- Background image ---------- */
 
 .design-upload-zone {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2986,6 +3011,21 @@
 .design-upload-zone.drag-over {
   background: var(--color-surface-hover);
   border-color: var(--brand-dark);
+}
+
+/* The Files dialog's zone also carries the vendored uploadButton directive,
+   which appends a plain, unstyled native <input type="file"> as a child -
+   cover it invisibly so only this zone's own icon/text are visible while
+   the native input still handles the actual click-to-browse affordance. A
+   harmless no-op on Default Design's plain drop-zone-only usage above,
+   which has no such child. */
+.design-upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .design-upload-icon {
@@ -4527,13 +4567,15 @@
 }
 
 /* =========================================================
-   Messaging plugin settings page (Settings -> "Messaging" plugin
-   settings) and its purge confirmation dialog. Reuses <plugin-settings-
-   header>, .device-details-card(-header), .design-field(-label)(-error),
+   Shared <plugin-purge-card> component (app/shared/directives.js +
+   app/shared/view/pluginPurgeCard.html / pluginPurgeConfirm.modal.html),
+   used by both the Messaging and Push plugin settings pages' "purge old
+   records" card and confirmation dialog. Reuses <plugin-settings-header>,
+   .device-details-card(-header), .design-field(-label)(-error),
    .number-suffix-input(-wrap), .settings-input-narrow, .modern-input-
-   invalid, .modern-toast, .modern-modal-* and the .btn-danger-* pair
-   above instead of duplicating any of them. Only the "danger zone" card
-   tint and the inline input+button row are new here.
+   invalid, .modern-toast, .modern-modal-*, .field-hint and the
+   .btn-danger-* pair above instead of duplicating any of them. Only the
+   "danger zone" card tint and the inline input+button row are new here.
    ========================================================= */
 
 .danger-zone-card {
@@ -4562,11 +4604,13 @@
 }
 
 @media (max-width: 600px) {
-  .messaging-settings-page .logs-page-header {
+  .messaging-settings-page .logs-page-header,
+  .push-settings-page .logs-page-header {
     flex-direction: column;
   }
 
-  .messaging-settings-page .logs-page-header-actions {
+  .messaging-settings-page .logs-page-header-actions,
+  .push-settings-page .logs-page-header-actions {
     width: 100%;
   }
 
@@ -4580,6 +4624,176 @@
   }
 
   .danger-zone-inline .btn-danger-outline {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Files page (main nav -> Files) and its Add/Edit file / configurations
+   dialogs. Scoped under .files-page. Reuses .logs-page-header, .summary-
+   card + .logs-results-card, .logs-filter-row(-actions), .logs-input(
+   -icon-wrap), .logs-results-count, .modern-table-wrap, .modern-
+   responsive-table, .logs-row (hover), .actions-column, .users-row-menu,
+   .device-details-badge (.users-role-blue/-neutral for the External/
+   Variable pills), .device-details-app-pkg (monospace path text),
+   .device-details-empty*, .device-details-skeleton*, .modern-toast,
+   .modern-modal-*, .modern-collapsible*, .design-upload-zone (drag-and-
+   drop zone shared with Default Design/Icons) and .field-hint instead of
+   duplicating any of them. Only the file-type icon, name/description
+   stack and path-copy button are new here.
+   ========================================================= */
+
+.files-total-size {
+  color: var(--color-text-tertiary);
+  font-weight: 400;
+}
+
+.files-available-space {
+  margin-top: 8px;
+}
+
+.files-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.files-name-text {
+  min-width: 0;
+}
+
+.files-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.files-name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  word-break: break-word;
+}
+
+.files-description {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+.files-updated {
+  color: var(--color-text-tertiary);
+  cursor: default;
+}
+
+/* ---------- File type icon (small row avatar - same visual language as
+   .icon-tile-image/-img but sized for a dense table row instead of a big
+   grid tile) ---------- */
+
+.file-type-icon {
+  position: relative;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.file-type-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.file-type-icon-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+}
+
+.file-type-icon-pdf .file-type-icon-glyph {
+  color: var(--color-danger);
+}
+
+.file-type-icon-apk .file-type-icon-glyph {
+  color: var(--color-success);
+}
+
+.file-type-icon-archive .file-type-icon-glyph {
+  color: var(--color-warning-text);
+}
+
+.file-type-icon-text .file-type-icon-glyph,
+.file-type-icon-image .file-type-icon-glyph {
+  color: #2563eb;
+}
+
+/* ---------- Path on device (monospace, truncated, hover-to-copy) ---------- */
+
+.files-path-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+}
+
+.files-path-text {
+  margin-top: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.files-path-copy {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  padding: 2px 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.logs-row:hover .files-path-copy,
+.files-path-copy:focus {
+  opacity: 1;
+}
+
+/* ---------- Add/Edit file dialog upload progress ---------- */
+
+.files-upload-progress {
+  margin-top: 10px;
+  margin-bottom: 0;
+  height: 6px;
+}
+
+.files-upload-progress .progress-bar {
+  background: var(--brand-dark);
+}
+
+@media (max-width: 900px) {
+  .files-path-cell {
+    max-width: none;
+  }
+
+  .files-path-copy {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .files-page .logs-page-header {
+    flex-direction: column;
+  }
+
+  .files-page .logs-page-header-actions {
     width: 100%;
   }
 }

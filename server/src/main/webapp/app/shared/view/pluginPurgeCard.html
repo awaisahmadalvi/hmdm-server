@@ -1,0 +1,25 @@
+<div class="device-details-card danger-zone-card">
+    <div class="device-details-card-header danger-zone-card-header">
+        <span class="glyphicon glyphicon-trash"></span>
+        <span>{{title}}</span>
+    </div>
+    <p class="danger-zone-desc">{{description}}</p>
+
+    <div class="design-field">
+        <label class="design-field-label" for="purgePeriodInput">{{('form.settings.purge.period.label' | localize).replace('${item}', itemLabel)}}</label>
+        <div class="danger-zone-inline">
+            <div class="number-suffix-input-wrap">
+                <input id="purgePeriodInput" ng-model="days" type="number" min="1" step="1"
+                       class="form-control logs-input settings-input-narrow number-suffix-input"
+                       ng-class="{'modern-input-invalid': periodInvalid()}"/>
+                <span class="number-suffix">{{'form.settings.purge.period.suffix' | localize}}</span>
+            </div>
+            <button type="button" class="btn btn-danger-outline" ng-disabled="periodInvalid()" ng-click="openConfirm()">
+                {{('form.settings.purge.button' | localize).replace('${item}', itemLabel)}}
+            </button>
+        </div>
+        <div class="design-field-error" ng-if="periodInvalid()">{{'form.settings.purge.period.error' | localize}}</div>
+    </div>
+
+    <div class="modern-toast" ng-if="toast" ng-class="'modern-toast-' + toast.type">{{toast.message}}</div>
+</div>

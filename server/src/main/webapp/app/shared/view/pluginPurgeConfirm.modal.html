@@ -1,4 +1,3 @@
-<!-- Localization completed -->
 <div class="modern-modal-header">
     <div class="modern-modal-icon modern-modal-icon-danger">
         <span class="glyphicon glyphicon-trash"></span>
@@ -12,12 +11,13 @@
 </div>
 <div class="modal-body modern-modal-body">
     <p class="danger-zone-desc">{{confirmBody}}</p>
+    <div class="field-hint" ng-if="note">{{note}}</div>
 
     <div class="modern-modal-actions">
         <button type="button" class="btn btn-default" ng-click="closeModal()" localized>button.cancel</button>
         <button type="button" class="btn btn-danger-solid" ng-click="confirmPurge()" ng-disabled="purging">
-            <span ng-if="!purging" localized>plugin.messaging.settings.confirm.purge.button</span>
-            <span ng-if="purging" localized>plugin.messaging.settings.confirm.purging</span>
+            <span ng-if="!purging" localized>form.settings.purge.confirm.purge.button</span>
+            <span ng-if="purging" localized>form.settings.purge.confirm.purging</span>
         </button>
     </div>
 </div>

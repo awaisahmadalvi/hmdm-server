@@ -1,29 +1,21 @@
 <!-- Localization completed -->
-<div class="width-1000 modern-page" ng-controller="PluginPushSettingsController">
-    <div class="text-center">
-        <h4 localized>plugin.push.settings.title</h4>
-    </div>
+<div class="width-800 modern-page push-settings-page" ng-controller="PluginPushSettingsController">
 
-    <div>
-        <form class='form-horizontal modern-toolbar'>
-            <div class='form-group'>
-                <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
-            </div>
-            <div class='form-group'>
-                <div ng-show='successMessage' class='success'><span>{{successMessage}}</span></div>
-            </div>
+    <plugin-settings-header
+            icon="glyphicon-send"
+            name="{{'plugin.push.settings.title' | localize}}"
+            subtitle="{{'plugin.push.settings.subtitle' | localize}}"
+            breadcrumb-label="{{'breadcrumb.plugin.push.main' | localize}}"
+            plugin-state="plugin-push">
+    </plugin-settings-header>
 
-            <div class='form-group'>
-                <label class='col-sm-4 control-label' for="c0" localized>plugin.push.settings.message.purge.period</label>
-                <div class='col-sm-1'>
-                    <input id="c0" ng-model='settings.pushPurgePeriod' type='number' min="1" class='form-control'/>
-                </div>
-                <div class='col-sm-7 padding-left'>
-                    <button type='submit' class='btn btn-default btn-modern-primary' ng-click='purge()' localized>plugin.push.settings.message.purge.button</button>
-                </div>
-            </div>
+    <plugin-purge-card
+            title="{{'plugin.push.settings.danger.title' | localize}}"
+            description="{{'plugin.push.settings.danger.description' | localize}}"
+            item-label="{{'plugin.push.settings.item.label' | localize}}"
+            days="settings.pushPurgePeriod"
+            note="{{'plugin.push.settings.scheduled.tasks.note' | localize}}"
+            purge-action="doPurge(days, onSuccess, onError)">
+    </plugin-purge-card>
 
-        </form>
-    </div>
 </div>
-
