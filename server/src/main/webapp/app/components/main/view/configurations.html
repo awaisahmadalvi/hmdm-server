@@ -1,77 +1,84 @@
 <!-- Localization completed -->
-<div ng-controller="ConfigurationsTabController" class="modern-page">
+<div ng-controller="ConfigurationsTabController" class="width-1200 modern-page logs-page configurations-page">
 
-    <notification-message attr-name="configurationsMessage"></notification-message>
-
-    <div class='form-group modern-toolbar'>
-        <input type='text'
-               ng-enter='search()'
-               ng-model='searchObj.searchValue'
-               ng-change="search()"
-               localized-placeholder='search.placeholder.configuration'
-               class='form-control configurations-search-input'>
-
-        <div class='configurations-search-buttons'>
-            <button type='button' class='btn btn-default btn-modern-primary' ng-if="hasPermission('add_config')" ng-click='addConfiguration()' localized>button.add</button>
+    <div class="logs-page-header">
+        <div>
+            <h4 localized>form.configurations.title</h4>
+            <div class="logs-page-subtitle" localized>form.configurations.subtitle</div>
+        </div>
+        <div class="logs-page-header-actions">
+            <button type="button" class="btn btn-modern-primary" ng-if="hasPermission('add_config')" ng-click="addConfiguration()">
+                <span class="glyphicon glyphicon-plus"></span> <span localized>form.configurations.add</span>
+            </button>
         </div>
     </div>
 
-    <div class="text-center" ng-if="configurations.length > paging.pageSize">
-        <pagination
-                boundary-links='true' class='pagination-sm'
-                max-size='3'
-                ng-model='paging.currentPage'
-                total-items='configurations.length'
-                items-per-page='paging.pageSize'
-                previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
-                last-text='&raquo;'></pagination>
+    <div class="summary-card logs-results-card">
+        <div class="logs-filter-row logs-filter-row-actions">
+            <div class="logs-input-icon-wrap logs-filter-grow">
+                <span class="glyphicon glyphicon-search logs-input-icon"></span>
+                <input type="text" ng-model="searchObj.searchValue" ng-enter="search()"
+                       localized-placeholder="search.placeholder.configuration"
+                       class="form-control logs-input">
+            </div>
+            <div class="logs-results-count">{{configurations.length || 0}} {{'form.configurations.count.suffix' | localize}}</div>
+        </div>
     </div>
 
-    <div class="modern-table-wrap" ng-if='configurations && configurations.length > 0'>
-    <table class='table'>
-        <thead>
-        <tr>
-            <th localized>table.heading.configuration.name</th>
-            <th localized>table.heading.configuration.desc</th>
-            <th class='actions-column-150' localized>table.heading.configuration.actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr ng-repeat='configuration in configurations.slice(((paging.currentPage-1)*paging.pageSize), ((paging.currentPage)*paging.pageSize))'>
-            <td>{{configuration.name}}</td>
-            <td>{{configuration.description}}</td>
-            <td>
-                <div>
-                    <button type='button' class='btn btn-default' localized-title="button.change"
-                            ng-click='editConfiguration( configuration )'>
-                        <span class='glyphicon glyphicon-pencil'></span>
+    <div class="configurations-grid" ng-if="loading">
+        <div class="device-details-skeleton device-details-skeleton-card"></div>
+        <div class="device-details-skeleton device-details-skeleton-card"></div>
+    </div>
+
+    <div class="configurations-grid" ng-if="!loading && configurations.length > 0">
+        <div class="device-details-card config-card" ng-repeat="configuration in configurations.slice(((paging.currentPage-1)*paging.pageSize), ((paging.currentPage)*paging.pageSize))"
+             ng-click="editConfiguration(configuration)">
+
+            <div class="config-card-header">
+                <span class="config-card-name">{{configuration.name}}</span>
+                <span class="device-details-badge users-role-neutral" ng-if="configuration.id === 1" localized>form.configurations.badge.default</span>
+                <span class="device-details-badge users-role-blue" ng-if="configuration.kioskMode" localized>form.configurations.mode.kiosk</span>
+            </div>
+
+            <div class="config-card-desc" ng-class="{'config-card-desc-muted': !configuration.description}"
+                 title="{{configuration.description}}">
+                {{configuration.description || ('form.configurations.no.description' | localize)}}
+            </div>
+
+            <div class="config-card-footer" ng-click="$event.stopPropagation()">
+                <a type="button" class="btn btn-outline-primary" ng-if="qrCodeAvailable(configuration)"
+                   data-hint-key="hint.step.2" ng-click="showQrCode(configuration)">
+                    <span class="glyphicon glyphicon-qrcode"></span> <span localized>form.configurations.action.qr</span>
+                </a>
+                <button type="button" class="logs-btn-reset" ng-click="editConfiguration(configuration)" localized>button.change</button>
+                <div class="users-row-menu" uib-dropdown ng-if="hasPermission('copy_config')">
+                    <button type="button" class="btn btn-default" uib-dropdown-toggle>
+                        <span class="glyphicon glyphicon-option-vertical"></span>
                     </button>
-                    <button ng-disabled='configuration.id === 1'
-                            type='button' localized-title="button.delete"
-                            class='btn btn-default'
-                            ng-if="hasPermission('copy_config')"
-                            ng-click='removeConfiguration( configuration )'>
-                        <span class='glyphicon glyphicon-trash'></span>
-                    </button>
-                    <button type='button' class='btn btn-default' localized-title="button.copy"
-                            ng-if="hasPermission('copy_config')"
-                            ng-click='copyConfiguration( configuration )'>
-                        <span class='glyphicon glyphicon-duplicate'></span>
-                    </button>
-                    <button type='button' class='btn btn-default' localized-title="button.qrcode"
-                            data-hint-key="hint.step.2"
-                            ng-if="qrCodeAvailable(configuration)"
-                            ng-click='showQrCode(configuration)'>
-                        <span class='glyphicon glyphicon-qrcode'></span>
-                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu>
+                        <li><a ng-click="copyConfiguration(configuration)" localized>form.configurations.action.duplicate</a></li>
+                        <li ng-if="configuration.id !== 1"><a ng-click="removeConfiguration(configuration)" localized>button.delete</a></li>
+                        <li ng-if="configuration.id === 1" class="disabled">
+                            <a title="{{'form.configurations.protected.default.tooltip' | localize}}" localized>button.delete</a>
+                        </li>
+                    </ul>
                 </div>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+            </div>
+        </div>
     </div>
 
-    <div ng-if='configurations && configurations.length == 0' class='center' localized>notfound.configurations</div>
+    <div class="device-details-empty" ng-if="!loading && configurations.length === 0 && !searchObj.searchValue">
+        <span class="glyphicon glyphicon-list-alt device-details-empty-icon"></span>
+        <div class="device-details-empty-title" localized>form.configurations.empty.title</div>
+        <div class="logs-empty-subtitle" localized>form.configurations.empty.subtitle</div>
+        <button type="button" class="btn btn-default btn-modern-primary margin-top" ng-if="hasPermission('add_config')" ng-click="addConfiguration()" localized>form.configurations.add</button>
+    </div>
+
+    <div class="device-details-empty" ng-if="!loading && configurations.length === 0 && searchObj.searchValue">
+        <span class="glyphicon glyphicon-search device-details-empty-icon"></span>
+        <div class="device-details-empty-title">{{'form.configurations.empty.search.prefix' | localize}} "{{searchObj.searchValue}}"</div>
+        <button type="button" class="btn btn-default margin-top" ng-click="clearSearch()" localized>form.settings.users.empty.search.clear</button>
+    </div>
 
     <div class="text-center" ng-if="configurations.length > paging.pageSize">
         <pagination
@@ -84,4 +91,8 @@
                 last-text='&raquo;'></pagination>
     </div>
 
+    <div class="modern-toast" ng-if="configurationsToast" ng-class="'modern-toast-' + configurationsToast.type">
+        {{configurationsToast.message}}
+        <a class="modern-toast-action" ng-if="configurationsToast.action" ng-click="configurationsToast.action.onClick()">{{configurationsToast.action.label}}</a>
+    </div>
 </div>

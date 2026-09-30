@@ -650,6 +650,64 @@
   margin-top: 10px !important;
 }
 
+.qr-heading {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.qr-title {
+  margin: 0 0 4px;
+  color: var(--color-text-primary);
+}
+
+.qr-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.qr-instructions {
+  max-width: 420px;
+  margin: 0 auto 20px;
+  padding-left: 20px;
+  text-align: left;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.qr-instructions li + li {
+  margin-top: 6px;
+}
+
+.qr-download-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.qr-options-card {
+  width: 100%;
+  max-width: 640px;
+  margin-bottom: 20px;
+}
+
+/* Isolate just the QR image when printing (button.help/window.print()). */
+@media print {
+  .qr-heading,
+  .qr-instructions,
+  .qr-download-actions,
+  .qr-options-card,
+  .qr-help-wrapper {
+    display: none !important;
+  }
+
+  .qr-page {
+    min-height: 0;
+    background: none;
+    padding: 0;
+  }
+}
+
 /* =========================================================
    Single-row header: nav links (Summary/Devices/Applications/
    Configurations/Files/Settings/Functions) merged into the
@@ -4795,5 +4853,134 @@
 
   .files-page .logs-page-header-actions {
     width: 100%;
+  }
+}
+
+/* =========================================================
+   Generic outline-primary button (brand-colored outline, transparent
+   background), introduced for the Configurations page's prominent
+   "Enrollment QR" card action. Not page-prefixed - the danger-toned
+   sibling of .btn-danger-outline above, for a prominent but non-primary
+   action that still deserves more weight than a plain .btn-default.
+   ========================================================= */
+
+.btn-outline-primary {
+  background: transparent;
+  border: 1px solid var(--brand-dark);
+  color: var(--brand-dark);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background: rgba(var(--brand-dark-rgb), 0.08);
+  color: var(--brand-dark);
+}
+
+/* A toast with a clickable follow-up action (e.g. "Open" after copying a
+   configuration) - not page-prefixed, any .modern-toast can add one. */
+.modern-toast-action {
+  margin-left: 10px;
+  font-weight: 700;
+  text-decoration: underline;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* =========================================================
+   Configurations page (main nav -> Configurations) and its Duplicate/QR
+   dialogs. Scoped under .configurations-page. Reuses .logs-page-header,
+   .summary-card + .logs-results-card, .logs-filter-row(-actions),
+   .logs-input(-icon-wrap), .logs-results-count, .device-details-card,
+   .device-details-badge (.users-role-blue/-neutral for the mode/default
+   pills), .device-details-empty*, .device-details-skeleton(-card),
+   .users-row-menu, .logs-btn-reset, .modern-toast, .modern-modal-* and
+   the .btn-outline-primary pair above instead of duplicating any of them.
+   Only the 2-column card grid and the card's own header/desc/footer are
+   new here.
+   ========================================================= */
+
+.configurations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.config-card {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.config-card-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.config-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.config-card-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 36px;
+  margin-bottom: 14px;
+}
+
+.config-card-desc-muted {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+.config-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.config-card-footer .btn-outline-primary {
+  font-weight: 600;
+}
+
+.config-card-footer .users-row-menu {
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  .configurations-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .configurations-page .logs-page-header {
+    flex-direction: column;
+  }
+
+  .configurations-page .logs-page-header-actions {
+    width: 100%;
+  }
+
+  .config-card-footer {
+    flex-wrap: wrap;
+  }
+
+  .config-card-footer .btn-outline-primary,
+  .config-card-footer .logs-btn-reset {
+    flex: 1 1 auto;
+    text-align: center;
   }
 }

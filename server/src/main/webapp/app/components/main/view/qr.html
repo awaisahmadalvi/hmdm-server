@@ -1,54 +1,75 @@
 <!-- Localization completed -->
-<div class="modern-page qr-page">
+<div class="qr-page">
 
-    <div class="qr-card" ng-if="showQR">
-        <img ng-src="{{qrCodeUrl}}" width="{{size}}" height="{{size}}"
-             class="qr-image"
-             localized-alt="form.qr.code.image.alt"/>
+    <div class="qr-heading">
+        <h4 class="qr-title">{{qrTitle}}</h4>
+        <div class="qr-subtitle" localized>form.qr.instructions.title</div>
     </div>
 
-    <form class='form-horizontal modern-toolbar qr-options' name="qrForm">
-        <div class="form-group">
-            <label class="col-sm-6 control-label" localized>form.qr.device.number</label>
-            <div class="col-sm-6" style="text-align: left">
+    <div ng-if="showQR">
+        <div class="qr-card">
+            <img ng-src="{{qrCodeUrl}}" width="{{size}}" height="{{size}}"
+                 class="qr-image"
+                 localized-alt="form.qr.code.image.alt"/>
+        </div>
+
+        <ol class="qr-instructions">
+            <li localized>qrcode.help.line2</li>
+            <li localized>qrcode.help.line3</li>
+            <li localized>qrcode.help.line4</li>
+        </ol>
+
+        <div class="qr-download-actions">
+            <a class="btn btn-default" ng-href="{{qrCodeUrl}}" download="enrollment-qr.png">
+                <span class="glyphicon glyphicon-download-alt"></span> <span localized>form.qr.download.png</span>
+            </a>
+            <button type="button" class="btn btn-default" ng-click="printQr()">
+                <span class="glyphicon glyphicon-print"></span> <span localized>form.qr.print</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="device-details-card qr-options-card">
+        <form class="qr-options" name="qrForm">
+            <div class="design-field">
+                <label class="design-field-label" localized>form.qr.device.number</label>
                 <input type="text" maxlength="100" name="qrdevice"
                        ng-enter='renew()'
                        ng-change="renew()"
                        ng-model="formData.deviceIdNew"
                        localized-placeholder="form.qr.device.number.placeholder"
-                       class="form-control"
+                       class="form-control logs-input"
                 />
             </div>
-        </div>
 
-        <div class="form-group">
-            <label class="col-sm-6 control-label" localized>form.qr.number.use</label>
-            <div class="col-sm-6" style="text-align: left">
-                <select class='form-control' id="useId-c" name="useId" ng-change="renew()"
+            <div class="design-field">
+                <label class="design-field-label" localized>form.qr.number.use</label>
+                <select class='form-control modern-select' id="useId-c" name="useId" ng-change="renew()"
                         ng-model='formData.useId' ng-disabled="formData.deviceIdNew != ''">
                     <option ng-value="''" ng-selected="!formData.useId && formData.deviceIdNew == ''" localized>form.qr.number.use.request</option>
                     <option ng-value="'imei'" ng-selected="formData.useId === 'imei'" localized>form.qr.number.use.imei</option>
                     <option ng-value="'serial'" ng-selected="formData.useId === 'serial'" localized>form.qr.number.use.serial</option>
                 </select>
-                <div class="qr-hint" localized>form.qr.number.hint</div>
+                <div class="field-hint" localized>form.qr.number.hint</div>
             </div>
-        </div>
 
-        <div class="form-group">
-            <label class="col-sm-6 control-label" localized>form.qr.auto.create</label>
-            <div class="col-sm-6" style="text-align: left">
-                <input type="checkbox" name="qrcreate"
-                       ng-model="formData.create"
-                       ng-change="renew()"
-                       class="qr-checkbox"
-                />
+            <div class="design-field">
+                <div class="settings-field-row">
+                    <label class="design-field-label" localized>form.qr.auto.create</label>
+                    <span class="modern-toggle">
+                        <input type="checkbox" name="qrcreate"
+                               ng-model="formData.create"
+                               ng-change="renew()"
+                               class="modern-toggle-input"
+                        />
+                        <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                    </span>
+                </div>
             </div>
-        </div>
 
-        <style type="text/css">.dropdown-multiselect button { min-width: 198px; }</style>
-        <div class="form-group" ng-if="formData.create">
-            <label class="col-sm-6 control-label" localized>form.qr.groups</label>
-            <div class="col-sm-6" style="text-align: left">
+            <style type="text/css">.dropdown-multiselect button { min-width: 198px; }</style>
+            <div class="design-field" ng-if="formData.create">
+                <label class="design-field-label" localized>form.qr.groups</label>
                 <div ng-dropdown-multiselect
                      options='groupsList'
                      translation-texts='tableFilteringTexts'
@@ -57,33 +78,25 @@
                      ng-change="renew()"
                      class='left margin-right-half custom-multi-select'></div>
             </div>
-        </div>
 
-        <div class="form-group" ng-if="jsonData">
-            <div class="col-sm-12">
-                <textarea class="form-control qr-json" readonly>{{jsonData}}</textarea>
+            <div class="design-field" ng-if="jsonData">
+                <label class="design-field-label" localized>form.qr.button.json</label>
+                <textarea class="form-control logs-input qr-json" readonly>{{jsonData}}</textarea>
             </div>
-        </div>
 
-        <div class='form-group qr-actions'>
-            <button type="button" class="btn btn-default btn-modern-primary" ng-click="generateJson()" localized>form.qr.button.json</button>
-            <button type="button" class="btn btn-default" data-hint-key="hint.step.3" data-hint-order="3"
-                    localized-title="button.help" ng-click="helpClicked()">
-                <span localized>button.help</span>
-            </button>
-        </div>
-    </form>
+            <div class="qr-actions">
+                <button type="button" class="btn btn-default" ng-click="generateJson()" localized>form.qr.button.json</button>
+                <button type="button" class="btn btn-default" data-hint-key="hint.step.3" data-hint-order="3"
+                        localized-title="button.help" ng-click="helpClicked()">
+                    <span localized>button.help</span>
+                </button>
+            </div>
+        </form>
+    </div>
 
     <div class="qr-help-wrapper" ng-if="showHelp" ng-style="{width: helpSize}">
         <div class="qr-help modern-proplist">
             <div class="qr-help-line qr-help-intro" localized>qrcode.help.line1</div>
-            <div class="qr-help-line">
-                <ol>
-                    <li localized>qrcode.help.line2</li>
-                    <li localized>qrcode.help.line3</li>
-                    <li localized>qrcode.help.line4</li>
-                </ol>
-            </div>
             <div class="qr-help-line qr-help-outro">{{qrCodeHelpLine5}}</div>
         </div>
     </div>

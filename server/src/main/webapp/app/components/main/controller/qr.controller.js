@@ -1,9 +1,18 @@
 // Localization completed
 angular.module('headwind-kiosk')
-    .controller('QRController', function ($state, $scope, $window, $stateParams, $http,
+    .controller('QRController', function ($state, $scope, $window, $stateParams, $http, $location,
                                           localization, hintService, groupService, $timeout, rebranding) {
         $scope.size = (Math.min($window.innerWidth, $window.innerHeight) * 0.80).toFixed(0);
         $scope.deviceId = $stateParams.deviceId;
+
+        var configName = $location.search().name;
+        $scope.qrTitle = configName ?
+            localization.localize('form.qr.title').replace('${configName}', configName) :
+            localization.localize('form.qr.title.generic');
+
+        $scope.printQr = function () {
+            $window.print();
+        };
 
         $scope.formData = {
             deviceIdNew: $stateParams.deviceId,

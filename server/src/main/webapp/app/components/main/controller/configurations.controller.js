@@ -26,15 +26,36 @@ angular.module('headwind-kiosk')
         };
 
         $scope.showQrCode = function (configuration) {
-            var url = configuration.baseUrl + "/#/qr/" + configuration.qrCodeKey + "/";
+            var url = configuration.baseUrl + "/#/qr/" + configuration.qrCodeKey + "/?name=" + encodeURIComponent(configuration.name);
             $window.open(url, "_self");
         };
 
+        $scope.configurationsToast = null;
+        var showConfigurationsToast = function (type, message, action) {
+            $scope.configurationsToast = { type: type, message: message, action: action };
+            $timeout(function () {
+                if ($scope.configurationsToast && $scope.configurationsToast.message === message) {
+                    $scope.configurationsToast = null;
+                }
+            }, 4000);
+        };
+
+        $scope.loading = true;
         $scope.init = function (isTypical) {
             $rootScope.settingsTabActive = false;
             $rootScope.pluginsTabActive = false;
             $scope.paging.currentPage = 1;
             $scope.isTypical = isTypical;
+
+            // The configuration editor sets $rootScope.configurationsMessage as a
+            // one-time flash message on save (see ConfigurationEditorController's
+            // save()/close()) - previously rendered via <notification-message>,
+            // now shown through this page's own toast for visual consistency.
+            if ($rootScope.configurationsMessage) {
+                showConfigurationsToast('success', $rootScope.configurationsMessage);
+                $rootScope.configurationsMessage = undefined;
+            }
+
             $scope.search(function () {
                 // Hints are shown after all configurations are loaded
                 $timeout(function () {
@@ -45,26 +66,44 @@ angular.module('headwind-kiosk')
         };
 
         $scope.search = function (callback) {
+            $scope.loading = true;
+            var onResponse = function (response) {
+                $scope.loading = false;
+                $scope.configurations = response.data;
+                if (callback) {
+                    callback();
+                }
+            };
+            var onError = function () {
+                $scope.loading = false;
+            };
             if ($scope.isTypical) {
-                configurationService.getAllTypicalConfigurations(
-                    {value: $scope.searchObj.searchValue},
-                    function (response) {
-                        $scope.configurations = response.data;
-                        if (callback) {
-                            callback();
-                        }
-                    });
+                configurationService.getAllTypicalConfigurations({value: $scope.searchObj.searchValue}, onResponse, onError);
             } else {
-                configurationService.getAllConfigurations(
-                    {value: $scope.searchObj.searchValue},
-                    function (response) {
-                        $scope.configurations = response.data;
-                        if (callback) {
-                            callback();
-                        }
-                    });
+                configurationService.getAllConfigurations({value: $scope.searchObj.searchValue}, onResponse, onError);
             }
         };
+
+        $scope.clearSearch = function () {
+            $scope.searchObj.searchValue = '';
+            $scope.search();
+        };
+
+        // Live search: debounce while typing, same search() Enter already
+        // triggers - not a separate search path (established pattern, see
+        // Groups/Icons/Users/Files pages).
+        var searchDebounceTimer = null;
+        $scope.$watch('searchObj.searchValue', function (newVal, oldVal) {
+            if (newVal === oldVal) {
+                return;
+            }
+            if (searchDebounceTimer) {
+                $timeout.cancel(searchDebounceTimer);
+            }
+            searchDebounceTimer = $timeout(function () {
+                $scope.search();
+            }, 400);
+        });
 
         $scope.addConfiguration = function() {
             confirmModal.getUserConfirmation(localization.localize('configuration.add.warning'), function () {
@@ -90,8 +129,22 @@ angular.module('headwind-kiosk')
                 }
             });
 
-            modalInstance.result.then(function () {
-                $scope.search();
+            modalInstance.result.then(function (newName) {
+                $scope.search(function () {
+                    var openAction = null;
+                    var newConfiguration = $scope.configurations.find(function (c) {
+                        return c.name === newName;
+                    });
+                    if (newConfiguration) {
+                        openAction = {
+                            label: localization.localize('form.configurations.action.open'),
+                            onClick: function () {
+                                $scope.editConfiguration(newConfiguration);
+                            }
+                        };
+                    }
+                    showConfigurationsToast('success', localization.localize('success.configuration.copied'), openAction);
+                });
             });
         };
 
@@ -103,8 +156,10 @@ angular.module('headwind-kiosk')
                 configurationService.removeConfiguration({id: configuration.id}, function (response) {
                     if (response.status === 'OK') {
                         $scope.search();
+                        showConfigurationsToast('success', localization.localize('success.configuration.deleted'));
                     } else {
                         alertService.showAlertMessage(localization.localize(response.message));
+                        showConfigurationsToast('error', localization.localize(response.message));
                     }
                 }, alertService.onRequestFailure);
             });
@@ -115,7 +170,12 @@ angular.module('headwind-kiosk')
     .controller('CopyConfigurationModalController',
         function ($scope, $modalInstance, configurationService, configuration, localization) {
 
-            $scope.configuration = {"id": configuration.id, "name": "", "description": configuration.description};
+            $scope.configuration = {
+                "id": configuration.id,
+                "name": configuration.name ? configuration.name + localization.localize('form.configuration.copy.suffix') : '',
+                "description": configuration.description
+            };
+            $scope.saving = false;
 
             $scope.save = function () {
                 $scope.saveInternal();
@@ -132,12 +192,17 @@ angular.module('headwind-kiosk')
                         "name": $scope.configuration.name,
                         "description": $scope.configuration.description
                     };
+                    $scope.saving = true;
                     configurationService.copyConfiguration(request, function (response) {
+                        $scope.saving = false;
                         if (response.status === 'OK') {
-                            $modalInstance.close();
+                            $modalInstance.close($scope.configuration.name);
                         } else {
                             $scope.errorMessage = localization.localize('error.duplicate.configuration.name');
                         }
+                    }, function () {
+                        $scope.saving = false;
+                        $scope.errorMessage = localization.localize('error.request.failure');
                     });
                 }
             };
