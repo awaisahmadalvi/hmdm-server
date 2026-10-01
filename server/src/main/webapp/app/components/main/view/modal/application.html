@@ -1,72 +1,238 @@
 <!-- Localization completed -->
-<div ng-show='errorMessage' class='modal-header'>
-    <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
+<div class="modern-modal-header app-modal-header">
+    <div class="app-modal-header-top">
+        <app-icon application="application" size="64"></app-icon>
+        <div class="app-modal-header-text">
+            <h4 class="modern-modal-title" ng-if="isNewApp" localized>form.application.title.add</h4>
+            <h4 class="modern-modal-title" ng-if="!isNewApp" localized>form.application.title.edit</h4>
+            <div class="app-modal-header-sub" ng-if="!isNewApp">
+                {{application.name || ''}}<span ng-if="application.pkg && application.type === 'app'"> &middot; {{application.pkg}}</span>
+            </div>
+        </div>
+        <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="modern-segmented" id="applicationType">
+        <button type="button" class="modern-segmented-option" ng-class="{active: application.type === 'app'}"
+                ng-disabled="!isNewApp" ng-click="application.type = 'app'" localized>form.application.type.option.app</button>
+        <button type="button" class="modern-segmented-option" ng-class="{active: application.type === 'web'}"
+                ng-disabled="!isNewApp" ng-click="application.type = 'web'" localized>form.application.type.option.web</button>
+        <button type="button" class="modern-segmented-option" ng-class="{active: application.type === 'intent'}"
+                ng-disabled="!isNewApp" ng-click="application.type = 'intent'" localized>form.application.type.option.intent</button>
+    </div>
 </div>
-<div ng-show='successMessage' class='modal-header'>
-    <div ng-show='successMessage' class='success'><span>{{successMessage}}</span></div>
-</div>
-<div class='modal-body'>
-    <form class='form-horizontal'>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' for="applicationType" localized>form.application.type</label>
-            <div class='col-sm-8'>
-                <select class="form-control" ng-model='application.type' id="applicationType" ng-disabled="!isNewApp">
-                    <option ng-value="'app'" ng-selected="application.type === 'app'"
-                            localized>form.application.type.option.app</option>
-                    <option ng-value="'web'" ng-selected="application.type === 'web'"
-                            localized>form.application.type.option.web</option>
-                    <option ng-value="'intent'" ng-selected="application.type === 'intent'"
-                            localized>form.application.type.option.intent</option>
-                </select>
+<div class='device-details-inline-error' ng-show='errorMessage'><span>{{errorMessage}}</span></div>
+<div class='device-details-inline-success' ng-show='successMessage'><span>{{successMessage}}</span></div>
+
+<div class='modal-body modern-modal-body'>
+<div class="app-modal-columns">
+<div class="app-modal-col-left">
+
+    <!-- SOURCE: upload zone (new APK apps) and/or URL (app/web) -->
+    <div class="device-details-card app-modal-section" ng-if="(isNewApp && application.type === 'app') || application.type === 'app' || application.type === 'web'">
+        <div class="device-details-card-header" localized>form.application.section.source</div>
+
+        <div class="design-field" ng-if="isNewApp && application.type === 'app'">
+            <label class="design-field-label" localized>form.application.file</label>
+            <div class="design-upload-zone" ng-if="!file.path" upload-button drop-upload
+                 file-input-disabler input-disabled="{{application.system}}"
+                 url="rest/private/web-ui-files"
+                 on-upload="onStartedUpload(files)"
+                 on-progress="onUploadProgress(progress)"
+                 on-success="fileUploaded(response)">
+                <span class="glyphicon glyphicon-cloud-upload design-upload-icon"></span>
+                <div class="design-upload-text" localized>form.application.source.upload</div>
+            </div>
+            <div class="progress files-upload-progress" ng-if="loading && uploadProgressPercent !== undefined && !file.path">
+                <div class="progress-bar" ng-style="{width: uploadProgressPercent + '%'}"></div>
+            </div>
+            <div class="design-upload-preview" ng-if="file.path && !invalidFile">
+                <span class="glyphicon glyphicon-file design-upload-icon" style="font-size: 20px;"></span>
+                <div class="files-name-text"><span class="files-name">{{fileName}}</span></div>
+                <button type="button" class="logs-btn-reset" ng-click="clearFile()" localized>button.cleanup</button>
+            </div>
+            <div ng-if="availableSpace" class="field-hint">{{availableSpace}}</div>
+        </div>
+
+        <div class="design-field" ng-if="application.type === 'app' || application.type === 'web'">
+            <label class="design-field-label" for="applicationUrl" localized>form.application.url</label>
+            <!-- We enable editing the URL for better user experience. The URL changes will be applied
+            to the latest app version. Only apps without split APKs could be edited -->
+            <input title="{{localization.localize(application.split ? 'form.application.url.disabled' : 'form.application.url.title')}}"
+                   ng-model='application.url' type='text'
+                   class="form-control logs-input settings-input design-hex-input" id="applicationUrl"
+                   ng-disabled="(application.system || (application.id && application.split))">
+            <div class="field-hint" localized>form.application.url.hint</div>
+        </div>
+    </div>
+
+    <!-- DETAILS -->
+    <div class="device-details-card app-modal-section">
+        <div class="device-details-card-header" localized>form.application.section.details</div>
+
+        <div class="design-field" ng-if="!fileSelected && application.type === 'app'">
+            <label class="design-field-label" for="applicationPkg" localized>form.application.pkg</label>
+            <input localized-title="form.application.pkg.title" ng-model='application.pkg' type='text'
+                   class="form-control logs-input settings-input design-hex-input" id="applicationPkg"
+                   localized-placeholder="form.application.pkg.placeholder"/>
+        </div>
+
+        <div class="design-field" ng-if="fileSelected && application.type === 'app'">
+            <label class="design-field-label" for="applicationPkg2" localized>form.application.pkg</label>
+            <div class="app-locked-field-wrap">
+                <input readonly ng-model='appdesc.pkg' type='text'
+                       class="form-control logs-input settings-input design-hex-input" id="applicationPkg2"/>
+                <span class="glyphicon glyphicon-lock app-locked-field-icon"></span>
             </div>
         </div>
 
-        <div class='form-group' ng-if="!fileSelected && application.type === 'app'">
-            <label class='col-sm-4 control-label' for="applicationPkg" localized>form.application.pkg</label>
-            <div class='col-sm-8'>
-                <input localized-title="form.application.pkg.title" ng-model='application.pkg' type='text'
-                       class='form-control' id="applicationPkg" localized-placeholder="form.application.pkg.placeholder"/>
-            </div>
+        <div class="design-field">
+            <label class="design-field-label" for="applicationName" localized>form.application.name</label>
+            <input localized-title="form.application.name.title" ng-model='application.name' type='text'
+                   class="form-control logs-input settings-input" id="applicationName" localized-placeholder="form.application.name.placeholder"/>
         </div>
 
-        <div class='form-group' ng-if="fileSelected && application.type === 'app'">
-            <label class='col-sm-4 control-label' for="applicationPkg2" localized>form.application.pkg</label>
-            <div class='col-sm-8'>
-                <input disabled ng-model='appdesc.pkg' type='text' class='form-control'
-                       id="applicationPkg2"/>
-            </div>
+        <div class="design-field" ng-if="!fileSelected && application.type === 'app'">
+            <label class="design-field-label" for="applicationVersion" localized>form.application.version</label>
+            <input localized-title="form.application.version.title" ng-model='application.version' type='text'
+                   class="form-control logs-input settings-input" ng-disabled="application.id" id="applicationVersion"
+                   localized-placeholder="form.application.version.placeholder"/>
         </div>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' for="applicationName" localized>form.application.name</label>
-            <div class='col-sm-8'>
-                <input localized-title="form.application.name.title" ng-model='application.name' type='text'
-                       class='form-control' id="applicationName" localized-placeholder="form.application.name.placeholder"/>
-            </div>
-        </div>
-
-        <div class='form-group' ng-if="!fileSelected && application.type === 'app'">
-            <label class='col-sm-4 control-label' for="applicationVersion" localized>form.application.version</label>
-            <div class='col-sm-8'>
-                <input localized-title="form.application.version.title" ng-model='application.version' type='text'
-                       class='form-control' ng-disabled="application.id" id="applicationVersion"
-                       localized-placeholder="form.application.version.placeholder"/>
-            </div>
-        </div>
-
-        <div class='form-group' ng-if="fileSelected && application.type === 'app'">
-            <label class='col-sm-4 control-label' for="applicationVersion2" localized>form.application.version</label>
-            <div class='col-sm-8'>
-                <input disabled type='text' class='form-control' id="applicationVersion2"
+        <div class="design-field" ng-if="fileSelected && application.type === 'app'">
+            <label class="design-field-label" for="applicationVersion2" localized>form.application.version</label>
+            <div class="app-locked-field-wrap">
+                <input readonly type='text' class="form-control logs-input settings-input" id="applicationVersion2"
                        ng-model='appdesc.version'/>
+                <span class="glyphicon glyphicon-lock app-locked-field-icon"></span>
             </div>
         </div>
 
-        <div class='form-group' ng-if="application.type === 'app'">
-            <label class='col-sm-4 control-label' for="applicationArch" localized>form.application.arch</label>
-            <div class='col-sm-8'>
-                <select class="form-control" ng-model='application.arch' id="applicationArch" ng-if="!application.id">
+        <div class="design-field" ng-if="application.type === 'intent'">
+            <label class="design-field-label" for="applicationIntent" localized>form.application.intent</label>
+            <input-dropdown
+                    id="applicationIntent"
+                    allow-custom-input="true"
+                    input-required="true"
+                    input-value="application.intent"
+                    input-placeholder="{{intentPlaceholder}}"
+                    selected-item="application.intent"
+                    filter-list-method="filterIntents(userInput)"
+                    default-dropdown-items="intentOptions">
+            </input-dropdown>
+        </div>
+    </div>
+
+    <!-- LAUNCHER PREVIEW -->
+    <div class="device-details-card app-modal-section">
+        <div class="device-details-card-header" localized>form.application.section.launcher.preview</div>
+        <div class="app-launcher-preview-screen" ng-style="{background: previewBackgroundColor}">
+            <div class="design-phone-app">
+                <app-icon application="application" size="40"></app-icon>
+                <div class="design-phone-app-name" ng-style="{color: previewTextColor}">
+                    {{ (application.showIcon && application.iconText) ? application.iconText : (application.name || '') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div class="app-modal-col-right">
+
+    <!-- LAUNCHER -->
+    <div class="device-details-card app-modal-section">
+        <div class="device-details-card-header" localized>form.application.section.launcher</div>
+
+        <div class="design-field">
+            <div class="settings-field-row">
+                <label class="design-field-label" for="showLabelBox" localized>form.application.showLabel</label>
+                <span class="modern-toggle">
+                    <input localized-title="form.application.showLabel.title" ng-model='application.showIcon'
+                           type='checkbox' class="modern-toggle-input" id="showLabelBox"/>
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
+            </div>
+        </div>
+
+        <div class="design-field" ng-class="{'apps-row-muted': !application.showIcon}">
+            <label class="design-field-label" for="iconTextInput" localized>form.application.iconText</label>
+            <input ng-model='application.iconText' type='text' class="form-control logs-input settings-input" id="iconTextInput"
+                   ng-disabled="!application.showIcon"
+                   localized-placeholder="form.application.iconText.placeholder"
+                   maxlength="256"/>
+        </div>
+
+        <div class="design-field" ng-class="{'apps-row-muted': !application.showIcon}">
+            <label class="design-field-label" localized>form.application.icon</label>
+            <div class="app-icon-picker-grid">
+                <button type="button" class="app-icon-picker-option" ng-repeat="icon in icons"
+                        ng-class="{selected: application.iconId === icon.id}"
+                        ng-disabled="!application.showIcon"
+                        ng-click="selectIcon(icon)"
+                        title="{{icon.name}}">
+                    <img ng-if="iconThumbUrl(icon)" ng-src="{{iconThumbUrl(icon)}}" alt=""/>
+                    <span ng-if="!iconThumbUrl(icon)" class="glyphicon glyphicon-apps"></span>
+                </button>
+            </div>
+            <button type="button" class="action-link app-icon-picker-add" ng-click="addNewIcon()" ng-disabled="!application.showIcon">
+                <span class="glyphicon glyphicon-plus"></span> <span localized>button.add.icon</span>
+            </button>
+        </div>
+        <div class="field-hint" ng-if="!application.showIcon" localized>form.application.icon.disabled.hint</div>
+    </div>
+
+    <!-- BEHAVIOR -->
+    <div class="device-details-card app-modal-section" ng-if="application.type === 'app'">
+        <div class="device-details-card-header" localized>form.application.section.behavior</div>
+
+        <div class="app-behavior-row">
+            <div class="settings-field-row">
+                <label class="design-field-label" for="applicationSystem" localized>form.application.system</label>
+                <span class="modern-toggle">
+                    <input localized-title="form.application.system.title" ng-model='application.system' type='checkbox'
+                           class="modern-toggle-input" id="applicationSystem"/>
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
+            </div>
+            <div class="field-hint" localized>form.application.system.title</div>
+        </div>
+
+        <div class="app-behavior-row">
+            <div class="settings-field-row">
+                <label class="design-field-label" for="applicationRunAfterInstall" localized>form.application.run.after.install</label>
+                <span class="modern-toggle">
+                    <input localized-title="form.application.run.after.install.title" ng-model='application.runAfterInstall'
+                           ng-disabled="application.system" type='checkbox' class="modern-toggle-input" id="applicationRunAfterInstall"/>
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
+            </div>
+            <div class="field-hint" localized>form.application.run.after.install.title</div>
+        </div>
+
+        <div class="app-behavior-row">
+            <div class="settings-field-row">
+                <label class="design-field-label" for="applicationRunAtBoot" localized>form.application.run.at.boot</label>
+                <span class="modern-toggle">
+                    <input localized-title="form.application.run.at.boot.title" ng-model='application.runAtBoot'
+                           ng-disabled="application.system" type='checkbox' class="modern-toggle-input" id="applicationRunAtBoot"/>
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
+            </div>
+            <div class="field-hint" localized>form.application.run.at.boot.title</div>
+        </div>
+    </div>
+
+    <!-- ADVANCED -->
+    <div class="modern-collapsible" ng-if="application.type === 'app' || application.type === 'web'">
+        <div class="modern-collapsible-header" ng-click="advancedOpen = !advancedOpen">
+            <span class="glyphicon" ng-class="advancedOpen ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right'"></span>
+            <span localized>form.application.section.advanced</span>
+        </div>
+        <div class="modern-collapsible-body" ng-if="advancedOpen">
+
+            <div class="design-field" ng-if="application.type === 'app'">
+                <label class="design-field-label" for="applicationArch" localized>form.application.arch</label>
+                <select class="form-control modern-select settings-input" ng-model='application.arch' id="applicationArch" ng-if="!application.id">
                     <option ng-value="''" ng-selected="application.arch === null || application.arch === ''"
                             localized>form.application.arch.universal</option>
                     <option ng-value="'armeabi'" ng-selected="application.arch === 'armeabi'"
@@ -74,142 +240,59 @@
                     <option ng-value="'arm64'" ng-selected="application.arch === 'arm64'"
                             localized>form.application.arch.arm64</option>
                 </select>
-                <div class="field-hint warning-font" ng-show="appNameWarning">{{appNameWarning}}</div>
-                <div class="field-hint warning-font" ng-show="appTypeWarning">{{appTypeWarning}}</div>
-                <div class="field-hint success-font" ng-show="appTypeSuccess">{{appTypeSuccess}}</div>
+                <div class="field-hint" style="color: var(--color-warning-text)" ng-show="appNameWarning">{{appNameWarning}}</div>
+                <div class="field-hint" style="color: var(--color-warning-text)" ng-show="appTypeWarning">{{appTypeWarning}}</div>
+                <div class="field-hint" style="color: var(--color-success-text)" ng-show="appTypeSuccess">{{appTypeSuccess}}</div>
                 <input ng-if="application.id"
                        localized-placeholder="form.application.disabled.arch"
                        localized-title="form.application.disabled.arch.title"
                        type='text'
-                       class='form-control'
+                       class="form-control logs-input settings-input"
                        disabled>
             </div>
-        </div>
 
-        <div class='form-group' ng-if="application.type === 'app'">
-            <label class='col-sm-4 control-label' for="applicationSystem" localized>form.application.system</label>
-            <div class='col-sm-2'>
-                <input localized-title="form.application.system.title" ng-model='application.system' type='checkbox'
-                       class='form-control' id="applicationSystem"/>
-            </div>
-        </div>
-
-        <div class='form-group' ng-if="application.type === 'app'">
-            <label class='col-sm-4 control-label' for="applicationRunAfterInstall"
-                   localized>form.application.run.after.install</label>
-            <div class='col-sm-2'>
-                <input localized-title="form.application.run.after.install.title" ng-model='application.runAfterInstall'
-                       ng-disabled="application.system" type='checkbox' class='form-control' id="applicationRunAfterInstall"/>
-            </div>
-
-            <label class='col-sm-4 control-label' for="applicationRunAtBoot"
-                   localized>form.application.run.at.boot</label>
-            <div class='col-sm-2'>
-                <input localized-title="form.application.run.at.boot.title" ng-model='application.runAtBoot'
-                       ng-disabled="application.system" type='checkbox' class='form-control' id="applicationRunAtBoot"/>
-            </div>
-        </div>
-
-        <div class='form-group' ng-if="application.type === 'app' || application.type === 'web'">
-            <label class='col-sm-4 control-label' for="applicationUrl" localized>form.application.url</label>
-            <div class='col-sm-8'>
-                <!-- We enable editing the URL for better user experience. The URL changes will be applied
-                to the latest app version. Only apps without split APKs could be edited -->
-                <input title="{{localization.localize(application.split ? 'form.application.url.disabled' : 'form.application.url.title')}}"
-                       ng-model='application.url' type='text'
-                       class='form-control' id="applicationUrl"
-                       ng-disabled="(application.system || (application.id && application.split))">
-            </div>
-            <div class="col-sm-4">&nbsp;</div>
-            <div class="col-sm-8 field-hint" localized>form.application.url.hint</div>
-        </div>
-
-        <div class='form-group' ng-if="application.type === 'intent'">
-            <label class='col-sm-4 control-label' for="applicationIntent" localized>form.application.intent</label>
-            <div class='col-sm-8'>
-                <input-dropdown
-                        id="applicationIntent"
-                        allow-custom-input="true"
-                        input-required="true"
-                        input-value="application.intent"
-                        input-placeholder="{{intentPlaceholder}}"
-                        selected-item="application.intent"
-                        filter-list-method="filterIntents(userInput)"
-                        default-dropdown-items="intentOptions">
-                </input-dropdown>
-            </div>
-        </div>
-
-        <div class='form-group' ng-if="isNewApp && application.type === 'app'">
-            <label class='col-sm-4 control-label' localized>form.application.file</label>
-            <div class='col-sm-8'>
-                <div class="btn btn-default full-width btn-upload" ng-if="!file.path"
-                     file-input-disabler input-disabled="{{application.system}}"
-                     upload-button
-                     url="rest/private/web-ui-files"
-                     on-upload="onStartedUpload(files)"
-                     on-progress="onUploadProgress(progress)"
-                     on-success="fileUploaded(response)"></div>
-                <span ng-if="file.path && !invalidFile">{{fileName}}</span>
-                <button class="btn btn-default" ng-if="file.path" ng-click="clearFile()" localized>button.cleanup</button>
-                <div ng-if="availableSpace" class="field-hint" style="margin-bottom: 0">{{availableSpace}}</div>
-            </div>
-        </div>
-
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' for="showLabelBox" localized>form.application.showLabel</label>
-            <div class='col-sm-2'>
-                <input localized-title="form.application.showLabel.title" ng-model='application.showIcon'
-                       type='checkbox' class='form-control' id="showLabelBox"/>
-            </div>
-
-            <div ng-if="application.type === 'app' && application.autoUpdateDisplayed">
-                <label class='col-sm-4 control-label' for="autoUpdateBox" localized>form.application.auto.update</label>
-                <div class='col-sm-2'>
-                    <input localized-title="form.application.auto.update.title" ng-model='application.autoUpdate'
-                           type='checkbox' class='form-control' id="autoUpdateBox"/>
+            <div class="design-field" ng-if="application.type === 'app' && application.autoUpdateDisplayed">
+                <div class="settings-field-row">
+                    <label class="design-field-label" for="autoUpdateBox" localized>form.application.auto.update</label>
+                    <span class="modern-toggle">
+                        <input localized-title="form.application.auto.update.title" ng-model='application.autoUpdate'
+                               type='checkbox' class="modern-toggle-input" id="autoUpdateBox"/>
+                        <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                    </span>
                 </div>
             </div>
 
-            <div ng-if="application.type === 'web'">
-                <label class='col-sm-4 control-label' for="useKioskBox" localized>form.application.use.kiosk</label>
-                <div class='col-sm-2'>
-                    <input localized-title="form.application.use.kiosk.title" ng-model='application.useKiosk'
-                           type='checkbox' class='form-control' id="useKioskBox"/>
+            <div class="design-field" ng-if="application.type === 'web'">
+                <div class="settings-field-row">
+                    <label class="design-field-label" for="useKioskBox" localized>form.application.use.kiosk</label>
+                    <span class="modern-toggle">
+                        <input localized-title="form.application.use.kiosk.title" ng-model='application.useKiosk'
+                               type='checkbox' class="modern-toggle-input" id="useKioskBox"/>
+                        <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                    </span>
                 </div>
             </div>
-
         </div>
+    </div>
 
-        <div class='form-group' ng-if="application.showIcon">
-            <label class='col-sm-4 control-label' for="iconTextInput" localized>form.application.iconText</label>
-            <div class='col-sm-8'>
-                <input ng-model='application.iconText' type='text' class='form-control' id="iconTextInput"
-                       localized-placeholder="form.application.iconText.placeholder"
-                       maxlength="256"/>
-            </div>
-        </div>
+</div>
+</div>
+</div>
 
-        <div class='form-group' ng-if="application.showIcon">
-            <label class='col-sm-4 control-label' for="iconInput" localized>form.application.icon</label>
-            <div class='col-sm-5'>
-                <select ng-options="icon.id as icon.name for icon in icons" name="icon"
-                        ng-model='application.iconId' class='form-control' id="iconInput">
-                </select>
-            </div>
-            <dic class="col-sm-3 align-right">
-                <button class="btn btn-default" type="button" ng-click="addNewIcon()" localized>button.add.icon</button>
-            </dic>
-        </div>
-
-
-        <div class='form-group'>
-            <div class='col-sm-offset-4 col-sm-8'>
-                <button type='submit' class='btn btn-default' ng-click='save()' ng-disabled="loading" localized>button.save</button>
-                <button type='button' class='btn btn-default' ng-click='closeModal()' ng-disabled="loading" localized >button.cancel</button>
-                <button type='button' class='btn btn-default' ng-click='manageConfigurations()' ng-disabled="loading"
-                        ng-if="!isNewApp" localized>button.configurations</button>
-            </div>
-        </div>
-    </form>
+<div class="modern-modal-actions">
+    <span class="app-modal-footer-left">
+        <a class="action-link" ng-if="!isNewApp" ng-click="manageConfigurations()">
+            <span ng-if="configCount === null" localized>form.application.configurations.used.link</span>
+            <span ng-if="configCount === 0" localized>form.application.configurations.used.none</span>
+            <span ng-if="configCount > 0">{{ ('form.application.configurations.used.count' | localize).replace('${count}', configCount).replace('${plural}', configCount === 1 ? '' : 's') }}</span>
+        </a>
+    </span>
+    <div class="app-modal-actions-right">
+        <button type='button' class='btn btn-default' ng-click='closeModal()' ng-disabled="loading" localized>button.cancel</button>
+        <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' ng-disabled="loading">
+            <span ng-if="!loading && isNewApp" localized>button.add.application</span>
+            <span ng-if="!loading && !isNewApp" localized>button.save</span>
+            <span ng-if="loading" localized>form.application.saving</span>
+        </button>
+    </div>
 </div>

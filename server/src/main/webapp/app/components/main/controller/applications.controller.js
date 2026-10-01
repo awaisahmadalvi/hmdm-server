@@ -2,7 +2,7 @@
 angular.module('headwind-kiosk')
     .controller('ApplicationsTabController', function ($scope, $rootScope, $modal, confirmModal, applicationService,
                                                        authService, $window, localization, alertService, $state,
-                                                       fileService, storageService) {
+                                                       fileService, storageService, $timeout, appIconService) {
 
         $scope.authService = authService;
 
@@ -99,10 +99,11 @@ angular.module('headwind-kiosk')
             });
         };
 
-        $scope.editApplication = function (application) {
+        $scope.editApplication = function (application, pendingFile) {
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/application.html',
                 controller: 'ApplicationModalController',
+                windowClass: 'app-modal-wide',
                 resolve: {
                     application: function () {
                         return application;
@@ -112,6 +113,9 @@ angular.module('headwind-kiosk')
                     },
                     closeOnSave: function () {
                         return false;
+                    },
+                    pendingFile: function () {
+                        return pendingFile || null;
                     }
                 }
             });
@@ -119,8 +123,102 @@ angular.module('headwind-kiosk')
             modalInstance.result.then($scope.search, $scope.search);
         };
 
+        // Wired to the page-wide drop-zone (see applications.html) - lets
+        // dropping an APK anywhere on the page open the same Add dialog
+        // used by the "Add application" button, with the dropped file fed
+        // into its existing upload flow (see ApplicationModalController's
+        // pendingFile handling) instead of requiring a click first.
+        $scope.onPageFileDrop = function ($event) {
+            var files = $event && $event.dataTransfer && $event.dataTransfer.files;
+            var file = files && files[0];
+            if (!file || !/\.(apk|xapk)$/i.test(file.name)) {
+                return;
+            }
+            $scope.editApplication({arch: null}, file);
+        };
+
+        $scope.clearAppSearch = function () {
+            $scope.search.searchValue = '';
+            $scope.search();
+        };
+
+        // Display-only classification for the Source column/badge - doesn't
+        // read anything beyond the URL already shown in the old URL column,
+        // just decides "Uploaded" (served by this same server) vs
+        // "External" (any other host) and flags an unreachable-from-devices
+        // localhost URL. Never affects what's saved.
+        $scope.appSourceInfo = function (application) {
+            var url = (application.split ? (application.urlArm64 || application.urlArmeabi) : application.url) || '';
+            var isRelative = url.length > 0 && !/^https?:\/\//i.test(url);
+            var isSameOrigin = false;
+            if (!isRelative && url) {
+                try {
+                    isSameOrigin = new URL(url, $window.location.href).origin === $window.location.origin;
+                } catch (e) {
+                    isSameOrigin = false;
+                }
+            }
+            return {
+                url: url,
+                uploaded: !!url && (isRelative || isSameOrigin),
+                isLocalhost: /^https?:\/\/(localhost|127\.0\.0\.1)/i.test(url)
+            };
+        };
+
+        $scope.copiedAppUrlId = null;
+        $scope.copyAppUrl = function (application) {
+            var info = $scope.appSourceInfo(application);
+            if (!info.url || !navigator.clipboard) {
+                return;
+            }
+            navigator.clipboard.writeText(info.url).then(function () {
+                $timeout(function () {
+                    $scope.copiedAppUrlId = application.id;
+                });
+                $timeout(function () {
+                    if ($scope.copiedAppUrlId === application.id) {
+                        $scope.copiedAppUrlId = null;
+                    }
+                }, 2000);
+            });
+        };
+
         $scope.clarifyOnCommon = function () {
             alertService.showAlertMessage(localization.localize('common.app.clarification'));
+        };
+
+        $scope.appsToast = null;
+        var showAppsToast = function (type, message) {
+            $scope.appsToast = {type: type, message: message};
+            $timeout(function () {
+                if ($scope.appsToast && $scope.appsToast.message === message) {
+                    $scope.appsToast = null;
+                }
+            }, 4000);
+        };
+
+        // One-off action (super-admin only, see the header button's
+        // authService.isSuperAdmin() guard) that re-parses every already-
+        // uploaded app's APK on the server to extract and store a launcher
+        // icon for apps that predate APK icon extraction. Safe to run more
+        // than once - the backend only touches applications that still have
+        // no apkIconFileId.
+        $scope.backfillingIcons = false;
+        $scope.backfillIcons = function () {
+            $scope.backfillingIcons = true;
+            applicationService.backfillIcons(function (response) {
+                $scope.backfillingIcons = false;
+                if (response.status === 'OK') {
+                    appIconService.refresh();
+                    showAppsToast('success', localization.localize('form.applications.backfill.icons.success').replace('${count}', response.data));
+                    $scope.search();
+                } else {
+                    showAppsToast('error', localization.localizeServerResponse(response));
+                }
+            }, function () {
+                $scope.backfillingIcons = false;
+                showAppsToast('error', localization.localize('error.request.failure'));
+            });
         };
 
         $scope.editConfiguration = function (application) {
@@ -152,7 +250,7 @@ angular.module('headwind-kiosk')
     })
     .controller('ApplicationModalController', function ($scope, $modalInstance, applicationService, iconService,
                                                         application, $modal, $q, isControlPanel, localization, closeOnSave,
-                                                        fileService) {
+                                                        fileService, pendingFile, $timeout, appIconService, settingsService) {
         $scope.isControlPanel = isControlPanel;
 
         $scope.localization = localization;
@@ -181,6 +279,64 @@ angular.module('headwind-kiosk')
         });
 
         $scope.icons = [{id: -1, name: localization.localize("form.application.icon.default")}];
+
+        // Icon picker grid (modal/application.html's Launcher section) - a
+        // {iconId: url} map shared (and cached) with every other place that
+        // renders an <app-icon>, so this dialog never issues its own
+        // separate icons/files requests.
+        $scope.iconUrlMap = {};
+        var loadIconUrls = function () {
+            appIconService.getMap(function (map) {
+                $scope.iconUrlMap = map;
+            });
+        };
+        loadIconUrls();
+
+        $scope.iconThumbUrl = function (icon) {
+            return (icon && icon.id !== -1) ? $scope.iconUrlMap[icon.id] : null;
+        };
+
+        $scope.selectIcon = function (icon) {
+            $scope.application.iconId = icon.id;
+        };
+
+        // Launcher preview tile (left column) - reads the Default Design
+        // background/text colors the same way designPreview.html's phone
+        // preview does (same isValidHex rule as settings.controller.js),
+        // falling back to the phone-frame's own default colors if Default
+        // Design hasn't been customized or fails to load.
+        $scope.previewBackgroundColor = '#0f172a';
+        $scope.previewTextColor = '#ffffff';
+        var isValidHex = function (value) {
+            return !!value && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value);
+        };
+        settingsService.getSettings(function (response) {
+            if (response.status === 'OK' && response.data) {
+                if (isValidHex(response.data.backgroundColor)) {
+                    $scope.previewBackgroundColor = response.data.backgroundColor;
+                }
+                if (isValidHex(response.data.textColor)) {
+                    $scope.previewTextColor = response.data.textColor;
+                }
+            }
+        });
+
+        // Footer "Used in configurations" link - null until loaded (shows a
+        // generic label), then the real count of configurations where this
+        // app is actually set to install, using the same data the
+        // Configurations dialog itself lists.
+        $scope.configCount = null;
+        var loadConfigCount = function () {
+            if (!$scope.application.id) {
+                return;
+            }
+            applicationService.getConfigurations({id: $scope.application.id}, function (response) {
+                if (response.data) {
+                    $scope.configCount = response.data.filter(function (c) { return c.action == 1; }).length;
+                }
+            });
+        };
+        loadConfigCount();
 
         $scope.intentPlaceholder = localization.localize("form.application.intent.placeholder");
         $scope.intentOptions = [
@@ -282,8 +438,33 @@ angular.module('headwind-kiosk')
             $scope.fileName = null;
             $scope.invalidFile = false;
             $scope.fileSelected = false;
-            
+
             $scope.application.type = 'app';
+        }
+
+        // Fed in from the Applications page's page-wide drop zone (see
+        // ApplicationsTabController.onPageFileDrop) - reuses the same
+        // DataTransfer/change-event trick as the dropUpload directive
+        // (directives.js) to feed the already-dropped file into this
+        // dialog's own upload-button input once it exists in the DOM, so
+        // the rest of the upload flow (onStartedUpload/fileUploaded etc.)
+        // runs completely unchanged.
+        if (pendingFile) {
+            $timeout(function () {
+                var input = document.querySelector('.modal-body input[type="file"]');
+                if (!input || typeof DataTransfer === 'undefined') {
+                    return;
+                }
+                try {
+                    var transfer = new DataTransfer();
+                    transfer.items.add(pendingFile);
+                    input.files = transfer.files;
+                    input.dispatchEvent(new Event('change', {bubbles: true}));
+                } catch (e) {
+                    // DataTransfer construction unsupported - the dialog is
+                    // still open and usable, just without the prefill.
+                }
+            });
         }
 
         $scope.onStartedUpload = function (files) {
@@ -291,6 +472,7 @@ angular.module('headwind-kiosk')
             $scope.errorMessage = undefined;
             $scope.invalidFile = false;
             $scope.fileSelected = false;
+            $scope.uploadProgressPercent = 0;
 
             if (files.length > 0) {
                 $scope.fileName = files[0].name;
@@ -312,6 +494,7 @@ angular.module('headwind-kiosk')
         $scope.onUploadProgress = function(progress) {
             var loadedMb = (progress.loaded / 1048576).toFixed(1);
             var totalMb = (progress.total / 1048576).toFixed(1);
+            $scope.uploadProgressPercent = progress.total ? Math.round((progress.loaded / progress.total) * 100) : 0;
             $scope.successMessage = localization.localize('success.uploading.file') +
                 " " + loadedMb + " / " + totalMb + " Mb";
         };
@@ -398,6 +581,7 @@ angular.module('headwind-kiosk')
                             $scope.fileName = null;
                             $scope.invalidFile = false;
                             $scope.fileSelected = false;
+                            loadConfigCount();
                             $scope.manageConfigurations(true);
                         } else {
                             $modalInstance.close();
@@ -579,6 +763,8 @@ angular.module('headwind-kiosk')
             modalInstance.result.then(function (newIcon) {
                 if (newIcon) {
                     $scope.application.iconId = newIcon.id;
+                    appIconService.refresh();
+                    loadIconUrls();
                     loadIcons();
                 }
             });
@@ -632,6 +818,7 @@ angular.module('headwind-kiosk')
             });
 
             modalInstance.result.then(function () {
+                loadConfigCount();
                 if (closeOnExit) {
                     $scope.closeModal();
                 }

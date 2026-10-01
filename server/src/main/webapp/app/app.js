@@ -274,9 +274,27 @@ angular.module('headwind-kiosk',
                 }
             })
             .state('configEditor', {
-                url: '/configuration/{id}',
-                templateUrl: 'app/components/main/view/configuration.html',
-                controller: 'ConfigurationEditorController',
+                url: '/configuration/{id}?tab',
+                // Shares content.html/TabController with every other top-level
+                // page (see the 'configurations' state above) instead of using
+                // configuration.html as its own top-level template - that's
+                // what was making the main nav (Devices/Applications/.../
+                // Settings/Functions) disappear on this route: it was never
+                // rendered at all on this page. ConfigurationEditorController
+                // is now an ng-controller inside configuration.html itself
+                // (nested under TabController via content.html's CONFS tab,
+                // same place configurations.html/ConfigurationsTabController
+                // already lives) rather than the state's own controller;
+                // $stateParams.id still resolves correctly since that only
+                // depends on the active state's url pattern, not which
+                // controller reads it.
+                templateUrl: 'app/components/main/view/content.html',
+                controller: 'TabController',
+                resolve: {
+                    openTab: function () {
+                        return 'CONFS';
+                    }
+                },
                 ncyBreadcrumb: {
                     label: '{{"breadcrumb.config.details" | localize}}', //label to show in breadcrumbs
                     parent: 'configurations'

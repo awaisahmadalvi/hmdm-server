@@ -63,11 +63,19 @@ angular.module('headwind-kiosk')
         $scope.act = {};
         $scope.act[openTab] = true;
 
+        // The configuration editor (configEditor state) shares this
+        // controller/template with the Configurations list (both resolve
+        // openTab to 'CONFS') so the main nav renders on the editor page
+        // too - content.html picks between configurations.html and
+        // configuration.html based on this flag. See app.js's configEditor
+        // state for the full rationale.
+        $scope.isConfigEditor = ($state.current.name === 'configEditor');
+
         $scope.functionsPlugins = [];
         $scope.settingsPlugins = [];
 
         $scope.openTab = function (tabName) {
-            if (tabName === $scope.activeTab) {
+            if (tabName === $scope.activeTab && !$scope.isConfigEditor) {
                 return;
             }
             if (routes[tabName]) {

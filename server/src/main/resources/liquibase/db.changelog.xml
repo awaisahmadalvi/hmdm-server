@@ -2609,4 +2609,14 @@
         </rollback>
     </changeSet>
 
+    <changeSet id="01.10.26-04:00" author="claude" context="common">
+        <comment>Column,new: applications#apkIconFileId</comment>
+        <sql>
+            ALTER TABLE applications ADD COLUMN apkIconFileId INT REFERENCES uploadedFiles( id ) ON DELETE SET NULL;
+        </sql>
+        <rollback>
+            ALTER TABLE applications DROP COLUMN apkIconFileId;
+        </rollback>
+    </changeSet>
+
 </databaseChangeLog>

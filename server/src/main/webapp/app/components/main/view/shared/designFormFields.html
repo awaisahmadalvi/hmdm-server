@@ -1,0 +1,122 @@
+<!--
+  Shared "Colors / Background image / Layout" form cards for the design
+  picker, used by BOTH Settings -> Default Design (settings/design.html)
+  and the Configuration editor's Design Settings tab (configuration.html),
+  via ng-include, so the two stay visually identical. Binds to whatever
+  object the including controller currently points $scope.designModel at
+  (the global default-design "settings" object on the Default Design page,
+  or the per-configuration "configuration" object - only while its own
+  "Use default design" toggle is off - on the editor). Depends on the
+  including controller exposing: designModel, colorSwatchProxy,
+  applySwatchColor(field), isValidHex(value), designColorPresets,
+  applyColorPreset(field, value), uploadBackground(), removeBackgroundImage(),
+  backgroundImageFileName(), desktopHeaderTemplatePlaceholder, and (for the
+  CUSTOM1/2/3 desktop-title options) settings.customPropertyName1/2/3.
+-->
+<div class="device-details-card design-card">
+    <div class="device-details-card-header" localized>form.settings.design.colors.title</div>
+
+    <div class="design-field">
+        <label class="design-field-label" localized>form.settings.design.color.font</label>
+        <div class="design-color-row">
+            <input type="color" class="design-color-swatch"
+                   ng-model="colorSwatchProxy.backgroundColor"
+                   ng-change="applySwatchColor('backgroundColor')" />
+            <input ng-model='designModel.backgroundColor' type='text'
+                   class='form-control logs-input design-hex-input'
+                   ng-class="{'modern-input-invalid': !isValidHex(designModel.backgroundColor)}"
+                   localized-placeholder='form.settings.design.color.font.placeholder'/>
+        </div>
+        <div class="design-field-error" ng-if="!isValidHex(designModel.backgroundColor)" localized>form.settings.design.color.invalid</div>
+        <div class="design-presets">
+            <button type="button" class="design-preset-swatch" ng-repeat="preset in designColorPresets"
+                    ng-style="{background: preset.value}" title="{{preset.label}}"
+                    ng-click="applyColorPreset('backgroundColor', preset.value)"></button>
+        </div>
+    </div>
+
+    <div class="design-field">
+        <label class="design-field-label" localized>form.settings.design.color.app.names</label>
+        <div class="design-color-row">
+            <input type="color" class="design-color-swatch"
+                   ng-model="colorSwatchProxy.textColor"
+                   ng-change="applySwatchColor('textColor')" />
+            <input ng-model='designModel.textColor' type='text'
+                   class='form-control logs-input design-hex-input'
+                   ng-class="{'modern-input-invalid': !isValidHex(designModel.textColor)}"
+                   localized-placeholder='form.settings.design.color.app.names.placeholder'/>
+        </div>
+        <div class="design-field-error" ng-if="!isValidHex(designModel.textColor)" localized>form.settings.design.color.invalid</div>
+        <div class="design-presets">
+            <button type="button" class="design-preset-swatch" ng-repeat="preset in designColorPresets"
+                    ng-style="{background: preset.value}" title="{{preset.label}}"
+                    ng-click="applyColorPreset('textColor', preset.value)"></button>
+        </div>
+    </div>
+</div>
+
+<div class="device-details-card design-card">
+    <div class="device-details-card-header" localized>form.settings.design.background.title</div>
+
+    <div class="design-upload-zone" drop-zone="uploadBackground()" ng-click="uploadBackground()">
+        <span class="glyphicon glyphicon-cloud-upload design-upload-icon"></span>
+        <div class="design-upload-text" localized>form.settings.design.background.dropzone</div>
+    </div>
+
+    <div class="design-upload-alt-row">
+        <span class="design-upload-alt" localized>form.settings.design.background.dropzone.alt</span>
+        <input ng-model='designModel.backgroundImageUrl' type='text' class='form-control logs-input'
+               localized-placeholder='form.configuration.settings.design.background.image.url.placeholder'>
+    </div>
+
+    <div class="design-upload-preview" ng-if="designModel.backgroundImageUrl">
+        <div class="design-upload-thumb" ng-style="{'background-image': 'url(' + designModel.backgroundImageUrl + ')'}"></div>
+        <div class="design-upload-filename">{{backgroundImageFileName()}}</div>
+        <button type="button" class="logs-btn-reset design-upload-remove"
+                ng-click="removeBackgroundImage()" localized>form.settings.design.background.remove</button>
+    </div>
+    <div class="design-upload-empty" ng-if="!designModel.backgroundImageUrl" localized>form.settings.design.background.none</div>
+</div>
+
+<div class="device-details-card design-card">
+    <div class="device-details-card-header" localized>form.settings.design.layout.title</div>
+
+    <div class="design-field">
+        <label class="design-field-label" for="iconSize" localized>form.settings.design.size.icon</label>
+        <div class="modern-segmented" id="iconSize">
+            <button type="button" class="modern-segmented-option"
+                    ng-class="{active: designModel.iconSize === 'SMALL'}"
+                    ng-click="designModel.iconSize = 'SMALL'" localized>form.settings.design.size.icon.small</button>
+            <button type="button" class="modern-segmented-option"
+                    ng-class="{active: designModel.iconSize === 'MEDIUM'}"
+                    ng-click="designModel.iconSize = 'MEDIUM'" localized>form.settings.design.size.icon.medium</button>
+            <button type="button" class="modern-segmented-option"
+                    ng-class="{active: designModel.iconSize === 'LARGE'}"
+                    ng-click="designModel.iconSize = 'LARGE'" localized>form.settings.design.size.icon.large</button>
+        </div>
+    </div>
+
+    <div class="design-field">
+        <label class="design-field-label" for="desktopHeader" localized>form.configuration.settings.design.desktop.header</label>
+        <select class='form-control modern-select' id="desktopHeader" ng-model='designModel.desktopHeader'>
+            <option ng-value="'NO_HEADER'" ng-selected="designModel.desktopHeader === 'NO_HEADER'"
+                    localized>form.configuration.settings.design.desktop.header.no</option>
+            <option ng-value="'DEVICE_ID'" ng-selected="designModel.desktopHeader === 'DEVICE_ID'"
+                    localized>form.configuration.settings.design.desktop.header.deviceid</option>
+            <option ng-value="'DESCRIPTION'" ng-selected="designModel.desktopHeader === 'DESCRIPTION'"
+                    localized>form.configuration.settings.design.desktop.header.description</option>
+            <option ng-value="'TEMPLATE'" ng-selected="designModel.desktopHeader === 'TEMPLATE'"
+                    localized>form.configuration.settings.design.desktop.header.custom</option>
+            <option ng-if="settings.customPropertyName1" ng-value="'CUSTOM1'" ng-selected="designModel.desktopHeader === 'CUSTOM1'">{{settings.customPropertyName1}}</option>
+            <option ng-if="settings.customPropertyName2" ng-value="'CUSTOM2'" ng-selected="designModel.desktopHeader === 'CUSTOM2'">{{settings.customPropertyName2}}</option>
+            <option ng-if="settings.customPropertyName3" ng-value="'CUSTOM3'" ng-selected="designModel.desktopHeader === 'CUSTOM3'">{{settings.customPropertyName3}}</option>
+        </select>
+        <div class='field-hint' ng-if="designModel.desktopHeader === 'DESCRIPTION' || designModel.desktopHeader === 'CUSTOM1' || designModel.desktopHeader === 'CUSTOM2' || designModel.desktopHeader === 'CUSTOM3'" localized>form.configuration.settings.design.desktop.header.hint</div>
+    </div>
+
+    <div class="design-field" ng-if="designModel.desktopHeader === 'TEMPLATE'">
+        <label class="design-field-label" localized>form.configuration.settings.design.desktop.header.template</label>
+        <input ng-model='designModel.desktopHeaderTemplate' type='text' class='form-control logs-input'
+               placeholder='{{desktopHeaderTemplatePlaceholder}}'>
+    </div>
+</div>

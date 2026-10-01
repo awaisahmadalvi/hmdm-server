@@ -131,8 +131,8 @@ public interface ApplicationMapper {
             "ORDER BY applications.name"})
     List<Application> getAllApplicationsByUrl(@Param("customerId") int customerId, @Param("url") String url);
 
-    @Insert({"INSERT INTO applications (name, pkg, showIcon, useKiosk, system, customerId, runAfterInstall, runAtBoot, type, iconText, iconId, intent) " +
-            "VALUES (#{name}, #{pkg}, #{showIcon}, #{useKiosk}, #{system}, #{customerId}, #{runAfterInstall}, #{runAtBoot}, #{type}, #{iconText}, #{iconId}, #{intent})"})
+    @Insert({"INSERT INTO applications (name, pkg, showIcon, useKiosk, system, customerId, runAfterInstall, runAtBoot, type, iconText, iconId, intent, apkIconFileId) " +
+            "VALUES (#{name}, #{pkg}, #{showIcon}, #{useKiosk}, #{system}, #{customerId}, #{runAfterInstall}, #{runAtBoot}, #{type}, #{iconText}, #{iconId}, #{intent}, #{apkIconFileId})"})
     @SelectKey( statement = "SELECT currval('applications_id_seq')", keyColumn = "id", keyProperty = "id", before = false, resultType = int.class )
     void insertApplication(Application application);
 
@@ -152,6 +152,12 @@ public interface ApplicationMapper {
             "split = #{split}, urlArmeabi = #{urlArmeabi}, urlArm64 = #{urlArm64} " +
             "WHERE id=#{id}"})
     void updateApplicationVersion(ApplicationVersion applicationVersion);
+
+    // Updates only the auto-extracted APK icon reference - kept separate from updateApplication so that a plain
+    // edit-save (rename, toggle flags, etc.) from the Add/Edit dialog never has a chance to null this out, since
+    // that dialog's request object never carries apkIconFileId.
+    @Update("UPDATE applications SET apkIconFileId = #{apkIconFileId} WHERE id = #{id}")
+    void updateApplicationApkIcon(@Param("id") Integer applicationId, @Param("apkIconFileId") Integer apkIconFileId);
 
     @Delete({"DELETE FROM applications WHERE id=#{id}"})
     void removeApplicationById(@Param("id") Integer id);
@@ -293,6 +299,26 @@ public interface ApplicationMapper {
     @Select({SELECT_BASE +
             "ORDER BY name"})
     List<Application> getAllAdminApplications();
+
+    // One-off icon backfill (Applications page's "Backfill icons" action): every already-uploaded Android app
+    // (has a stored APK URL) that doesn't have an auto-extracted icon yet, across all customers - super-admin only
+    // (see findApplicationsNeedingIconBackfillForCustomer below for the single-customer-scoped equivalent any
+    // edit_applications user can run).
+    String BACKFILL_CANDIDATE_FILTER =
+            "WHERE applications.apkIconFileId IS NULL " +
+            "AND applications.type = 'app' " +
+            "AND applications.system = FALSE " +
+            "AND (COALESCE(applicationVersions.url, '') <> '' " +
+            "     OR COALESCE(applicationVersions.urlArmeabi, '') <> '' " +
+            "     OR COALESCE(applicationVersions.urlArm64, '') <> '') ";
+
+    @Select({SELECT_BASE + BACKFILL_CANDIDATE_FILTER + "ORDER BY applications.id"})
+    List<Application> findApplicationsNeedingIconBackfill();
+
+    @Select({SELECT_BASE + BACKFILL_CANDIDATE_FILTER +
+            "AND applications.customerId = #{customerId} " +
+            "ORDER BY applications.id"})
+    List<Application> findApplicationsNeedingIconBackfillForCustomer(@Param("customerId") int customerId);
 
     @Select({SELECT_BASE +
             "WHERE (applications.name ILIKE #{value} OR pkg ILIKE #{value}) " +

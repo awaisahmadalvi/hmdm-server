@@ -1,132 +1,175 @@
 <!-- Localization completed -->
-<div ng-controller="ApplicationsTabController" class="modern-page">
-    <form class="form-horizontal modern-toolbar">
-    <div class='form-group'>
-        <div class="col-sm-10">
-            <input type='text'
-                   ng-model='search.searchValue'
-                   ng-change="search()"
-                   ng-model-options="{ debounce: 500 }"
-                   ng-enter='search()'
-                   localized-placeholder='search.placeholder.application'
-                   class='form-control'>
+<div ng-controller="ApplicationsTabController" class="width-1200 modern-page logs-page applications-page" drop-zone="onPageFileDrop($event)">
+
+    <div class="logs-page-header">
+        <div>
+            <h4 localized>form.applications.title</h4>
+            <div class="logs-page-subtitle" localized>form.applications.subtitle</div>
         </div>
-
-        <div class='device-search-buttons col-sm-2'>
-            <button ng-if="hasPermission('edit_applications')" type='button' class='btn btn-default btn-modern-primary' ng-click='editApplication( {arch:null} )' localized>button.add</button>
-        </div>
-    </div>
-
-    <div class="form-group">
-        <div class="col-sm-2"><div ng-if="availableSpace" class="field-hint" style="margin-top: 9px">{{availableSpace}}</div></div>
-
-        <label for='cc12222' class="control-label col-sm-3" localized>form.configuration.apps.show.systeam.apps</label>
-
-        <div class="col-sm-1">
-            <input id="cc12222" ng-model='showMyAppsOnly.system' name="n42" type='checkbox' class='form-control'
-                   ng-checked="showMyAppsOnly.system"
-                   ng-change="showSystemAppsOnlyToggled()"/>
-        </div>
-
-        <label for="cc1" class="control-label col-sm-3" ng-if="myAppsButtonVisible"
-               localized>box.show.my.apps.only</label>
-
-        <div class='col-sm-1' ng-if="myAppsButtonVisible">
-            <input id="cc1" ng-model='showMyAppsOnly.on' name="n4" type='checkbox' class='form-control'
-                   ng-change="showMyAppsOnlyToggled()"/>
+        <div class="logs-page-header-actions">
+            <button ng-if="hasPermission('edit_applications')" type="button"
+                    class="btn btn-default" ng-click="backfillIcons()" ng-disabled="backfillingIcons"
+                    localized-title="form.applications.backfill.icons.title">
+                <span class="glyphicon" ng-class="backfillingIcons ? 'glyphicon-refresh' : 'glyphicon-picture'"></span>
+                <span ng-if="!backfillingIcons" localized>form.applications.backfill.icons</span>
+                <span ng-if="backfillingIcons" localized>form.applications.backfill.icons.running</span>
+            </button>
+            <button ng-if="hasPermission('edit_applications')" type="button" class="btn btn-modern-primary" ng-click="editApplication({arch:null})">
+                <span class="glyphicon glyphicon-plus"></span> <span localized>button.add.application</span>
+            </button>
         </div>
     </div>
-    </form>
-    
-    <div class="text-center" ng-if="applications.length > paging.pageSize">
-        <pagination
-                boundary-links='true' class='pagination-sm'
-                max-size='3'
-                ng-model='paging.currentPage'
-                total-items='applications.length'
-                items-per-page='paging.pageSize'
-                previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
-                last-text='&raquo;'></pagination>
+
+    <div class="summary-card logs-results-card">
+
+        <div class="logs-filter-row logs-filter-row-actions">
+            <div class="logs-input-icon-wrap logs-filter-grow">
+                <span class="glyphicon glyphicon-search logs-input-icon"></span>
+                <input type="text" ng-model="search.searchValue" ng-change="search()"
+                       ng-model-options="{ debounce: 500 }" ng-enter="search()"
+                       localized-placeholder="search.placeholder.application"
+                       class="form-control logs-input">
+            </div>
+
+            <div class="settings-field-row apps-system-toggle">
+                <label class="design-field-label" localized>form.configuration.apps.show.systeam.apps</label>
+                <span class="modern-toggle">
+                    <input type="checkbox" class="modern-toggle-input" ng-model="showMyAppsOnly.system" ng-change="showSystemAppsOnlyToggled()">
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
+            </div>
+
+            <div class="logs-results-count">
+                <span>{{applications.length || 0}} <span localized>form.applications.count.suffix</span></span>
+            </div>
+        </div>
+
+        <div ng-if="myAppsButtonVisible" class="design-field" style="margin-top: 10px;">
+            <div class="settings-field-row">
+                <label class="design-field-label" localized>box.show.my.apps.only</label>
+                <span class="modern-toggle">
+                    <input type="checkbox" class="modern-toggle-input" ng-model="showMyAppsOnly.on" ng-change="showMyAppsOnlyToggled()">
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
+            </div>
+        </div>
+
+        <div ng-if="availableSpace" class="field-hint">{{availableSpace}}</div>
+
+        <div class="device-details-skeleton-group" ng-if="loading">
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+        </div>
+
+        <div class="device-details-empty" ng-if="!loading && applications.length === 0 && !search.searchValue">
+            <span class="glyphicon glyphicon-th-large device-details-empty-icon"></span>
+            <div class="device-details-empty-title" localized>form.applications.empty.title</div>
+            <div class="logs-empty-subtitle" localized>form.applications.empty.subtitle</div>
+            <button ng-if="hasPermission('edit_applications')" type="button" class="btn btn-modern-primary margin-top" ng-click="editApplication({arch:null})">
+                <span class="glyphicon glyphicon-plus"></span> <span localized>button.add.application</span>
+            </button>
+        </div>
+
+        <div class="device-details-empty" ng-if="!loading && applications.length === 0 && search.searchValue">
+            <span class="glyphicon glyphicon-search device-details-empty-icon"></span>
+            <div class="device-details-empty-title">{{'form.applications.empty.search.prefix' | localize}} "{{search.searchValue}}"</div>
+            <button type="button" class="btn btn-default margin-top" ng-click="clearAppSearch()" localized>form.settings.users.empty.search.clear</button>
+        </div>
+
+        <div class="modern-table-wrap" ng-if="!loading && applications.length > 0">
+            <table class="table modern-responsive-table">
+                <thead>
+                <tr>
+                    <th localized>table.heading.application.name</th>
+                    <th localized>table.heading.application.version</th>
+                    <th localized>form.applications.source</th>
+                    <th localized>table.heading.application.label</th>
+                    <th>&nbsp;</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="logs-row" ng-repeat="application in applications.slice(((paging.currentPage-1)*paging.pageSize), ((paging.currentPage)*paging.pageSize))"
+                    ng-click="editApplication(application)">
+                    <td data-label="{{'table.heading.application.name' | localize}}">
+                        <div class="app-name-cell">
+                            <app-icon application="application" size="36"></app-icon>
+                            <div>
+                                <div class="app-name-text">
+                                    {{application.name}}
+                                    <span class="device-details-badge users-role-neutral" ng-if="application.system" localized>form.applications.badge.system</span>
+                                </div>
+                                <div class="device-details-app-pkg" ng-if="pkgInfoVisible(application)">{{application.pkg}}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="{{'table.heading.application.version' | localize}}">
+                        <span ng-if="pkgInfoVisible(application)">{{application.version}}<span ng-if="application.versionCode"> ({{application.versionCode}})</span></span>
+                    </td>
+                    <td data-label="{{'form.applications.source' | localize}}" ng-click="$event.stopPropagation()">
+                        <span class="files-path-cell" ng-if="appSourceInfo(application).url">
+                            <span class="device-details-badge app-source-badge" ng-class="appSourceInfo(application).uploaded ? 'users-role-blue' : 'users-role-neutral'"
+                                  title="{{appSourceInfo(application).url}}">
+                                <span ng-if="appSourceInfo(application).uploaded" localized>form.applications.source.uploaded</span>
+                                <span ng-if="!appSourceInfo(application).uploaded" localized>form.applications.source.external</span>
+                            </span>
+                            <span class="glyphicon glyphicon-warning-sign" style="color: var(--color-warning-text)" ng-if="appSourceInfo(application).isLocalhost"
+                                  title="{{'form.applications.source.localhost.warning' | localize}}"></span>
+                            <button type="button" class="files-path-copy" ng-click="copyAppUrl(application)"
+                                    title="{{ ('form.file.copy.link' | localize).replace('${link}', appSourceInfo(application).url) }}">
+                                <span class="glyphicon" ng-class="copiedAppUrlId === application.id ? 'glyphicon-ok' : 'glyphicon-copy'"></span>
+                            </button>
+                        </span>
+                        <span class="device-details-badge app-source-badge users-role-neutral" ng-if="!appSourceInfo(application).url"
+                              title="{{'form.applications.source.none.tooltip' | localize}}" localized>form.applications.source.none</span>
+                    </td>
+                    <td data-label="{{'table.heading.application.label' | localize}}">
+                        <span class="device-details-badge users-role-blue" ng-if="application.showIcon" localized>form.applications.home.shown</span>
+                        <span class="app-order-dash" ng-if="!application.showIcon">&mdash;</span>
+                    </td>
+                    <td class="actions-column" ng-click="$event.stopPropagation()">
+                        <button ng-if="hasPermission('edit_applications') && (!application.commonApplication || application.customerId == user.customerId)"
+                                type="button" class="btn btn-default app-options-btn" ng-click="editApplication(application)" localized-title="button.edit">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                        </button>
+                        <button ng-if="hasPermission('edit_applications') && application.commonApplication && application.customerId != user.customerId"
+                                type="button" class="btn btn-default app-options-btn" ng-click="clarifyOnCommon()" localized-title="button.common">
+                            <span class="glyphicon glyphicon-cloud"></span>
+                        </button>
+                        <div class="users-row-menu" app-actions-menu>
+                            <button type="button" class="btn btn-default">
+                                <span class="glyphicon glyphicon-option-vertical"></span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-right actions-menu-list">
+                                <li ng-if="application.type == 'app'"><a ng-click="editVersions(application)" localized>form.applications.action.versions</a></li>
+                                <li><a ng-click="editConfiguration(application)" localized>form.applications.action.configurations</a></li>
+                                <li ng-if="hasPermission('edit_applications') && !application.deletionProhibited && (!application.commonApplication || application.customerId == user.customerId)">
+                                    <a class="action-danger" ng-click="removeApplication(application)" localized>button.delete</a>
+                                </li>
+                                <li ng-if="hasPermission('edit_applications') && application.deletionProhibited && (!application.commonApplication || application.customerId == user.customerId)" class="disabled">
+                                    <a class="action-danger" title="{{'error.application.config.reference.exists' | localize}}" localized>button.delete</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="logs-results-toolbar logs-results-toolbar-bottom" ng-if="applications.length > paging.pageSize">
+            <pagination
+                    boundary-links='true' class='pagination-sm'
+                    max-size='3'
+                    ng-model='paging.currentPage'
+                    total-items='applications.length'
+                    items-per-page='paging.pageSize'
+                    previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
+                    last-text='&raquo;'></pagination>
+        </div>
     </div>
 
-    <div class="modern-table-wrap" ng-if='applications && applications.length > 0'>
-    <table class='table'>
-        <thead>
-        <tr>
-            <th localized>table.heading.application.pkg</th>
-            <th localized>table.heading.application.name</th>
-            <th localized>table.heading.application.version</th>
-            <th localized>table.heading.application.url</th>
-            <th localized>table.heading.application.label</th>
-            <th class='actions-column-150' localized>table.heading.application.actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr ng-repeat='application in applications.slice(((paging.currentPage-1)*paging.pageSize), ((paging.currentPage)*paging.pageSize))'>
-            <td>
-                <span ng-if="pkgInfoVisible(application)">{{application.pkg}}</span>
-            </td>
-            <td>{{application.name}}</td>
-            <td>
-                <span ng-if="pkgInfoVisible(application)">{{application.version}}<span ng-if="application.versionCode"> ({{application.versionCode}})</span></span>
-            </td>
-            <td ng-if="!application.split">{{application.url}}</td>
-            <td ng-if="application.split" class="column-split-apk"><span class="configuration-hint">arm64:</span>&nbsp;&nbsp;
-                <span ng-if="application.urlArm64">{{application.urlArm64}}</span>
-                <span class="warning-font" ng-if="!application.urlArm64" localized>form.configuration.apps.no.apk</span><br>
-                <span class="configuration-hint">armeabi:</span>
-                <span ng-if="application.urlArmeabi">{{application.urlArmeabi}}</span>
-                <span class="warning-font" ng-if="!application.urlArmeabi" localized>form.configuration.apps.no.apk</span>
-            <td>{{application.showIcon ? '✓' : ''}}</td>
-
-            <td>
-                <div>
-                    <button localized-title="button.edit.versions" ng-class="'btn btn-default ' + (application.type == 'app' ? '' : 'expired-device-hidden')"
-                            type='button' ng-click='editVersions( application )'>
-                        <span class='glyphicon glyphicon-sound-5-1'></span>
-                    </button>
-                    <button localized-title="button.set.configurations"
-                            type='button' class='btn btn-default' ng-click='editConfiguration( application )'>
-                        <span class='glyphicon glyphicon-list'></span>
-                    </button>
-                    <button ng-if="hasPermission('edit_applications') && (!application.commonApplication || application.customerId == user.customerId)"
-                            localized-title="button.edit"
-                            type='button' class='btn btn-default' ng-click='editApplication( application )'>
-                        <span class='glyphicon glyphicon-pencil'></span>
-                    </button>
-                    <button ng-if="hasPermission('edit_applications') && !application.deletionProhibited && (!application.commonApplication || application.customerId == user.customerId)"
-                            localized-title="button.delete"
-                            type='button' class='btn btn-default' ng-click='removeApplication( application )'>
-                        <span class='glyphicon glyphicon-trash'></span>
-                    </button>
-                    <button ng-if="hasPermission('edit_applications') && application.deletionProhibited && (!application.commonApplication || application.customerId == user.customerId)"
-                            localized-title="error.application.config.reference.exists" disabled="disabled"
-                            type='button' class='btn btn-default' ng-click='removeApplication( application )'>
-                        <span class='glyphicon glyphicon-trash'></span>
-                    </button>
-                    <button ng-if="hasPermission('edit_applications') && application.commonApplication && application.customerId != user.customerId"
-                            ng-click="clarifyOnCommon()"
-                            localized-title="button.common" type='button' class='btn btn-default'>
-                        <span class='glyphicon glyphicon-cloud'></span>
-                    </button>
-                </div>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+    <div class="modern-toast" ng-if="appsToast" ng-class="'modern-toast-' + appsToast.type">
+        {{appsToast.message}}
     </div>
-
-    <div ng-if='applications && applications.length === 0' class='center' localized>notfound.apps.for.display</div>
-
-    <div class="text-center" ng-if="applications.length > paging.pageSize">
-        <pagination
-                boundary-links='true' class='pagination-sm'
-                max-size='3'
-                ng-model='paging.currentPage'
-                total-items='applications.length'
-                items-per-page='paging.pageSize'
-                previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
-                last-text='&raquo;'></pagination>
-    </div>
-
 </div>

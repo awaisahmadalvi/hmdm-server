@@ -18,6 +18,10 @@ angular.module('headwind-kiosk')
         // dragged over the element and invokes the given expression on
         // drop/click. Does not read or upload the dropped file itself -
         // callers wire drop to whatever their existing upload action is.
+        // $event is exposed as a local (the native drop event, so callers
+        // that need the dropped File can read $event.dataTransfer.files) -
+        // existing usages don't reference $event in their expression, so
+        // this is a backward-compatible addition.
         return {
             restrict: 'A',
             scope: false,
@@ -41,7 +45,7 @@ angular.module('headwind-kiosk')
                     stop(event);
                     element.removeClass('drag-over');
                     scope.$apply(function () {
-                        scope.$eval(attrs.dropZone);
+                        scope.$eval(attrs.dropZone, {$event: (event.originalEvent || event)});
                     });
                 });
             }
@@ -367,6 +371,109 @@ angular.module('headwind-kiosk')
                 if (closeCurrent === closeFn) {
                     closeCurrent = null;
                 }
+            }
+        };
+    })
+    // Renders an application's icon, replacing the old plain grey
+    // .app-icon-placeholder square. Priority order: (1) the assigned
+    // Settings -> Icons image if one is set (application.iconId, resolved
+    // via appIconService, main.service.js); (2) the icon auto-extracted
+    // from the APK on upload, if one was stored (application.apkIconFileId -
+    // a direct uploadedFiles reference, resolved via the same service's
+    // getFileUrlMap, no icons-table indirection); (3) a type icon (globe
+    // for web pages, gear for system actions) or the app's initials,
+    // always on a stable color pulled from a fixed 8-color palette hashed
+    // from the app's package ID (or name/id as a fallback key) so the same
+    // app always gets the same color. A broken/expired image URL falls
+    // back to the same avatar via the native <img> "error" event. Used in
+    // the Applications table, the Add/Edit dialog (header and launcher
+    // preview) and the Configuration editor's Applications tab.
+    .directive('appIcon', function (appIconService) {
+        var PALETTE_SIZE = 8;
+
+        var colorIndex = function (key) {
+            var str = key || '';
+            var hash = 0;
+            for (var i = 0; i < str.length; i++) {
+                hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+            }
+            return hash % PALETTE_SIZE;
+        };
+
+        var initialsOf = function (application) {
+            var name = ((application && (application.name || application.pkg)) || '?').trim();
+            if (!name) {
+                return '?';
+            }
+            var words = name.split(/\s+/).filter(Boolean);
+            if (words.length > 1) {
+                return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        };
+
+        return {
+            restrict: 'E',
+            scope: {
+                application: '=',
+                size: '@'
+            },
+            template:
+                '<span class="app-icon-tile" ng-class="avatarColorClass" ng-style="tileStyle">' +
+                    '<img ng-show="iconUrl && !imgBroken" ng-src="{{iconUrl}}" class="app-icon-tile-img" alt="" />' +
+                    '<span ng-show="!iconUrl || imgBroken" class="app-icon-tile-fallback">' +
+                        '<span ng-if="application.type === \'web\'" class="glyphicon glyphicon-globe"></span>' +
+                        '<span ng-if="application.type === \'intent\'" class="glyphicon glyphicon-cog"></span>' +
+                        '<span ng-if="application.type !== \'web\' && application.type !== \'intent\'">{{initials}}</span>' +
+                    '</span>' +
+                '</span>',
+            link: function (scope, element) {
+                var px = parseInt(scope.size, 10) || 36;
+                scope.tileStyle = {
+                    width: px + 'px',
+                    height: px + 'px',
+                    'font-size': Math.max(10, Math.round(px * 0.38)) + 'px'
+                };
+
+                element.find('img').on('error', function () {
+                    scope.$apply(function () {
+                        scope.imgBroken = true;
+                    });
+                });
+
+                var refresh = function () {
+                    var application = scope.application || {};
+                    scope.imgBroken = false;
+                    scope.iconUrl = null;
+                    scope.initials = initialsOf(application);
+                    var key = application.pkg || application.name || String(application.id || '');
+                    scope.avatarColorClass = 'app-icon-color-' + colorIndex(key);
+
+                    var iconId = application.iconId;
+                    var apkIconFileId = application.apkIconFileId;
+                    if (iconId && iconId !== -1) {
+                        // 1. An explicitly assigned Settings -> Icons image always wins.
+                        appIconService.getMap(function (map) {
+                            if (scope.application === application && application.iconId === iconId) {
+                                scope.iconUrl = map[iconId] || null;
+                            }
+                        });
+                    } else if (apkIconFileId) {
+                        // 2. Otherwise, the icon auto-extracted from the APK, if one was stored.
+                        appIconService.getFileUrlMap(function (fileUrlById) {
+                            if (scope.application === application && application.apkIconFileId === apkIconFileId) {
+                                scope.iconUrl = fileUrlById[apkIconFileId] || null;
+                            }
+                        });
+                    }
+                    // 3. Otherwise the fallback avatar (initials/type glyph) computed above is all that renders.
+                };
+
+                scope.$watch('application.iconId', refresh);
+                scope.$watch('application.apkIconFileId', refresh);
+                scope.$watch('application.name', refresh);
+                scope.$watch('application.pkg', refresh);
+                scope.$watch('application.type', refresh);
             }
         };
     })

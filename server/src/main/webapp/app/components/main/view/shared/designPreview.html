@@ -1,0 +1,39 @@
+<!--
+  Shared live phone preview for the design picker, used by BOTH Settings ->
+  Default Design (settings/design.html) and the Configuration editor's
+  Design Settings tab (configuration.html) - see designFormFields.html for
+  the matching form half and its scope requirements. Reads colors/background/
+  icon size/desktop title from $scope.designModel (see designFormFields.html),
+  and orientation/status-bar from $scope.configuration - both are simply
+  undefined (safely ignored) on the Default Design page, which has neither.
+-->
+<div class="device-details-card design-preview-card">
+    <div class="device-details-card-header" localized>form.settings.design.preview.title</div>
+
+    <div class="design-phone-frame" ng-class="{'design-phone-landscape': configuration.orientation === 2}">
+        <div class="design-phone-notch"></div>
+        <div class="design-phone-screen"
+             ng-style="{background: previewColor(designModel.backgroundColor, '#0f172a')}">
+            <div class="design-phone-bg" ng-if="designModel.backgroundImageUrl"
+                 ng-style="{'background-image': 'url(' + designModel.backgroundImageUrl + ')'}"></div>
+
+            <div class="design-phone-statusbar" ng-if="configuration.displayStatus"
+                 ng-style="{color: previewColor(designModel.textColor, '#ffffff')}">
+                <span>9:41</span>
+                <span class="design-phone-statusbar-battery" localized>form.settings.design.preview.battery</span>
+            </div>
+
+            <div class="design-phone-header" ng-if="previewHeaderText()"
+                 ng-style="{color: previewColor(designModel.textColor, '#ffffff')}">{{previewHeaderText()}}</div>
+
+            <div class="design-phone-grid">
+                <div class="design-phone-app" ng-repeat="app in [1,2,3,4,5,6]">
+                    <div class="design-phone-icon" ng-class="iconSizePreviewClass()"></div>
+                    <div class="design-phone-app-name"
+                         ng-style="{color: previewColor(designModel.textColor, '#ffffff')}"
+                         localized>form.settings.design.preview.app</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

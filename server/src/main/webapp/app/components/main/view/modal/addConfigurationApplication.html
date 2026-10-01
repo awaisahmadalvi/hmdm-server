@@ -14,87 +14,65 @@
 </div>
 
 <div class='modal-body modern-modal-body'>
-    <form class='form-horizontal'>
-        <div class='form-group'>
-            <label class='col-sm-12' localized>form.configuration.title</label>
-        </div>
+    <div class="design-field">
+        <label class="design-field-label" localized>form.configuration.title</label>
+        <input type="text" disabled="disabled" class="form-control logs-input" value="{{configuration.name}}"/>
+    </div>
 
-        <div class='form-group'>
-            <div class='col-sm-12'>
-                <input type="text" disabled="disabled" class="form-control"
-                       value="{{configuration.name}}"/>
-            </div>
-        </div>
+    <div class="design-field">
+        <label class="design-field-label" localized>table.heading.application.name</label>
+        <input type="text" maxlength="512" name="mdm12222"
+               ng-model="mainApp"
+               autocomplete="off"
+               localized-placeholder="search.placeholder.application"
+               class="form-control logs-input"
+               typeahead="app as (app.name + (app.version && app.version !== '0' ? ' ' + app.version : '')) for app in getApps($viewValue)"
+               typeahead-template-url="app/components/main/view/modal/appTypeaheadSuggestion.html"
+               typeahead-loading="loadingApps"
+               typeahead-wait-ms="300"
+               typeahead-input-formatter="appLookupFormatter($model)"
+               typeahead-focus-first="false"
+               typeahead-on-select="onMainAppSelected($item)"
+               typeahead-no-results="noResults">
+    </div>
 
-        <!-- New layout -->
-        <div class="form-group">
-            <div class="col-sm-4">
-                <label localized>table.heading.application.name</label>
-            </div>
-            <div class="col-sm-8">
-                <input type="text" maxlength="512" name="mdm12222"
-                       ng-model="mainApp"
-                       autocomplete="off"
-                       localized-placeholder="search.placeholder.application"
-                       class="form-control"
-                       typeahead="app as (app.name + (app.version && app.version !== '0' ? ' ' + app.version : '')) for app in getApps($viewValue)"
-                       typeahead-loading="loadingApps"
-                       typeahead-wait-ms="300"
-                       typeahead-input-formatter="appLookupFormatter($model)"
-                       typeahead-focus-first="false"
-                       typeahead-on-select="onMainAppSelected($item)"
-                       typeahead-no-results="noResults">
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="col-sm-4">
-                <label localized>table.heading.application.actions</label>
-            </div>
-            <div class="col-sm-8" ng-if="mainApp && mainApp.id > 0">
-                <select id='action{{mainApp.id}}'
-                        ng-change="actionChanged(mainApp)"
-                        ng-model="mainApp.action" name="action{{mainApp.id}}"
-                        class="form-control col-xs-12">
-                    <option ng-value="1" ng-selected="mainApp.action == 1"
-                            ng-if="!isInstallOptionAvailable(mainApp)"
-                            localized>form.configuration.apps.action.permit</option>
-                    <option ng-value="1" ng-selected="mainApp.action == 1"
-                            ng-if="isInstallOptionAvailable(mainApp)"
-                            localized>form.configuration.apps.action.install</option>
-                    <option ng-value="0" ng-selected="mainApp.action == 0"
-                            ng-if="!isInstallOptionAvailable(mainApp)"
-                            localized>form.configuration.apps.action.prohibit</option>
-                    <option ng-value="0" ng-selected="mainApp.action == 0"
-                            ng-if="isInstallOptionAvailable(mainApp)"
-                            localized>form.configuration.apps.action.not.install</option>
-                    <option ng-value="2" ng-selected="mainApp.action == 2"
-                            ng-if="isRemoveOptionAvailable(mainApp)"
-                            localized>form.configuration.apps.action.delete</option>
-                </select>
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="col-sm-4">
-                <label localized>table.heading.application.label</label>
-            </div>
-            <div class="col-sm-8" ng-if="mainApp && mainApp.id > 0">
-                <select ng-model="mainApp.showIcon" name="showLabel{{mainApp.id}}"
-                        ng-options="value.id as value.label for value in showIconSelectOptions"
-                        ng-disabled="mainApp.action == 0" class="form-control">
-                </select>
-            </div>
-        </div>
+    <div class="design-field" ng-if="mainApp && mainApp.id > 0">
+        <label class="design-field-label" localized>table.heading.application.actions</label>
+        <select id='action{{mainApp.id}}'
+                ng-change="actionChanged(mainApp)"
+                ng-model="mainApp.action" name="action{{mainApp.id}}"
+                class="form-control modern-select">
+            <option ng-value="1" ng-selected="mainApp.action == 1"
+                    ng-if="!isInstallOptionAvailable(mainApp)"
+                    localized>form.configuration.apps.action.permit</option>
+            <option ng-value="1" ng-selected="mainApp.action == 1"
+                    ng-if="isInstallOptionAvailable(mainApp)"
+                    localized>form.configuration.apps.action.install</option>
+            <option ng-value="0" ng-selected="mainApp.action == 0"
+                    ng-if="!isInstallOptionAvailable(mainApp)"
+                    localized>form.configuration.apps.action.prohibit</option>
+            <option ng-value="0" ng-selected="mainApp.action == 0"
+                    ng-if="isInstallOptionAvailable(mainApp)"
+                    localized>form.configuration.apps.action.not.install</option>
+            <option ng-value="2" ng-selected="mainApp.action == 2"
+                    ng-if="isRemoveOptionAvailable(mainApp)"
+                    localized>form.configuration.apps.action.delete</option>
+        </select>
+    </div>
 
+    <div class="design-field" ng-if="mainApp && mainApp.id > 0">
+        <label class="design-field-label" localized>table.heading.application.label</label>
+        <select ng-model="mainApp.showIcon" name="showLabel{{mainApp.id}}"
+                ng-options="value.id as value.label for value in showIconSelectOptions"
+                ng-disabled="mainApp.action == 0" class="form-control modern-select">
+        </select>
+    </div>
 
-
-        <div class='form-group modern-modal-actions'>
-            <div class='text-center'>
-                <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
-                <button ng-if="hasPermission('edit_applications')" type='submit' class='btn btn-default' ng-click='newApp()' localized>button.new.app</button>
-                <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()'
-                        ng-disabled="!(mainApp && mainApp.id > 0)"
-                        localized>button.add</button>
-            </div>
-        </div>
-    </form>
+    <div class="modern-modal-actions text-center">
+        <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
+        <button ng-if="hasPermission('edit_applications')" type='button' class='btn btn-default' ng-click='newApp()' localized>button.new.app</button>
+        <button type='button' class='btn btn-default btn-modern-primary' ng-click='save()'
+                ng-disabled="!(mainApp && mainApp.id > 0)"
+                localized>button.add</button>
+    </div>
 </div>

@@ -1,120 +1,124 @@
 <!-- Localization completed -->
-<div ng-show='errorMessage' class='modal-header'>
-    <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
+<div class="modern-modal-header">
+    <div class="modern-modal-icon">
+        <span class="glyphicon glyphicon-file"></span>
+    </div>
+    <h4 class="modern-modal-title" ng-if="isEditMode" localized>form.configuration.file.title.edit</h4>
+    <h4 class="modern-modal-title" ng-if="!isEditMode" localized>form.configuration.file.title.add</h4>
+    <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
 </div>
-<div ng-show='successMessage' class='modal-header'>
-    <div ng-show='successMessage' class='success'><span>{{successMessage}}</span></div>
-</div>
-<div class='modal-body'>
-    <form class='form-horizontal'>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' for="fileSelection" localized>form.configuration.file.select</label>
-            <div class='col-sm-8'>
-                <select ng-options="file as file.name for file in files track by file.id" name="selectedFile"
-                        ng-model='file' class='form-control' id="fileSelection">
-                </select>
-            </div>
-        </div>
+<div class='device-details-inline-error' ng-show='errorMessage'><span>{{errorMessage}}</span></div>
+<div class='device-details-inline-success' ng-show='successMessage'><span>{{successMessage}}</span></div>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' for="description" localized>form.configuration.file.description</label>
-            <div class='col-sm-8'>
-                <input ng-model='file.description' type='text' class='form-control' id="description"
-                       ng-disabled="file.id"
-                       localized-placeholder="form.configuration.file.description.placeholder" />
-            </div>
-        </div>
+<div class='modal-body modern-modal-body'>
+    <div class="design-field">
+        <label class="design-field-label" for="fileSelection" localized>form.configuration.file.select</label>
+        <select ng-options="file as file.name for file in files track by file.id" name="selectedFile"
+                ng-model='file' class="form-control modern-select settings-input" id="fileSelection">
+        </select>
+        <div class="field-hint"><a ui-sref="files" class="action-link" localized>form.configuration.file.upload.new</a></div>
+    </div>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' for="fileExternal" localized>form.file.external</label>
-            <div class='col-sm-2'>
+    <div class="design-field">
+        <label class="design-field-label" for="description" localized>form.configuration.file.description</label>
+        <input ng-model='file.description' type='text' class="form-control logs-input settings-input" id="description"
+               ng-disabled="file.id"
+               localized-placeholder="form.configuration.file.description.placeholder" />
+    </div>
+
+    <div class="design-field">
+        <div class="settings-field-row">
+            <label class="design-field-label" for="fileExternal" localized>form.file.external</label>
+            <span class="modern-toggle">
                 <input localized-title="form.file.external.title" ng-model='file.external' type='checkbox'
-                       ng-disabled="file.id" class='form-control' id="fileExternal"/>
-            </div>
+                       ng-disabled="file.id" class="modern-toggle-input" id="fileExternal"/>
+                <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+            </span>
         </div>
+    </div>
 
-        <div ng-if='!file.id && !file.external' class='form-group'>
-            <label class='col-sm-4 control-label' localized>form.configuration.file.file</label>
-            <div class='col-sm-8'>
-                <div class="btn btn-default full-width btn-upload"
-                     upload-button
-                     url="rest/private/web-ui-files/raw"
-                     on-upload="onStartedUpload(files)"
-                     on-progress="onUploadProgress(progress)"
-                     on-success="fileUploaded(response)"></div>
-                <div ng-if="availableSpace" class="field-hint" style="margin-bottom: 0">{{availableSpace}}</div>
-            </div>
-        </div>
+    <div class="design-field" ng-if='!file.id && !file.external'>
+        <label class="design-field-label" localized>form.configuration.file.file</label>
+        <div class="btn btn-default full-width btn-upload"
+             upload-button
+             url="rest/private/web-ui-files/raw"
+             on-upload="onStartedUpload(files)"
+             on-progress="onUploadProgress(progress)"
+             on-success="fileUploaded(response)"></div>
+        <div ng-if="availableSpace" class="field-hint">{{availableSpace}}</div>
+    </div>
 
-        <div class='form-group' ng-if="!file.external">
-            <label class='col-sm-4 control-label' localized>form.file.name</label>
-            <div class='col-sm-8'>
-                <input type='text'
-                       ng-disabled="file.id"
-                       ng-model='file.filePath'
-                       class='form-control'>
-            </div>
-        </div>
+    <div class="design-field" ng-if="!file.external">
+        <label class="design-field-label" localized>form.file.name</label>
+        <input type='text'
+               ng-disabled="file.id"
+               ng-model='file.filePath'
+               class="form-control logs-input settings-input design-hex-input">
+    </div>
 
-        <div class='form-group' ng-if="file.external">
-            <label class='col-sm-4 control-label' localized>form.configuration.file.url</label>
-            <div class='col-sm-8'>
-                <input type='text'
-                       ng-disabled="file.id"
-                       ng-model='file.externalUrl'
-                       class='form-control'
-                       localized-placeholder='form.file.external.url.placeholder'>
-            </div>
-        </div>
+    <div class="design-field" ng-if="file.external">
+        <label class="design-field-label" localized>form.configuration.file.url</label>
+        <input type='text'
+               ng-disabled="file.id"
+               ng-model='file.externalUrl'
+               class="form-control logs-input settings-input"
+               localized-placeholder='form.file.external.url.placeholder'>
+    </div>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' localized>form.configuration.file.path</label>
-            <div class='col-sm-8'>
-                <input type='text'
-                       ng-disabled="file.id && !file.overridePath"
-                       ng-model='file.devicePath'
-                       localized-placeholder="form.file.device.path.placeholder"
-                       class='form-control'>
-            </div>
-        </div>
+    <div class="design-field">
+        <label class="design-field-label" localized>form.configuration.file.path</label>
+        <input type='text'
+               ng-disabled="file.id && !file.overridePath"
+               ng-model='file.devicePath'
+               localized-placeholder="form.file.device.path.placeholder"
+               class="form-control logs-input settings-input design-hex-input">
+    </div>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' for="fileOverride" localized>form.configuration.file.override.path</label>
-            <div class='col-sm-2'>
+    <div class="design-field">
+        <div class="settings-field-row">
+            <label class="design-field-label" for="fileOverride" localized>form.configuration.file.override.path</label>
+            <span class="modern-toggle">
                 <input localized-title="form.configuration.file.override.path.title" ng-model='file.overridePath' type='checkbox'
-                       ng-disabled='!file.id' class='form-control' id="fileOverride"/>
-            </div>
+                       ng-disabled='!file.id' class="modern-toggle-input" id="fileOverride"/>
+                <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+            </span>
         </div>
+    </div>
 
-        <div class='form-group'>
-            <div class="col-sm-4">
-                <label class='control-label' for="replaceVariables" localized>form.configuration.files.variables</label><br>
-                <span class="field-hint" localized>form.configuration.files.variables.hint</span>
-            </div>
-            <div class='col-sm-2'>
-                <input ng-disabled="file.id" ng-model='file.replaceVariables' type='checkbox' class='form-control' id="replaceVariables"/>
-            </div>
+    <div class="design-field">
+        <div class="settings-field-row">
+            <label class="design-field-label" for="replaceVariables" localized>form.configuration.files.variables</label>
+            <span class="modern-toggle">
+                <input ng-disabled="file.id" ng-model='file.replaceVariables' type='checkbox' class="modern-toggle-input" id="replaceVariables"/>
+                <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+            </span>
         </div>
+        <div class="field-hint" localized>form.configuration.files.variables.hint</div>
+    </div>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' for="fileRemove" localized>table.heading.file.remove</label>
-            <div class='col-sm-2'>
+    <div class="design-field">
+        <div class="settings-field-row">
+            <label class="design-field-label" for="fileRemove" localized>table.heading.file.remove</label>
+            <span class="modern-toggle">
                 <input localized-title="table.heading.file.remove.hint" ng-model='file.remove' type='checkbox'
-                       class='form-control' id="fileRemove"/>
-            </div>
+                       class="modern-toggle-input" id="fileRemove"/>
+                <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+            </span>
         </div>
+        <div class="field-hint" localized>table.heading.file.remove.hint</div>
+    </div>
 
-        <div class='form-group'>
-            <div class='col-sm-4'>
+    <div class="modern-modal-actions">
+        <div class="settings-button-row" style="justify-content: space-between;">
+            <span class="field-hint" style="margin:0;" localized>form.configuration.file.save.note</span>
+            <span class="settings-button-row">
                 <div ng-if='loading'>
                     <img class='loading-spinner' src='images/loading.gif'/>
                 </div>
-            </div>
-            <div class='col-sm-offset-4 col-sm-8'>
-                <button type='submit' class='btn btn-default' ng-click='save()' ng-disabled="loading" localized>button.save</button>
-                <button type='button' class='btn btn-default' ng-click='closeModal()' ng-disabled="loading" localized >button.cancel</button>
-            </div>
+                <button type='button' class='btn btn-default' ng-click='closeModal()' ng-disabled="loading" localized>button.cancel</button>
+                <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' ng-disabled="loading" localized>button.save</button>
+            </span>
         </div>
-    </form>
+    </div>
 </div>

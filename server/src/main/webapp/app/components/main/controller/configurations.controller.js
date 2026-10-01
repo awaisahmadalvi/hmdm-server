@@ -224,7 +224,10 @@ angular.module('headwind-kiosk')
         $scope.mainApp = null;
         $scope.errorMessage = undefined;
 
-        if (applicationSetting.id || applicationSetting.tempId) {
+        // applicationId is also set (with no id/tempId) when opening this
+        // dialog from a specific app's "Add setting to this app" link, to
+        // preselect that app on an otherwise-new setting.
+        if (applicationSetting.id || applicationSetting.tempId || applicationSetting.applicationId) {
             $scope.mainApp = {
                 id: applicationSetting.applicationId,
                 name: applicationSetting.applicationName,
@@ -352,6 +355,7 @@ angular.module('headwind-kiosk')
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/application.html',
                 controller: 'ApplicationModalController',
+                windowClass: 'app-modal-wide',
                 resolve: {
                     application: function () {
                         return {};
@@ -361,6 +365,9 @@ angular.module('headwind-kiosk')
                     },
                     closeOnSave: function () {
                         return true;
+                    },
+                    pendingFile: function () {
+                        return null;
                     }
                 }
             });
@@ -391,6 +398,174 @@ angular.module('headwind-kiosk')
                 return $scope.configurationForm.$dirty ? 'btn-attention' : '';
             };
 
+            // Editor shell: which of the 6 tabs is active (0 = Common
+            // Settings ... 5 = Files, matching their order below), the
+            // save toast, and the QR button (same qrCodeAvailable/
+            // showQrCode logic as the Configurations list page, but using
+            // the live mainApp selection rather than the last-saved
+            // mainAppId since this page may have unsaved changes).
+            // ?tab=N (see app.js's configEditor state) lets another page -
+            // e.g. an application's "Configurations using this app" dialog -
+            // deep-link straight to a specific tab (2 = Applications)
+            // instead of always landing on Common Settings.
+            var initialTab = parseInt($stateParams.tab, 10);
+            $scope.activeConfigTab = (initialTab >= 0 && initialTab <= 5) ? initialTab : 0;
+
+            $scope.configEditorToast = null;
+            var showConfigEditorToast = function (type, message) {
+                $scope.configEditorToast = { type: type, message: message };
+                $timeout(function () {
+                    if ($scope.configEditorToast && $scope.configEditorToast.message === message) {
+                        $scope.configEditorToast = null;
+                    }
+                }, 3000);
+            };
+
+            $scope.qrCodeAvailable = function () {
+                return $scope.configuration.qrCodeKey && $scope.mainApp.id > 0 && $scope.configuration.eventReceivingComponent &&
+                    $scope.configuration.eventReceivingComponent.length > 0;
+            };
+
+            $scope.showQrCode = function () {
+                var url = $scope.configuration.baseUrl + "/#/qr/" + $scope.configuration.qrCodeKey + "/?name=" + encodeURIComponent($scope.configuration.name);
+                $window.open(url, "_self");
+            };
+
+            $scope.qrUrlIsLocalhost = function () {
+                var url = ($scope.configuration.baseUrl || '').toLowerCase();
+                return url.indexOf('localhost') > -1 || url.indexOf('127.0.0.1') > -1;
+            };
+
+            $scope.copyQrUrl = function () {
+                if (!navigator.clipboard) {
+                    return;
+                }
+                var url = $scope.configuration.baseUrl + "/#/qr/" + $scope.configuration.qrCodeKey + "/";
+                // navigator.clipboard.writeText() is a native Promise, not $q -
+                // its .then() runs outside Angular's digest, so the toast must
+                // be shown inside a $timeout to actually render (same pattern
+                // as Files' copyPath()).
+                navigator.clipboard.writeText(url).then(function () {
+                    $timeout(function () {
+                        showConfigEditorToast('success', localization.localize('form.configuration.settings.mdm.qrcode.copied'));
+                    });
+                });
+            };
+
+            // Sticky section nav factory - identical IntersectionObserver-
+            // based approach as the General settings page (settings.
+            // controller.js), generalized so every editor tab with its own
+            // section nav (Common Settings, MDM Settings, ...) gets one
+            // without re-implementing the observer/scroll-suppression
+            // wiring each time. Returns the scrollTo(id) function to bind
+            // as that tab's $scope.scrollToXSection.
+            var makeSectionScrollspy = function (config) {
+                // config: {idPrefix, sectionIds, scrollOffset, tabIndex, activeProp}
+                $scope[config.activeProp] = config.sectionIds[0];
+
+                var suppressAuto = false;
+                var suppressTimeout = null;
+
+                var scrollTo = function (id) {
+                    $scope[config.activeProp] = id;
+                    suppressAuto = true;
+                    if (suppressTimeout) {
+                        $timeout.cancel(suppressTimeout);
+                    }
+                    suppressTimeout = $timeout(function () {
+                        suppressAuto = false;
+                    }, 1000);
+                    var el = document.getElementById(config.idPrefix + id);
+                    if (el) {
+                        $window.scrollTo({ top: el.offsetTop - config.scrollOffset, behavior: 'smooth' });
+                    }
+                };
+
+                var visibility = {};
+                var observer = null;
+
+                if ($window.IntersectionObserver) {
+                    observer = new IntersectionObserver(function (entries) {
+                        entries.forEach(function (entry) {
+                            var id = entry.target.id.replace(config.idPrefix, '');
+                            visibility[id] = entry.isIntersecting;
+                        });
+                        if (suppressAuto) {
+                            return;
+                        }
+                        var current = null;
+                        config.sectionIds.forEach(function (id) {
+                            if (visibility[id]) {
+                                current = id;
+                            }
+                        });
+                        if (current && $scope[config.activeProp] !== current) {
+                            $scope.$apply(function () {
+                                $scope[config.activeProp] = current;
+                            });
+                        }
+                    }, {
+                        rootMargin: '-' + config.scrollOffset + 'px 0px -70% 0px',
+                        threshold: 0
+                    });
+
+                    $timeout(function () {
+                        if ($scope.activeConfigTab !== config.tabIndex) {
+                            return;
+                        }
+                        config.sectionIds.forEach(function (id) {
+                            var el = document.getElementById(config.idPrefix + id);
+                            if (el) {
+                                observer.observe(el);
+                            }
+                        });
+                    });
+                }
+
+                var onScrollBottom = function () {
+                    if (suppressAuto || $scope.activeConfigTab !== config.tabIndex) {
+                        return;
+                    }
+                    var atBottom = $window.scrollY + $window.innerHeight >= document.documentElement.scrollHeight - 2;
+                    if (!atBottom) {
+                        return;
+                    }
+                    var last = config.sectionIds[config.sectionIds.length - 1];
+                    if (last && $scope[config.activeProp] !== last) {
+                        $scope.$apply(function () {
+                            $scope[config.activeProp] = last;
+                        });
+                    }
+                };
+                angular.element($window).on('scroll', onScrollBottom);
+                $scope.$on('$destroy', function () {
+                    angular.element($window).off('scroll', onScrollBottom);
+                    if (observer) {
+                        observer.disconnect();
+                    }
+                });
+
+                return scrollTo;
+            };
+
+            var COMMON_SECTION_IDS = ['general', 'connectivity', 'hardware', 'display', 'updates', 'security', 'launcher'];
+            $scope.scrollToCommonSection = makeSectionScrollspy({
+                idPrefix: 'common-section-',
+                sectionIds: COMMON_SECTION_IDS,
+                scrollOffset: 140, // clears the sticky page header + tabs
+                tabIndex: 0,
+                activeProp: 'commonActiveSection'
+            });
+
+            var MDM_SECTION_IDS = ['kiosk', 'agent', 'enrollment', 'policy', 'migration'];
+            $scope.scrollToMdmSection = makeSectionScrollspy({
+                idPrefix: 'mdm-section-',
+                sectionIds: MDM_SECTION_IDS,
+                scrollOffset: 140,
+                tabIndex: 3,
+                activeProp: 'mdmActiveSection'
+            });
+
             $scope.uploadBackground = function () {
                 var modalInstance = $modal.open({
                     templateUrl: 'app/components/main/view/modal/file.html',
@@ -410,9 +585,136 @@ angular.module('headwind-kiosk')
 
                 modalInstance.result.then(function (data) {
                     if (data) {
-                        $scope.configuration.backgroundImageUrl = data.url;
+                        $scope.designModel.backgroundImageUrl = data.url;
                     }
                 });
+            };
+
+            $scope.removeBackgroundImage = function () {
+                $scope.designModel.backgroundImageUrl = '';
+            };
+
+            $scope.backgroundImageFileName = function () {
+                var url = $scope.designModel && $scope.designModel.backgroundImageUrl;
+                if (!url) {
+                    return '';
+                }
+                var parts = url.split('/');
+                return parts[parts.length - 1] || url;
+            };
+
+            var DESIGN_HEX_COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+            $scope.isValidHex = function (value) {
+                return !value || DESIGN_HEX_COLOR_RE.test(value);
+            };
+
+            $scope.designColorPresets = [
+                {label: localization.localize('form.settings.design.color.preset.navy'), value: '#0f172a'},
+                {label: localization.localize('form.settings.design.color.preset.white'), value: '#ffffff'},
+                {label: localization.localize('form.settings.design.color.preset.black'), value: '#000000'}
+            ];
+
+            $scope.applyColorPreset = function (field, value) {
+                $scope.designModel[field] = value;
+            };
+
+            // See settings.controller.js's identical helper for why the
+            // swatch is mirrored through a normalized proxy rather than
+            // bound directly to the real (possibly 3-digit/empty/invalid)
+            // hex field.
+            var expandDesignHex = function (value) {
+                if (!DESIGN_HEX_COLOR_RE.test(value || '')) {
+                    return null;
+                }
+                if (value.length === 4) {
+                    return '#' + value[1] + value[1] + value[2] + value[2] + value[3] + value[3];
+                }
+                return value.toLowerCase();
+            };
+
+            $scope.colorSwatchProxy = {};
+
+            var syncDesignSwatchProxy = function (field, fallback) {
+                // designModel isn't assigned until the syncDesignModel watch
+                // below has run at least once - this watch is registered
+                // earlier, so on the very first digest it can fire first,
+                // while designModel is still undefined.
+                $scope.colorSwatchProxy[field] = (($scope.designModel && expandDesignHex($scope.designModel[field])) || fallback);
+            };
+
+            $scope.$watch('designModel.backgroundColor', function () {
+                syncDesignSwatchProxy('backgroundColor', '#0f172a');
+            });
+            $scope.$watch('designModel.textColor', function () {
+                syncDesignSwatchProxy('textColor', '#ffffff');
+            });
+
+            $scope.applySwatchColor = function (field) {
+                $scope.designModel[field] = $scope.colorSwatchProxy[field];
+            };
+
+            $scope.previewColor = function (value, fallback) {
+                return $scope.isValidHex(value) && value ? value : fallback;
+            };
+
+            $scope.iconSizePreviewClass = function () {
+                var size = $scope.designModel && $scope.designModel.iconSize;
+                if (size === 'LARGE') {
+                    return 'design-preview-icon-large';
+                }
+                if (size === 'MEDIUM') {
+                    return 'design-preview-icon-medium';
+                }
+                return 'design-preview-icon-small';
+            };
+
+            $scope.previewHeaderText = function () {
+                var header = $scope.designModel && $scope.designModel.desktopHeader;
+                switch (header) {
+                    case 'DEVICE_ID':
+                        return localization.localize('form.settings.design.preview.header.deviceid');
+                    case 'DESCRIPTION':
+                        return localization.localize('form.settings.design.preview.header.description');
+                    case 'TEMPLATE':
+                        return $scope.designModel.desktopHeaderTemplate || localization.localize('form.settings.design.preview.header.custom');
+                    case 'CUSTOM1':
+                    case 'CUSTOM2':
+                    case 'CUSTOM3':
+                        return localization.localize('form.settings.design.preview.header.custom');
+                    default:
+                        return '';
+                }
+            };
+
+            // $scope.designModel points at whichever object the Design
+            // Settings tab's form/preview should currently reflect: the
+            // global default-design object while "Use default design" is
+            // on (read-only there), or this configuration's own fields
+            // while it's off (editable) - shared with the Default Design
+            // settings page via designFormFields.html/designPreview.html.
+            var syncDesignModel = function () {
+                $scope.designModel = ($scope.configuration.useDefaultDesignSettings && $scope.settings)
+                    ? $scope.settings : $scope.configuration;
+            };
+            $scope.$watch('configuration.useDefaultDesignSettings', syncDesignModel);
+            $scope.$watch('configuration', syncDesignModel);
+            $scope.$watch('settings', syncDesignModel);
+
+            // If the custom fields are still empty when switching "Use
+            // default design" off, prefill them from the default design so
+            // the form doesn't start out blank - a convenience default only;
+            // it doesn't change what gets saved (an empty field here would
+            // have taken the default design's own value anyway until the
+            // user edits it).
+            $scope.onDesignDefaultToggle = function () {
+                if (!$scope.configuration.useDefaultDesignSettings && $scope.settings) {
+                    ['backgroundColor', 'textColor', 'backgroundImageUrl', 'iconSize', 'desktopHeader'].forEach(function (field) {
+                        if (!$scope.configuration[field]) {
+                            $scope.configuration[field] = $scope.settings[field];
+                        }
+                    });
+                }
             };
 
             $scope.localizeRenewVersionTitle = function (application) {
@@ -428,8 +730,11 @@ angular.module('headwind-kiosk')
             $scope.filterApps = function (item) {
                 var filter = ($scope.paging.filterText || '').toLowerCase();
 
-                return (item.name && item.name.toLowerCase().indexOf(filter) >= 0)
+                var matchesText = (item.name && item.name.toLowerCase().indexOf(filter) >= 0)
                     || (item.type === 'app' && item.pkg && item.pkg.toLowerCase().indexOf(filter) >= 0);
+                var matchesActionFilter = $scope.appActionFilter === 'all' || $scope.appActionGroup(item) === $scope.appActionFilter;
+
+                return matchesText && matchesActionFilter;
             };
 
             $scope.splitApkWarning = function(application) {
@@ -562,6 +867,90 @@ angular.module('headwind-kiosk')
                 return !application.system && application.type === 'app';
             };
 
+            // Groups an app's raw action value (0/1/2) together with the
+            // isInstallOptionAvailable() flag that already decides which of
+            // two labels a 0 or 1 gets shown as (Block vs Do not install,
+            // Install vs Allow) - the Action pill's color and the toolbar's
+            // filter pills both key off this same grouping so they agree
+            // with whatever label each row is actually showing.
+            $scope.appActionGroup = function (application) {
+                if (application.action == 1) {
+                    return 'install';
+                }
+                if (application.action == 0) {
+                    return $scope.isInstallOptionAvailable(application) ? 'not-install' : 'block';
+                }
+                return 'delete';
+            };
+
+            $scope.appActionFilter = 'all';
+
+            $scope.setAppActionFilter = function (key) {
+                $scope.appActionFilter = key;
+            };
+
+            // Only offers a filter pill for a group that actually has at
+            // least one matching app right now (client-side only).
+            $scope.appActionFilters = function () {
+                var groups = [
+                    {key: 'install', label: localization.localize('form.configuration.apps.action.install')},
+                    {key: 'not-install', label: localization.localize('form.configuration.apps.action.not.install')},
+                    {key: 'block', label: localization.localize('form.configuration.apps.action.prohibit')},
+                    {key: 'delete', label: localization.localize('form.configuration.apps.action.delete')}
+                ];
+                var present = {};
+                ($scope.applications || []).forEach(function (app) {
+                    present[$scope.appActionGroup(app)] = true;
+                });
+                return groups.filter(function (group) {
+                    return present[group.key];
+                });
+            };
+
+            // Client-side only, computed from the same $scope.applications
+            // array the table already renders - doesn't touch what's saved.
+            $scope.appsSummary = function () {
+                var apps = $scope.applications || [];
+                var install = 0, home = 0, blocked = 0;
+                apps.forEach(function (app) {
+                    if (app.action == 1) {
+                        install++;
+                        if (app.showIcon) {
+                            home++;
+                        }
+                    } else if ($scope.appActionGroup(app) === 'block') {
+                        blocked++;
+                    }
+                });
+                return {total: apps.length, install: install, home: home, blocked: blocked};
+            };
+
+            $scope.appsHintDismissed = false;
+            $scope.dismissAppsHint = function () {
+                $scope.appsHintDismissed = true;
+            };
+
+            // appActionFilters()/appsSummary() both build a brand new array/
+            // object every call. Calling them directly from an ng-repeat/
+            // interpolation would hand Angular a new reference every single
+            // digest, which for the ng-repeat specifically never stabilizes
+            // ($rootScope:infdig, confirmed by reproducing it live - the
+            // whole app fell back to the root state on any Applications-tab
+            // render). Cache their output here instead and only recompute
+            // when the underlying data actually (deep-)changes; the template
+            // reads the cached appActionFilterOptions/appsSummaryData.
+            $scope.appActionFilterOptions = [];
+            $scope.appsSummaryData = {total: 0, install: 0, home: 0, blocked: 0};
+            $scope.$watch('applications', function () {
+                $scope.appActionFilterOptions = $scope.appActionFilters();
+                $scope.appsSummaryData = $scope.appsSummary();
+            }, true);
+
+            $scope.resetAppsFilters = function () {
+                $scope.paging.filterText = '';
+                $scope.appActionFilter = 'all';
+            };
+
             $scope.desktopHeaderTemplatePlaceholder = localization.localize('form.configuration.settings.design.desktop.header.template.placeholder') + ' deviceId, description, custom1, custom2, custom3';
 
             var transFunction = function(trans) {
@@ -576,6 +965,19 @@ angular.module('headwind-kiosk')
                 }
             }
             $transitions.onStart({ }, transFunction, {invokeLimit: 1});
+
+            // $scope.saved is a one-shot flag meant only to let the Save-and-
+            // close flow's own transitionTo() through without re-prompting
+            // (dirty is still true at that point since it's cleared only in
+            // the non-close save branch above). Without this watch it stays
+            // true forever after any successful save, permanently disabling
+            // the unsaved-changes prompt for edits made later in the same
+            // visit - reset it as soon as the form goes dirty again.
+            $scope.$watch('configurationForm.$dirty', function (dirty) {
+                if (dirty) {
+                    $scope.saved = false;
+                }
+            });
 
             $scope.sortByChanged = function () {
                 $window.localStorage.setItem('HMDM_configAppsSortBy', $scope.sort.by);
@@ -756,15 +1158,24 @@ angular.module('headwind-kiosk')
 
                 if (!$scope.configuration.pushOptions) {
                     $scope.errorMessage = localization.localize('error.empty.push.options');
+                    $scope.activeConfigTab = 0;
                 } else if (!$scope.configuration.name) {
                     $scope.errorMessage = localization.localize('error.empty.configuration.name');
+                    $scope.activeConfigTab = 0;
                 } else if (!$scope.configuration.password) {
                     $scope.errorMessage = localization.localize('error.empty.configuration.password');
+                    $scope.activeConfigTab = 0;
                 } else if ($scope.configuration.kioskMode && (!contentAppSelected)) {
                     $scope.errorMessage = localization.localize('error.empty.configuration.contentApp');
+                    $scope.activeConfigTab = 3;
                 } else if (bConfigurationWasLost) {
                     $scope.errorMessage = localization.localize('error.invalid.configuration.mainApp');
+                    $scope.activeConfigTab = 3;
                 } {
+                    if ($scope.errorMessage) {
+                        showConfigEditorToast('error', $scope.errorMessage);
+                        return;
+                    }
                     var request = {};
 
                     for (var prop in $scope.configuration) {
@@ -843,7 +1254,9 @@ angular.module('headwind-kiosk')
                         request.orientation = null;
                     }
 
+                    $scope.saving = true;
                     configurationService.updateConfiguration(request, function (response) {
+                        $scope.saving = false;
                         if (response.status === 'OK') {
                             $scope.saved = true;
                             if (doClose) {
@@ -851,6 +1264,7 @@ angular.module('headwind-kiosk')
                                 $scope.close();
                             } else {
                                 $scope.successMessage = localization.localize('success.configuration.saved');
+                                showConfigEditorToast('success', $scope.successMessage);
                                 $scope.configuration = response.data;
 
                                 if ($scope.configuration.timeZone === null) {
@@ -874,9 +1288,12 @@ angular.module('headwind-kiosk')
                             }
                         } else {
                             $scope.errorMessage = localization.localize(response.message);
+                            showConfigEditorToast('error', $scope.errorMessage);
                         }
                     }, function () {
+                        $scope.saving = false;
                         $scope.errorMessage = localization.localize('error.request.failure');
+                        showConfigEditorToast('error', $scope.errorMessage);
                     });
                 }
             };
@@ -922,13 +1339,13 @@ angular.module('headwind-kiosk')
                 });
             };
 
-            $scope.addApplicationSetting = function () {
+            var openApplicationSettingModal = function (applicationSettingSeed) {
                 var modalInstance = $modal.open({
                     templateUrl: 'app/components/main/view/modal/applicationSetting.html',
                     controller: 'ApplicationSettingEditorController',
                     resolve: {
                         applicationSetting: function () {
-                            return {type: "STRING"};
+                            return applicationSettingSeed;
                         },
                         getApps: function () {
                             return getAppSettingsApps;
@@ -942,6 +1359,22 @@ angular.module('headwind-kiosk')
                         $scope.configuration.applicationSettings.push(applicationSetting);
                         filterApplicationSettings();
                     }
+                });
+            };
+
+            $scope.addApplicationSetting = function () {
+                openApplicationSettingModal({type: "STRING"});
+            };
+
+            // Preselects the app whose group header the link was clicked
+            // from - see ApplicationSettingEditorController's mainApp-
+            // prefill guard.
+            $scope.addApplicationSettingForApp = function (app) {
+                openApplicationSettingModal({
+                    type: "STRING",
+                    applicationId: app.applicationId,
+                    applicationName: app.applicationName,
+                    applicationPkg: app.applicationPkg
                 });
             };
 
@@ -1203,6 +1636,15 @@ angular.module('headwind-kiosk')
                 }
             };
 
+            $scope.confirmRemoveApplicationSetting = function (applicationSetting) {
+                var message = localization.localize('question.delete.application.setting')
+                    .replace('${name}', applicationSetting.name)
+                    .replace('${app}', applicationSetting.applicationName || applicationSetting.applicationPkg);
+                confirmModal.getUserConfirmation(message, function () {
+                    $scope.removeApplicationSetting(applicationSetting);
+                });
+            };
+
             $scope.removeFile = function (file) {
                 var modalInstance = $modal.open({
                     templateUrl: 'app/components/main/view/modal/removeFileConfirmation.html',
@@ -1292,6 +1734,75 @@ angular.module('headwind-kiosk')
                 });
             };
 
+            // Groups the already-filtered $scope.applicationSettings by app
+            // for the grouped list UI, and computes the header summary chip.
+            // Cached via $watch (rather than called directly from ng-repeat/
+            // interpolation) because it builds new array/object instances
+            // every call - calling it inline from ng-repeat previously
+            // caused an infinite-digest crash on the Applications tab for
+            // the exact same reason (see appActionFilterOptions there).
+            $scope.appSettingsGroups = [];
+            $scope.appSettingsSummary = {settings: 0, apps: 0};
+            $scope.appSettingsCollapsed = {};
+
+            var computeApplicationSettingsGroups = function () {
+                var byApp = {};
+                var order = [];
+                ($scope.applicationSettings || []).forEach(function (item) {
+                    var key = item.applicationId || item.applicationPkg;
+                    if (!byApp[key]) {
+                        byApp[key] = {
+                            applicationId: item.applicationId,
+                            applicationName: item.applicationName,
+                            applicationPkg: item.applicationPkg,
+                            settings: []
+                        };
+                        order.push(key);
+                    }
+                    byApp[key].settings.push(item);
+                });
+                $scope.appSettingsGroups = order.map(function (key) {
+                    return byApp[key];
+                });
+                $scope.appSettingsSummary = {
+                    settings: $scope.applicationSettings ? $scope.applicationSettings.length : 0,
+                    apps: order.length
+                };
+            };
+            $scope.$watch('applicationSettings', computeApplicationSettingsGroups, true);
+
+            $scope.toggleAppSettingsGroup = function (key) {
+                $scope.appSettingsCollapsed[key] = !$scope.appSettingsCollapsed[key];
+            };
+
+            $scope.settingTypeLabel = function (setting) {
+                switch (setting.type) {
+                    case 'INTEGER':
+                        return localization.localize('form.application.setting.type.integer');
+                    case 'BOOLEAN':
+                        return localization.localize('form.application.setting.type.boolean');
+                    default:
+                        return localization.localize('form.application.setting.type.string');
+                }
+            };
+
+            $scope.settingTypeBadgeClass = function (setting) {
+                switch (setting.type) {
+                    case 'INTEGER':
+                        return 'users-role-blue';
+                    case 'BOOLEAN':
+                        return 'users-role-purple';
+                    default:
+                        return 'users-role-neutral';
+                }
+            };
+
+            $scope.resetAppSettingsFilters = function () {
+                $scope.settingsPaging.appSettingsFilterText = '';
+                $scope.settingsPaging.appSettingsFilterApp = null;
+                filterApplicationSettings();
+            };
+
             var filterFiles = function () {
                 $scope.files = $scope.configuration.files.filter(function (item) {
                     var valid = true;
@@ -1308,6 +1819,55 @@ angular.module('headwind-kiosk')
                 });
             };
 
+            $scope.resetFilesFilter = function () {
+                $scope.filesPaging.filesFilterText = '';
+                filterFiles();
+            };
+
+            // Same file-type-by-extension mapping as the main Files page
+            // (files.controller.js) - duplicated here as a small pure
+            // function rather than factored into a shared service, since
+            // it's the only piece needed from that controller and this
+            // codebase doesn't otherwise share plain helpers across
+            // controllers via services.
+            var FILE_TYPE_MAP = [
+                { exts: ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'], icon: 'glyphicon-picture', cls: 'file-type-icon-image', isImage: true },
+                { exts: ['pdf'], icon: 'glyphicon-file', cls: 'file-type-icon-pdf', isImage: false },
+                { exts: ['apk'], icon: 'glyphicon-cog', cls: 'file-type-icon-apk', isImage: false },
+                { exts: ['zip', 'rar', '7z', 'tar', 'gz'], icon: 'glyphicon-compressed', cls: 'file-type-icon-archive', isImage: false },
+                { exts: ['txt', 'csv', 'json', 'xml', 'log', 'md', 'yml', 'yaml'], icon: 'glyphicon-align-left', cls: 'file-type-icon-text', isImage: false }
+            ];
+            var DEFAULT_FILE_TYPE = { icon: 'glyphicon-file', cls: 'file-type-icon-generic', isImage: false };
+
+            $scope.fileTypeInfo = function (file) {
+                var name = file.external ? (file.externalUrl || file.url || '') : (file.filePath || '');
+                var dotIdx = name.lastIndexOf('.');
+                var ext = dotIdx > -1 ? name.substring(dotIdx + 1).toLowerCase() : '';
+                for (var i = 0; i < FILE_TYPE_MAP.length; i++) {
+                    if (FILE_TYPE_MAP[i].exts.indexOf(ext) !== -1) {
+                        return FILE_TYPE_MAP[i];
+                    }
+                }
+                return DEFAULT_FILE_TYPE;
+            };
+
+            $scope.copiedFileUrlId = null;
+            $scope.copyFileUrl = function (file) {
+                if (!file.url || !navigator.clipboard) {
+                    return;
+                }
+                navigator.clipboard.writeText(file.url).then(function () {
+                    $timeout(function () {
+                        $scope.copiedFileUrlId = file.id || file.tempId;
+                    });
+                    $timeout(function () {
+                        if ($scope.copiedFileUrlId === (file.id || file.tempId)) {
+                            $scope.copiedFileUrlId = null;
+                        }
+                    }, 2000);
+                });
+            };
+
             function pad(num, size) {
                 var s = num + "";
                 while (s.length < size) s = "0" + s;
@@ -1320,10 +1880,10 @@ angular.module('headwind-kiosk')
                 angular.element(document.querySelector('#password-c')).attr('type', 'password');
             }, 300);
 
-            $scope.togglePassword = function() {
-                var passwordElement = angular.element(document.querySelector('#password-c'));
-                var passwordButton = angular.element(document.querySelector('#button-show-password'));
-                var passwordIcon = angular.element(document.querySelector('#span-show-password'));
+            var togglePasswordField = function (inputId, buttonId, iconId) {
+                var passwordElement = angular.element(document.querySelector(inputId));
+                var passwordButton = angular.element(document.querySelector(buttonId));
+                var passwordIcon = angular.element(document.querySelector(iconId));
                 var type = passwordElement.attr('type');
                 if (type == 'text') {
                     passwordElement.attr('type', 'password');
@@ -1336,6 +1896,14 @@ angular.module('headwind-kiosk')
                     passwordIcon.removeClass('glyphicon-eye-open');
                     passwordIcon.addClass('glyphicon-eye-close');
                 }
+            };
+
+            $scope.togglePassword = function() {
+                togglePasswordField('#password-c', '#button-show-password', '#span-show-password');
+            };
+
+            $scope.toggleWifiPassword = function () {
+                togglePasswordField('#wifiPassword-c', '#button-show-wifi-password', '#span-show-wifi-password');
             };
 
             var mainAppSelected = false;
@@ -1564,15 +2132,24 @@ angular.module('headwind-kiosk')
         $scope.file = {};
         $scope.errorMessage = undefined;
         $scope.fileSelected = false;
+        $scope.isEditMode = !!configFile.fileId;
 
         $scope.files = [];
         fileService.getAllFiles({},
             function (response) {
                 if (response.status === 'OK') {
-                    // Exclude already existing files (except the file currently being edited)
+                    // Exclude already existing files (except the file currently being edited).
+                    // configFile is {} for "Add" (no fileId) and the real
+                    // configuration-file link for "Edit" (has a fileId) -
+                    // comparing it to a fresh {} literal with === or !==
+                    // is always false/true respectively regardless of
+                    // configFile's actual content (distinct object
+                    // identity), which silently broke both the add flow
+                    // (below) and this re-inclusion check. Pre-existing bug,
+                    // fixed here as its own change alongside the redesign.
                     var configIds = new Set(configFiles.map(f => f.fileId));
                     response.data = response.data.filter(f => !configIds.has(f.id) ||
-                        (configFile !== {} && f.id === configFile.fileId));
+                        (!!configFile.fileId && f.id === configFile.fileId));
 
                     response.data.forEach(function (file) {
                         file.name = file.description ? file.description :
@@ -1586,7 +2163,7 @@ angular.module('headwind-kiosk')
                         id: 0,
                         name: localization.localize('form.configuration.file.create')
                     });
-                    if (configFile === {}) {
+                    if (!configFile.fileId) {
                         if ($scope.files.length > 1) {
                             $scope.file = $scope.files[1];
                         } else {
@@ -1713,6 +2290,8 @@ angular.module('headwind-kiosk')
     })
     .controller('RemoveConfigurationFileModalController',
         function ($scope, $modalInstance, file) {
+
+            $scope.file = file;
 
             // By now, disable this option so the user isn't confused
             // TODO: suggest permanent deletion if a file is not used in icons and configurations (except this one)

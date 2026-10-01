@@ -88,6 +88,9 @@ public class Application implements CustomerData, Serializable {
     @ApiModelProperty("An file name with the icon to represent the application")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String icon;
+    @ApiModelProperty("An ID of an uploaded file holding the icon auto-extracted from the APK, if any (distinct from iconId, which is an explicit Settings -> Icons assignment)")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer apkIconFileId;
     @ApiModelProperty("Order of applications on the screen")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Integer screenOrder;
@@ -409,6 +412,14 @@ public class Application implements CustomerData, Serializable {
 
     public void setIconId(Integer iconId) {
         this.iconId = iconId;
+    }
+
+    public Integer getApkIconFileId() {
+        return apkIconFileId;
+    }
+
+    public void setApkIconFileId(Integer apkIconFileId) {
+        this.apkIconFileId = apkIconFileId;
     }
 
     public Integer getScreenOrder() {

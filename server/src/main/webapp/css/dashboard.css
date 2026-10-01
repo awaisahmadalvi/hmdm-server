@@ -1012,16 +1012,23 @@
    is what keeps this from ever overlapping the main-nav rules above:
    those are all scoped TO .app-nav-tabset specifically, this one is
    scoped to every OTHER tabset, so the two selector sets can never
-   both match the same element. */
-.tabset:not(.app-nav-tabset) > .nav-tabs > li.active > a,
-.tabset:not(.app-nav-tabset) > .nav-tabs > li.active > a:hover,
-.tabset:not(.app-nav-tabset) > .nav-tabs > li.active > a:focus {
+   both match the same element.
+   :not(.modern-tabset) is the same idea for .modern-tabset's own
+   underline style (used by the Configuration editor's tabs) - without
+   it, this rule's (0,4,2) specificity beat .modern-tabset's (0,3,2)
+   underline rule below, so the editor's active tab silently rendered
+   this generic style's TOP border instead of its own bottom underline
+   (only visible on close inspection - both draw a 2px brand-dark line,
+   just on opposite edges of the tab). */
+.tabset:not(.app-nav-tabset):not(.modern-tabset) > .nav-tabs > li.active > a,
+.tabset:not(.app-nav-tabset):not(.modern-tabset) > .nav-tabs > li.active > a:hover,
+.tabset:not(.app-nav-tabset):not(.modern-tabset) > .nav-tabs > li.active > a:focus {
   color: var(--brand-dark);
   border-color: var(--color-border) var(--color-border) transparent;
   border-top: 2px solid var(--brand-dark);
 }
 
-.tabset:not(.app-nav-tabset) > .nav-tabs > li > a:hover {
+.tabset:not(.app-nav-tabset):not(.modern-tabset) > .nav-tabs > li > a:hover {
   color: var(--brand-dark);
 }
 
@@ -2982,7 +2989,13 @@
   align-items: start;
 }
 
-.design-card + .design-card {
+/* Spacing between cards in the design form's left column. Keyed off direct
+   child position (not ".design-card + .design-card") so it still applies
+   when a card is wrapped in an ng-if/ng-include container - e.g. the
+   Configuration editor's Design Settings tab, which conditionally swaps a
+   whole wrapped block (default-design summary vs. the shared custom form)
+   in and out above its own extra "Device display" card. */
+.design-form-col > * + * {
   margin-top: 20px;
 }
 
@@ -3232,6 +3245,32 @@
 .design-phone-app-name {
   font-size: 9px;
   text-align: center;
+}
+
+/* Configuration editor extras (orientation lock / status bar) - harmless
+   no-ops on the Default Design page, which has neither field. */
+.design-phone-statusbar {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Swaps the frame to a wide/short aspect ratio instead of a literal CSS
+   rotate(), which would need extra layout-flow workarounds since transforms
+   don't affect box size/flow. */
+.design-phone-frame.design-phone-landscape {
+  width: 340px;
+}
+
+.design-phone-frame.design-phone-landscape .design-phone-screen {
+  height: 200px;
+}
+
+.design-phone-frame.design-phone-landscape .design-phone-grid {
+  grid-template-columns: repeat(6, 1fr);
 }
 
 @media (max-width: 1024px) {
@@ -5047,4 +5086,817 @@
     flex: 1 1 auto;
     text-align: center;
   }
+}
+
+/* =========================================================
+   Configuration editor shell (Configurations -> Edit) and its Common
+   Settings tab. Scoped under .config-editor-page. Reuses <plugin-
+   settings-breadcrumb>-style markup (.plugin-settings-breadcrumb(-sep)),
+   .logs-page-header/.columns-sticky-header, .design-header-actions/
+   .design-unsaved-indicator/.logs-btn-reset (save UX incl. its mobile
+   fixed-bottom-bar), .device-details-badge, .device-details-inline-*,
+   .modern-tabset (underline tabs, same as the Push messages page),
+   .device-details-card, .design-field(-label), .modern-toggle, .modern-
+   select, .modern-segmented(-option), .settings-body/-nav(-link)/-cards
+   /-reveal (section nav + scrollspy + smooth reveal, same as the General
+   settings page - including its existing <=900px "hide the nav, collapse
+   to one column" breakpoint), .settings-input(-narrow), .field-hint,
+   .settings-caution, .modern-input-invalid, .btn-outline-primary and
+   .modern-toast instead of duplicating any of them. Only the sticky tabs-
+   under-header offset, the in-input password toggle and the range/time
+   row layouts are new here.
+   ========================================================= */
+
+.config-editor-header .logs-page-subtitle {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* The underline tabs stick directly below the sticky header, so together
+   they read as one fixed block while the tab content scrolls underneath -
+   two adjacent position:sticky elements rather than one, since ui-
+   bootstrap's tabset renders .nav-tabs and .tab-content as siblings of
+   the same element (wrapping just the header in a sticky container would
+   make the tab content sticky too). */
+.config-editor-page .modern-tabset > .nav-tabs {
+  position: sticky;
+  top: 132px;
+  z-index: 15;
+  background: var(--color-surface);
+}
+
+/* .settings-nav (General settings page) defaults to sticking at 70px,
+   right under that page's own shorter header. Here it would stick behind/
+   under the sticky tabs bar instead (which ends at 176px), so it needs its
+   own offset to clear both the sticky header and the sticky tabs. */
+.config-editor-page .settings-nav {
+  top: 196px;
+}
+
+.config-editor-body {
+  padding-top: 20px;
+}
+
+.config-password-wrap {
+  position: relative;
+}
+
+.config-password-wrap .form-control {
+  padding-right: 40px !important;
+}
+
+.config-password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.config-password-toggle:hover {
+  color: var(--color-text-secondary);
+}
+
+.config-range-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 480px;
+}
+
+.config-range-row input[type="range"] {
+  flex: 1 1 auto;
+}
+
+.config-range-value {
+  flex: 0 0 auto;
+  min-width: 32px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.config-time-range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.config-time-sep {
+  color: var(--color-text-tertiary);
+}
+
+/* Design Settings tab: read-only summary of Settings -> Default Design,
+   shown next to the live preview while "Use default design" is on. */
+.design-default-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.design-default-summary-swatches {
+  display: flex;
+  gap: 8px;
+}
+
+.design-default-summary-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.design-default-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.design-default-summary-link {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .config-editor-page .logs-page-header {
+    flex-direction: column;
+  }
+
+  .config-editor-page .logs-page-header-actions {
+    width: 100%;
+  }
+
+  .config-editor-page .modern-tabset > .nav-tabs {
+    /* .modern-tabset's own <=600px rule already handles overflow-x/
+       flex-wrap for horizontal scrolling - just undo the sticky
+       positioning here so it doesn't fight the fixed bottom action bar. */
+    position: static;
+  }
+
+  .config-editor-page {
+    padding-bottom: 70px;
+  }
+}
+
+/* =========================================================
+   Configuration editor - Applications tab. Not page-scoped (the tab
+   already lives inside .config-editor-page) - reuses .device-details-card
+   (-header), .logs-page-header/-subtitle(-actions), .logs-filter-row(
+   -actions), .logs-input(-icon-wrap), .modern-segmented(-option), .modern-
+   toggle, .modern-select, .modern-table-wrap, .modern-responsive-table
+   (mobile card-stacking, incl. its own <=700px breakpoint), .device-
+   details-app-pkg, .device-details-empty*, .settings-input-narrow,
+   .settings-field-row, .design-field(-label), .action-link, .btn-modern-
+   primary, .btn-default (already compact inside <td> via the existing
+   ".modern-page td .btn-default" rule) and .modern-page table.table*
+   instead of duplicating any of them. New here: the summary chips row,
+   the toggleable filter pills (no existing component is a close enough
+   match - .device-details-badge/.logs-chip are informational, .modern-
+   segmented is a joined mutually-exclusive control), the dot-in-select
+   Action control, the app icon placeholder and the dismissible info
+   banner (colors only - structure borrowed from .settings-caution).
+   ========================================================= */
+
+.apps-summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.apps-summary-chip strong {
+  color: var(--color-text-primary);
+}
+
+.apps-summary-chip-sep {
+  color: var(--color-border);
+}
+
+.apps-toolbar {
+  margin-top: 18px;
+  flex-wrap: wrap;
+  row-gap: 12px;
+}
+
+.apps-search {
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+
+.apps-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.apps-filter-pill {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.apps-filter-pill:hover {
+  background: var(--color-surface-hover);
+}
+
+.apps-filter-pill.active {
+  background: var(--brand-dark);
+  border-color: var(--brand-dark);
+  color: var(--color-surface);
+}
+
+.apps-sort-segmented {
+  flex: 0 0 auto;
+}
+
+.apps-system-toggle {
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.apps-system-toggle .design-field-label {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+/* Generic info banner - also reused as-is (no dismiss button) by the MDM
+   Settings tab's Enrollment card. */
+.apps-info-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--color-info);
+  background: var(--color-info-bg);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.apps-info-banner-dismiss {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.apps-info-banner-dismiss:hover {
+  opacity: 1;
+}
+
+.apps-table-wrap {
+  margin-top: 16px;
+}
+
+.app-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-icon-placeholder {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.app-name-text {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.apps-row-muted {
+  opacity: 0.6;
+}
+
+.app-action-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.app-action-dot {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.app-action-select {
+  padding-left: 24px !important;
+  min-width: 140px;
+}
+
+.app-action-wrap-install .app-action-dot {
+  background: var(--color-success);
+}
+
+.app-action-wrap-not-install .app-action-dot {
+  background: var(--color-text-tertiary);
+}
+
+.app-action-wrap-block .app-action-dot,
+.app-action-wrap-delete .app-action-dot {
+  background: var(--color-danger);
+}
+
+.app-order-dash {
+  color: var(--color-text-tertiary);
+}
+
+.app-options-btn .glyphicon {
+  font-size: 12px;
+}
+
+@media (max-width: 700px) {
+  .apps-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* .apps-search's "flex: 1 1 220px" sets a 220px FLEX-BASIS, which in a
+     row layout means width but in this column layout (above) means height -
+     without resetting it here, the search box stretches to 220px tall with
+     its icon left centered in all that empty space. */
+  .apps-search {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .apps-system-toggle {
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+/* =========================================================
+   Configuration editor - MDM Settings tab. Reuses .settings-body/-nav(
+   -link)/-cards/-reveal (section nav + scrollspy + smooth reveal, same as
+   Common Settings), .device-details-card(-header), .design-field(-label),
+   .modern-toggle, .modern-select, .modern-collapsible(-header/-body),
+   .config-password-wrap/-toggle (Common Settings' password-in-input
+   pattern, reused for the WiFi password field), .settings-input, .field-
+   hint, .settings-caution, .device-details-badge(.users-role-neutral),
+   .apps-info-banner/.apps-toolbar, .btn-outline-primary/.btn-default and
+   .action-link instead of duplicating any of them. Only the monospace
+   code-style textarea and the danger-zone card modifier are new here.
+   ========================================================= */
+
+.settings-textarea-mono {
+  width: 100%;
+  max-width: none;
+  min-height: 90px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+}
+
+.settings-card-danger {
+  border: 1px solid var(--color-danger-bg);
+}
+
+.settings-card-danger > .modern-collapsible-header {
+  color: var(--color-danger);
+}
+
+.settings-button-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-readonly-field {
+  display: block;
+  max-width: 480px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  color: var(--color-text-primary);
+  word-break: break-all;
+}
+
+/* =========================================================
+   Configuration editor - Applications Settings tab. Not page-scoped (the
+   tab already lives inside .config-editor-page) - reuses .device-details-
+   card(-header), .logs-page-header/-subtitle(-actions), .logs-filter-row(
+   -actions), .logs-input(-icon-wrap), .apps-summary-chip(s) (Applications
+   tab), .device-details-badge(.users-role-neutral/-blue/-purple),
+   .device-details-app-pkg, .device-details-empty*, .logs-empty-subtitle,
+   .modern-table-wrap/.modern-responsive-table (incl. its own <=700px
+   mobile card-stacking), .app-icon-placeholder/.app-name-text
+   (Applications tab), .users-row-menu/[app-actions-menu]/.actions-menu-
+   list (shared "..." dropdown), .action-link, .btn-modern-primary/
+   .btn-default, .settings-textarea-mono, .settings-button-row and
+   .device-details-inline-error instead of duplicating any of them. Only
+   the group header/wrapper and the truncated monospace value cell are
+   new here.
+   ========================================================= */
+
+.app-settings-group {
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.app-settings-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.app-settings-group-chevron {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.app-settings-group-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-settings-add-link {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  /* Without wrapping, a long app name has nowhere to go but to wrap its
+     own text across multiple lines while staying in a single flex row -
+     the count badge and "Add setting" link (both flex: 0 0 auto) then
+     stay pinned vertically centered on that same row, reading as if they
+     overlap the now multi-line name instead of sitting cleanly beside it.
+     min-width here (raised from the desktop 0) gives the name/pkg column
+     a floor it won't shrink below, so once chevron + icon + that floor +
+     badge + link can no longer all fit on one line, the badge and link
+     (last in source order) wrap to a line of their own underneath instead
+     of the browser shrinking the name column toward zero to keep
+     everything on one line. */
+  .app-settings-group-header {
+    flex-wrap: wrap;
+  }
+
+  .app-settings-group-info {
+    min-width: 160px;
+  }
+}
+
+.app-settings-table-wrap {
+  border-top: 1px solid var(--color-border-subtle);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.app-settings-row {
+  cursor: pointer;
+}
+
+.app-setting-value {
+  display: inline-block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  margin-right: 8px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+}
+
+.app-settings-comment {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+/* =========================================================
+   Application icon (<app-icon>, app/shared/directives.js) - real assigned
+   icon image, else a type glyph (globe/gear) or initials, on one of a
+   fixed 8-color soft palette hashed from the app's package ID. Replaces
+   the plain grey .app-icon-placeholder square in the Applications table,
+   the Add/Edit dialog header/launcher preview and the Configuration
+   editor's Applications tab. Sizing is set inline by the directive
+   (36px table / 64px dialog header) - only shape/color are here.
+   ========================================================= */
+
+.app-icon-tile {
+  position: relative;
+  flex: 0 0 auto;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.app-icon-tile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-icon-tile-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  text-transform: uppercase;
+}
+
+/* Fixed 8-color palette (soft background + a readable, saturated shade of
+   the same hue for text/glyphs) - not design tokens, since this is a
+   deliberately fixed identity palette rather than a semantic color. */
+.app-icon-color-0 { background: #eef2ff; color: #4338ca; }
+.app-icon-color-1 { background: #ecfdf5; color: #047857; }
+.app-icon-color-2 { background: #fff7ed; color: #c2410c; }
+.app-icon-color-3 { background: #fdf2f8; color: #be185d; }
+.app-icon-color-4 { background: #f0f9ff; color: #0369a1; }
+.app-icon-color-5 { background: #fefce8; color: #a16207; }
+.app-icon-color-6 { background: #f5f3ff; color: #6d28d9; }
+.app-icon-color-7 { background: #f0fdfa; color: #0f766e; }
+
+/* =========================================================
+   Add/Edit application dialog (modal/application.html) - wide, two-column,
+   fixed header/footer redesign. Reuses .modern-modal-header/-body/-
+   actions/-icon/-title/-close, .device-details-card(-header), .design-
+   field(-label), .modern-toggle, .modern-select, .modern-segmented(
+   -option), .modern-collapsible(-header/-body), .design-upload-zone(
+   -preview/-icon/-text), .files-upload-progress, .field-hint, .device-
+   details-inline-error/-success, .action-link, .btn-modern-primary/
+   .btn-default and .app-icon-tile (above) instead of duplicating any of
+   them. Only the wide/fixed-chrome shell, the two-column grid, the
+   compact section-card modifier, the launcher preview tile, the icon
+   picker grid and the locked-field treatment are new here.
+
+   windowClass: 'app-modal-wide' (passed by every $modal.open() that opens
+   this template - applications.controller.js, configurations.controller.js,
+   panel.controller.js) puts this class on ui-bootstrap's own .modal
+   wrapper, so these rules only ever affect this one dialog.
+   ========================================================= */
+
+.app-modal-wide .modal-dialog {
+  width: 1040px;
+  max-width: 92vw;
+}
+
+.app-modal-wide .modal-content {
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-modal-wide .modern-modal-header {
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.app-modal-header-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.app-modal-header-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-modal-header-text .modern-modal-title {
+  margin: 0;
+}
+
+.app-modal-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-modal-wide .modern-modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-top: 18px;
+}
+
+.app-modal-wide .modern-modal-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 14px 24px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.app-modal-actions-right {
+  display: flex;
+  align-items: center;
+}
+
+.app-modal-columns {
+  display: grid;
+  grid-template-columns: 40% 1fr;
+  gap: 20px;
+  padding: 0 24px 4px;
+}
+
+.app-modal-col-left,
+.app-modal-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.app-modal-section {
+  padding: 16px 18px;
+}
+
+.app-modal-section .device-details-card-header {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+}
+
+.app-modal-section .design-field:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .app-modal-wide .modal-dialog {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .app-modal-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-modal-wide .modal-content {
+    max-height: 100vh;
+  }
+}
+
+/* ---------- Launcher preview tile ---------- */
+
+.app-launcher-preview-screen {
+  width: 120px;
+  margin: 4px auto 0;
+  padding: 14px 8px;
+  border-radius: 14px;
+  display: flex;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+/* Reuses the Design Settings phone-preview's single-app-cell classes
+   (.design-phone-app/-icon/-app-name, see designPreview.html) instead of
+   a new icon+label stack, since this is that exact same visual unit -
+   only the outer tile (a small swatch, not a full phone frame) is new. */
+.app-launcher-preview-screen .design-phone-app {
+  width: 100%;
+}
+
+/* ---------- Locked (read-only-but-not-greyed-out) field ---------- */
+
+.app-locked-field-wrap {
+  position: relative;
+}
+
+.app-locked-field-wrap .form-control {
+  padding-right: 32px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.app-locked-field-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* ---------- Icon picker (visual grid of thumbnails) ---------- */
+
+.app-icon-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.app-icon-picker-option {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  padding: 0;
+  background: var(--color-surface-muted);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+}
+
+.app-icon-picker-option img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-icon-picker-option.selected {
+  border-color: var(--brand-dark);
+  box-shadow: 0 0 0 2px var(--color-accent-glow);
+}
+
+.app-icon-picker-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---------- Behavior toggle rows (short helper text under each) ---------- */
+
+.app-behavior-row {
+  margin-bottom: 14px;
+}
+
+.app-behavior-row:last-child {
+  margin-bottom: 0;
+}
+
+.app-behavior-row .field-hint {
+  margin-top: 4px;
+}
+
+/* ---------- Small list fixes: Source badge / "no source" pill ---------- */
+
+.device-details-badge.app-source-badge {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
 }

@@ -21,6 +21,8 @@
 
 package com.hmdm.rest.json;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.io.Serializable;
 
 /**
@@ -56,6 +58,15 @@ public class APKFileDetails implements Serializable {
      * <p>Application name.</p>
      */
     private String name;
+
+    /**
+     * <p>The app's launcher icon extracted from the APK (highest-density legacy PNG, or an adaptive icon's
+     * foreground layer when that resolves to a real PNG), already resized - null if none could be extracted.
+     * Never sent to the client: it is only consumed server-side (ApplicationDAO) when the application/version is
+     * actually persisted, not at upload-preview time.</p>
+     */
+    @JsonIgnore
+    private byte[] iconPngBytes;
 
     /**
      * <p>Constructs new <code>APKFileDetails</code> instance. This implementation does nothing.</p>
@@ -101,6 +112,15 @@ public class APKFileDetails implements Serializable {
 
     public void setArch(String arch) {
         this.arch = arch;
+    }
+
+    @JsonIgnore
+    public byte[] getIconPngBytes() {
+        return iconPngBytes;
+    }
+
+    public void setIconPngBytes(byte[] iconPngBytes) {
+        this.iconPngBytes = iconPngBytes;
     }
 
     @Override

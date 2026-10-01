@@ -602,4 +602,22 @@ public class ApplicationResource {
             return Response.INTERNAL_ERROR();
         }
     }
+
+    // =================================================================================================================
+    @ApiOperation(value = "Backfill APK icons", notes = "One-off: extracts and stores launcher icons for already-uploaded apps that predate APK icon extraction. Super-admin only.", response = Integer.class)
+    @Path("/admin/backfillIcons")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response backfillApkIcons() {
+        try {
+            final int updated = this.applicationDAO.backfillApkIcons();
+            return Response.OK(updated);
+        } catch (SecurityException e) {
+            logger.error("Prohibited to backfill APK icons by current user", e);
+            return Response.PERMISSION_DENIED();
+        } catch (Exception e) {
+            logger.error("Failed to backfill APK icons", e);
+            return Response.INTERNAL_ERROR();
+        }
+    }
 }

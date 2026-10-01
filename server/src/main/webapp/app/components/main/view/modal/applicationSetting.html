@@ -1,78 +1,96 @@
 <!-- Localization completed -->
-<div ng-show='errorMessage' class='modal-header'>
-    <div ng-if='errorMessage' class='error'><span>{{errorMessage}}</span></div>
+<div class="modern-modal-header">
+    <div class="modern-modal-icon">
+        <span class="glyphicon glyphicon-cog"></span>
+    </div>
+    <h4 class="modern-modal-title" ng-if="applicationSetting.id || applicationSetting.tempId" localized>form.application.setting.title.edit</h4>
+    <h4 class="modern-modal-title" ng-if="!(applicationSetting.id || applicationSetting.tempId)" localized>form.application.setting.title.add</h4>
+    <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
 </div>
-<div ng-show='successMessage' class='modal-header'>
-    <div ng-if='successMessage' class='success'><span>{{successMessage}}</span></div>
-</div>
-<div class='modal-body'>
-    <form class='form-horizontal'>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' localized>form.application.setting.app</label>
-            <div class='col-sm-8'>
-                <input type="text" maxlength="512" name="mdm1"
-                       ng-model="mainApp"
-                       autocomplete="off"
-                       localized-placeholder="search.placeholder.application"
-                       class="form-control"
-                       typeahead="app as (app.pkg) for app in getApps($viewValue)"
-                       typeahead-loading="loadingApps"
-                       typeahead-wait-ms="300"
-                       typeahead-input-formatter="appLookupFormatter($model)"
-                       typeahead-focus-first="false"
-                       typeahead-on-select="onMainAppSelected($item)"
-                       typeahead-no-results="noResults">
+<div class='device-details-inline-error' ng-if='errorMessage'><span>{{errorMessage}}</span></div>
 
-            </div>
+<div class='modal-body modern-modal-body'>
+    <div class="design-field">
+        <label class="design-field-label" localized>form.application.setting.app</label>
+        <input type="text" maxlength="512" name="mdm1"
+               ng-model="mainApp"
+               autocomplete="off"
+               localized-placeholder="form.application.setting.app.placeholder"
+               class="form-control logs-input settings-input"
+               typeahead="app as (app.pkg) for app in getApps($viewValue)"
+               typeahead-loading="loadingApps"
+               typeahead-wait-ms="300"
+               typeahead-input-formatter="appLookupFormatter($model)"
+               typeahead-focus-first="false"
+               typeahead-on-select="onMainAppSelected($item)"
+               typeahead-no-results="noResults">
+    </div>
+
+    <div class="design-field">
+        <label class="design-field-label" localized>form.application.setting.name</label>
+        <input ng-model='applicationSetting.name' type='text' required
+               class='form-control logs-input settings-input design-hex-input'/>
+        <div class="field-hint" localized>form.application.setting.name.hint</div>
+    </div>
+
+    <div class="design-field">
+        <label class="design-field-label" for="settingType" localized>form.application.setting.type</label>
+        <select class="form-control modern-select settings-input" id="settingType" ng-model="applicationSetting.type">
+            <option ng-value="'STRING'" localized>form.application.setting.type.string</option>
+            <option ng-value="'INTEGER'" localized>form.application.setting.type.integer</option>
+            <option ng-value="'BOOLEAN'" localized>form.application.setting.type.boolean</option>
+        </select>
+    </div>
+
+    <div class="design-field" ng-if="applicationSetting.type === 'BOOLEAN'">
+        <div class="settings-field-row">
+            <label class="design-field-label" localized>form.application.setting.value</label>
+            <span class="modern-toggle">
+                <input type="checkbox" class="modern-toggle-input" ng-model="applicationSetting.value"
+                       ng-true-value="'true'" ng-false-value="'false'">
+                <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+            </span>
         </div>
+    </div>
 
+    <div class="design-field" ng-if="applicationSetting.type === 'INTEGER'">
+        <label class="design-field-label" localized>form.application.setting.value</label>
+        <input type="text" inputmode="numeric" ng-pattern="/^-?[0-9]*$/"
+               ng-model="applicationSetting.value" class="form-control logs-input settings-input design-hex-input"/>
+    </div>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' localized>form.application.setting.name</label>
-            <div class='col-sm-8'>
-                <input ng-model='applicationSetting.name' type='text' class='form-control' required/>
-            </div>
+    <div class="design-field" ng-if="!applicationSetting.type || applicationSetting.type === 'STRING'">
+        <label class="design-field-label" localized>form.application.setting.value</label>
+        <textarea ng-model="applicationSetting.value" rows="4" class="form-control settings-textarea-mono"></textarea>
+    </div>
+
+    <div class="design-field">
+        <div class="settings-field-row">
+            <label class="design-field-label" for="variableContent" localized>form.configuration.files.variables</label>
+            <span class="modern-toggle">
+                <input id="variableContent" type="checkbox" class="modern-toggle-input" ng-model="applicationSetting.variable">
+                <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+            </span>
         </div>
+        <div class="field-hint" localized>form.configuration.files.variables.hint</div>
+    </div>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' localized>form.application.setting.value</label>
-            <div class='col-sm-8'>
-                <textarea ng-model='applicationSetting.value' class='form-control' rows="4"></textarea>
-            </div>
+    <div class="design-field">
+        <label class="design-field-label" localized>form.application.setting.comment</label>
+        <textarea ng-model='applicationSetting.comment' rows="3" class="form-control logs-input settings-input"></textarea>
+    </div>
+
+    <div class="modern-modal-actions">
+        <div class="settings-button-row" style="justify-content: space-between;">
+            <span class="field-hint" style="margin:0;" localized>form.application.setting.save.note</span>
+            <span class="settings-button-row">
+                <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
+                <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' ng-disabled="loading"
+                        ng-if="applicationSetting.id || applicationSetting.tempId" localized>button.save</button>
+                <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' ng-disabled="loading"
+                        ng-if="!(applicationSetting.id || applicationSetting.tempId)" localized>form.application.setting.add</button>
+            </span>
         </div>
-
-        <div class="form-group">
-            <div class="col-sm-4">
-                <label class='control-label' for="variableContent" localized>form.configuration.files.variables</label><br>
-                <span class="field-hint" localized>form.configuration.files.variables.hint</span>
-            </div>
-            <div class='col-sm-2'>
-                <input localized-title="form.configuration.files.variables.hint" ng-model='applicationSetting.variable' type='checkbox'
-                       class='form-control' id="variableContent"/>
-            </div>
-        </div>
-
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' localized>form.application.setting.comment</label>
-            <div class='col-sm-8'>
-                <textarea ng-model='applicationSetting.comment' class='form-control' rows="4"></textarea>
-
-            </div>
-        </div>
-
- <!--       <div class='form-group'>
-            <label class='col-sm-4 control-label' localized>form.application.setting.readonly</label>
-            <div class='col-sm-1'>
-                <input ng-model='applicationSetting.readonly' type='checkbox' class='form-control'>
-            </div>
-        </div> -->
-
-        <div class='form-group'>
-            <div class='col-sm-offset-4 col-sm-8'>
-                <button type='submit' class='btn btn-default' ng-click='save()' ng-disabled="loading" localized>button.ok</button>
-                <button type='button' class='btn btn-default' ng-click='closeModal()' ng-disabled="loading" localized >button.cancel</button>
-            </div>
-        </div>
-    </form>
+    </div>
 </div>

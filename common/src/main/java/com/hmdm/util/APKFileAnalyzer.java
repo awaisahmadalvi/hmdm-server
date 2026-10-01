@@ -27,7 +27,10 @@ import com.hmdm.persistence.ApplicationDAO;
 import com.hmdm.persistence.domain.Application;
 import com.hmdm.rest.json.APKFileDetails;
 import net.dongliu.apk.parser.ApkFile;
+import net.dongliu.apk.parser.bean.AdaptiveIcon;
 import net.dongliu.apk.parser.bean.ApkMeta;
+import net.dongliu.apk.parser.bean.Icon;
+import net.dongliu.apk.parser.bean.IconFace;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,11 +110,60 @@ public class APKFileAnalyzer {
             Long versionCode = apkMeta.getVersionCode();
             result.setVersionCode(versionCode != null ? versionCode.intValue() : 0);
             result.setArch(getArchByApkLibs(filePath));
+
+            // Icon extraction is a nice-to-have on top of the fields above: any failure here must never break
+            // the pkg/version/arch extraction that the rest of the upload flow depends on.
+            try {
+                result.setIconPngBytes(extractIcon(apkFile));
+            } catch (Exception e) {
+                log.warn("Failed to extract an icon from APK-file: {}", filePath, e);
+            }
+
             return result;
         } catch (IOException e) {
             log.error("Failed to analyze APK-file: {}", filePath, e);
             throw new APKFileAnalyzerException("Failed to analyze APK-file", e);
         }
+    }
+
+    /**
+     * <p>Extracts the app's launcher icon as raw (not yet resized) PNG bytes, or null if none could be found.</p>
+     *
+     * <p>Preference order: an adaptive icon's foreground layer when it resolves to an actual PNG (adaptive icons
+     * are the modern/intended format - {@link net.dongliu.apk.parser.bean.AdaptiveIcon#getBackground()} is the
+     * adaptive XML descriptor itself, not a bitmap, so only the foreground is ever considered); otherwise the
+     * highest-density legacy (pre-Android-8) PNG mipmap. Vector-drawable icons, WebP-only icons and {@link
+     * net.dongliu.apk.parser.bean.ColorIcon} (the adaptive background's solid-color fallback) have no usable
+     * bitmap and are skipped - the caller falls back to the client-side avatar in that case.</p>
+     */
+    private byte[] extractIcon(ApkFile apkFile) throws IOException {
+        byte[] bestAdaptive = null;
+        int bestAdaptiveDensity = -1;
+        byte[] bestLegacy = null;
+        int bestLegacyDensity = -1;
+
+        for (IconFace face : apkFile.getAllIcons()) {
+            if (face instanceof AdaptiveIcon) {
+                Icon foreground = ((AdaptiveIcon) face).getForeground();
+                if (foreground != null && isPng(foreground.getData()) && foreground.getDensity() > bestAdaptiveDensity) {
+                    bestAdaptive = foreground.getData();
+                    bestAdaptiveDensity = foreground.getDensity();
+                }
+            } else if (face instanceof Icon) {
+                Icon icon = (Icon) face;
+                if (isPng(icon.getData()) && icon.getDensity() > bestLegacyDensity) {
+                    bestLegacy = icon.getData();
+                    bestLegacyDensity = icon.getDensity();
+                }
+            }
+        }
+
+        return bestAdaptive != null ? bestAdaptive : bestLegacy;
+    }
+
+    private static boolean isPng(byte[] data) {
+        return data != null && data.length > 8
+                && (data[0] & 0xFF) == 0x89 && data[1] == 'P' && data[2] == 'N' && data[3] == 'G';
     }
 
     /**

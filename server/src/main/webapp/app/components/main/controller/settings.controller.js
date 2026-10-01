@@ -5,6 +5,12 @@ angular.module('headwind-kiosk')
                                                    groupService, configurationService, twoFactorAuthService,
                                                    $transitions, $q, $state, $window) {
         $scope.settings = {};
+        // Alias so the Colors/Background image/Layout/preview markup shared
+        // with the Configuration editor's Design Settings tab (designForm.html/
+        // designPreview.html) can bind to one generic "designModel" name
+        // instead of "settings" - kept pointing at whichever object is
+        // currently $scope.settings wherever that gets reassigned below.
+        $scope.designModel = $scope.settings;
         $scope.userRoleSettings = {};
         $scope.loading = false;
 
@@ -186,6 +192,7 @@ angular.module('headwind-kiosk')
                     settingsService.getSettings(function (response) {
                         if (response.data) {
                             $scope.settings = response.data;
+                            $scope.designModel = $scope.settings;
                             $scope.initTwoFactor($scope.settings);
                             designSettingsSnapshot = angular.copy($scope.settings);
                             generalSettingsSnapshot = angular.copy($scope.settings);
@@ -348,17 +355,17 @@ angular.module('headwind-kiosk')
 
             modalInstance.result.then(function (data) {
                 if (data) {
-                    $scope.settings.backgroundImageUrl = data.url;
+                    $scope.designModel.backgroundImageUrl = data.url;
                 }
             });
         };
 
         $scope.removeBackgroundImage = function () {
-            $scope.settings.backgroundImageUrl = '';
+            $scope.designModel.backgroundImageUrl = '';
         };
 
         $scope.backgroundImageFileName = function () {
-            var url = $scope.settings && $scope.settings.backgroundImageUrl;
+            var url = $scope.designModel && $scope.designModel.backgroundImageUrl;
             if (!url) {
                 return '';
             }
@@ -379,7 +386,7 @@ angular.module('headwind-kiosk')
         ];
 
         $scope.applyColorPreset = function (field, value) {
-            $scope.settings[field] = value;
+            $scope.designModel[field] = value;
         };
 
         // The native <input type="color"> swatch only ever accepts a full
@@ -404,18 +411,18 @@ angular.module('headwind-kiosk')
         $scope.colorSwatchProxy = {};
 
         var syncSwatchProxy = function (field, fallback) {
-            $scope.colorSwatchProxy[field] = expandHex($scope.settings[field]) || fallback;
+            $scope.colorSwatchProxy[field] = expandHex($scope.designModel[field]) || fallback;
         };
 
-        $scope.$watch('settings.backgroundColor', function () {
+        $scope.$watch('designModel.backgroundColor', function () {
             syncSwatchProxy('backgroundColor', '#0f172a');
         });
-        $scope.$watch('settings.textColor', function () {
+        $scope.$watch('designModel.textColor', function () {
             syncSwatchProxy('textColor', '#ffffff');
         });
 
         $scope.applySwatchColor = function (field) {
-            $scope.settings[field] = $scope.colorSwatchProxy[field];
+            $scope.designModel[field] = $scope.colorSwatchProxy[field];
         };
 
         // Fallback used only to keep the live preview rendering something
@@ -426,7 +433,7 @@ angular.module('headwind-kiosk')
         };
 
         $scope.iconSizePreviewClass = function () {
-            var size = $scope.settings && $scope.settings.iconSize;
+            var size = $scope.designModel && $scope.designModel.iconSize;
             if (size === 'LARGE') {
                 return 'design-preview-icon-large';
             }
@@ -437,14 +444,14 @@ angular.module('headwind-kiosk')
         };
 
         $scope.previewHeaderText = function () {
-            var header = $scope.settings && $scope.settings.desktopHeader;
+            var header = $scope.designModel && $scope.designModel.desktopHeader;
             switch (header) {
                 case 'DEVICE_ID':
                     return localization.localize('form.settings.design.preview.header.deviceid');
                 case 'DESCRIPTION':
                     return localization.localize('form.settings.design.preview.header.description');
                 case 'TEMPLATE':
-                    return $scope.settings.desktopHeaderTemplate || localization.localize('form.settings.design.preview.header.custom');
+                    return $scope.designModel.desktopHeaderTemplate || localization.localize('form.settings.design.preview.header.custom');
                 case 'CUSTOM1':
                 case 'CUSTOM2':
                 case 'CUSTOM3':
@@ -453,8 +460,6 @@ angular.module('headwind-kiosk')
                     return '';
             }
         };
-
-        $scope.previewAppNames = [1, 2, 3, 4, 5, 6];
 
         var designSettingsSnapshot = null;
 
@@ -465,6 +470,7 @@ angular.module('headwind-kiosk')
         $scope.resetDesignSettings = function () {
             if (designSettingsSnapshot) {
                 $scope.settings = angular.copy(designSettingsSnapshot);
+                $scope.designModel = $scope.settings;
             }
             clearMessages();
         };

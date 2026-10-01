@@ -20,105 +20,101 @@
   -->
 
 <!-- Localization completed -->
-<div ng-show='errorMessage' class='modal-header'>
-    <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
+<div class="modern-modal-header">
+    <div class="modern-modal-icon">
+        <span class="glyphicon glyphicon-list"></span>
+    </div>
+    <h4 class="modern-modal-title">{{ ('form.applications.configurations.title' | localize).replace('${name}', application.name || '') }}</h4>
+    <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
 </div>
-<div class='modal-body'>
-    <form class='form-horizontal'>
 
-        <div class='form-group'>
-            <label class='col-sm-3 control-label' localized>form.application.configurations.app</label>
-            <div class='col-sm-9'>
-                <input type="text" disabled="disabled" class="form-control"
-                       value="{{application.name}} ({{application.version}})"/>
-            </div>
+<div class='device-details-inline-error' ng-show='errorMessage'><span>{{errorMessage}}</span></div>
+
+<div class='modal-body modern-modal-body'>
+
+    <div class="design-field">
+        <label class="design-field-label" localized>form.application.configurations.app</label>
+        <input type="text" disabled="disabled" class="form-control logs-input settings-input"
+               value="{{application.name}} ({{application.version}})"/>
+    </div>
+
+    <div class="design-field">
+        <label class="design-field-label" localized>form.application.configurations.configs</label>
+        <div class="field-hint" localized>form.applications.configurations.subtitle</div>
+
+        <div class="settings-field-row" style="margin-top: 12px;">
+            <span class="settings-field-row" style="gap: 8px;">
+                <input type="checkbox" ng-model="toggleSelectAll" ng-change="selectAllChanged()">
+                <select id='actionGroup'
+                        ng-change="actionGroupChanged()"
+                        ng-model="actionGroup" name="actionGroup"
+                        class="form-control modern-select settings-input-narrow">
+                    <option ng-value="-1" ng-selected="actionGroup == -1" localized>form.configuration.apps.action.select</option>
+                    <option ng-value="1" ng-selected="actionGroup == 1"
+                            ng-if="!isInstallOptionAvailable(application)"
+                            localized>form.configuration.apps.action.permit</option>
+                    <option ng-value="1" ng-selected="actionGroup == 1"
+                            ng-if="isInstallOptionAvailable(application)"
+                            localized>form.configuration.apps.action.install</option>
+                    <option ng-value="0" ng-selected="actionGroup == 0"
+                            ng-if="!isInstallOptionAvailable(application)"
+                            localized>form.configuration.apps.action.prohibit</option>
+                    <option ng-value="0" ng-selected="actionGroup == 0"
+                            ng-if="isInstallOptionAvailable(application)"
+                            localized>form.configuration.apps.action.not.install</option>
+                    <option ng-value="2" ng-selected="actionGroup == 2"
+                            ng-if="isRemoveOptionAvailable(application)"
+                            localized>form.configuration.apps.action.delete</option>
+                </select>
+            </span>
         </div>
 
-        <div class='form-group'>
-            <label class='col-sm-3 control-label' localized>form.application.configurations.configs</label>
-            <div class='col-sm-9'>
-                <div class='configurations-videos panel panel-default'>
-                    <div class='panel-body'>
-
-                        <div class="form-group">
-                            <div class="col-sm-1">
-                                <input type="checkbox" style="margin-top: 12px" ng-model="toggleSelectAll" ng-change="selectAllChanged()">
-                            </div>
-                            <div class="col-sm-5">
-                                <select id='actionGroup'
-                                        ng-change="actionGroupChanged()"
-                                        ng-model="actionGroup" name="actionGroup"
-                                        class="form-control col-sm-4">
-                                    <option ng-value="-1" ng-selected="actionGroup == -1" localized>form.configuration.apps.action.select</option>
-                                    <option ng-value="1" ng-selected="actionGroup == 1"
-                                            ng-if="!isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.permit</option>
-                                    <option ng-value="1" ng-selected="actionGroup == 1"
-                                            ng-if="isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.install</option>
-                                    <option ng-value="0" ng-selected="actionGroup == 0"
-                                            ng-if="!isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.prohibit</option>
-                                    <option ng-value="0" ng-selected="actionGroup == 0"
-                                            ng-if="isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.not.install</option>
-                                    <option ng-value="2" ng-selected="actionGroup == 2"
-                                            ng-if="isRemoveOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.delete</option>
-                                </select>
-                            </div>
-                            <div class='col-sm-6'></div>
-                        </div>
-
-                        <hr style="margin-top: 0; margin-bottom: 15px">
-
-                        <div ng-repeat='configuration in configurations | orderBy: "name"' class="form-group">
-                            <div class="col-sm-1">
-                                <input type="checkbox" style="margin-top: 12px" ng-model="configuration.selected"
-                                       ng-change="selectionChanged(configuration)">
-                            </div>
-                            <div class="col-sm-5">
-                                <select id='action{{configuration.configurationId}}'
-                                        ng-change="actionChanged(configuration)"
-                                        ng-model="configuration.action" name="action{{configuration.configurationId}}"
-                                        class="form-control col-sm-4">
-                                    <option ng-value="1" ng-selected="configuration.action == 1"
-                                            ng-if="!isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.permit</option>
-                                    <option ng-value="1" ng-selected="configuration.action == 1"
-                                            ng-if="isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.install</option>
-                                    <option ng-value="0" ng-selected="configuration.action == 0"
-                                            ng-if="!isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.prohibit</option>
-                                    <option ng-value="0" ng-selected="configuration.action == 0"
-                                            ng-if="isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.not.install</option>
-                                    <option ng-value="2" ng-selected="configuration.action == 2"
-                                            ng-if="isRemoveOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.delete</option>
-                                </select>
-                            </div>
-                            <label style="display:flex; align-items:center; height:34px;" class='col-sm-6' for='action{{configuration.configurationId}}'>{{configuration.configurationName}}</label>
-                            <!--<div class="col-sm-2">
-                                <button class="btn btn-default" ng-if="configuration.outdated && configuration.action != 2"
-                                        ng-click="upgradeApp(configuration)"
-                                        title="{{localizeRenewVersionTitle(configuration)}}">
-                                    <span class="glyphicon glyphicon-refresh"></span>
-                                </button>
-                            </div> -->
-                        </div>
-
-                    </div>
-                </div>
-            </div>
+        <div class="modern-table-wrap" style="margin-top: 12px;" ng-if="configurations.length > 0">
+            <table class="table modern-responsive-table">
+                <tbody>
+                <tr ng-repeat='configuration in configurations | orderBy: "name"'>
+                    <td style="width: 32px;">
+                        <input type="checkbox" ng-model="configuration.selected" ng-change="selectionChanged(configuration)">
+                    </td>
+                    <td>
+                        <select id='action{{configuration.configurationId}}'
+                                ng-change="actionChanged(configuration)"
+                                ng-model="configuration.action" name="action{{configuration.configurationId}}"
+                                class="form-control modern-select settings-input-narrow">
+                            <option ng-value="1" ng-selected="configuration.action == 1"
+                                    ng-if="!isInstallOptionAvailable(application)"
+                                    localized>form.configuration.apps.action.permit</option>
+                            <option ng-value="1" ng-selected="configuration.action == 1"
+                                    ng-if="isInstallOptionAvailable(application)"
+                                    localized>form.configuration.apps.action.install</option>
+                            <option ng-value="0" ng-selected="configuration.action == 0"
+                                    ng-if="!isInstallOptionAvailable(application)"
+                                    localized>form.configuration.apps.action.prohibit</option>
+                            <option ng-value="0" ng-selected="configuration.action == 0"
+                                    ng-if="isInstallOptionAvailable(application)"
+                                    localized>form.configuration.apps.action.not.install</option>
+                            <option ng-value="2" ng-selected="configuration.action == 2"
+                                    ng-if="isRemoveOptionAvailable(application)"
+                                    localized>form.configuration.apps.action.delete</option>
+                        </select>
+                    </td>
+                    <td>
+                        <label for='action{{configuration.configurationId}}' style="margin: 0;">{{configuration.configurationName}}</label>
+                    </td>
+                    <td class="actions-column">
+                        <a class="action-link" href="#/configuration/{{configuration.configurationId}}?tab=2"
+                           title="{{'form.applications.configurations.open.editor' | localize}}">
+                            <span class="glyphicon glyphicon-new-window"></span>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
+    </div>
 
-        <div class='form-group'>
-            <div class='col-sm-offset-3 col-sm-8'>
-                <button type='submit' class='btn btn-default' ng-click='save()' ng-disabled="loading" localized>button.save</button>
-                <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
-            </div>
-        </div>
-    </form>
+    <div class="modern-modal-actions">
+        <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
+        <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' ng-disabled="loading" localized>button.save</button>
+    </div>
 </div>

@@ -23,8 +23,14 @@ package com.hmdm.persistence;
 
 import com.google.inject.Inject;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,12 +39,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+
+import javax.imageio.ImageIO;
 
 import com.google.inject.Singleton;
 import javax.inject.Named;
 import com.hmdm.persistence.domain.ApplicationVersion;
+import com.hmdm.persistence.domain.UploadedFile;
 import com.hmdm.persistence.domain.User;
 import com.hmdm.rest.json.APKFileDetails;
 import com.hmdm.rest.json.ApplicationConfigurationLink;
@@ -49,12 +59,14 @@ import com.hmdm.rest.json.LookupItem;
 import com.hmdm.util.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.glassfish.jersey.jaxb.internal.XmlJaxbElementProvider;
+import org.imgscalr.Scalr;
 import org.mybatis.guice.transactional.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.hmdm.persistence.domain.Application;
 import com.hmdm.persistence.domain.Customer;
 import com.hmdm.persistence.mapper.ApplicationMapper;
+import com.hmdm.persistence.mapper.UploadedFileMapper;
 import com.hmdm.security.SecurityContext;
 import com.hmdm.security.SecurityException;
 
@@ -67,6 +79,7 @@ public class ApplicationDAO extends AbstractLinkedDAO<Application, ApplicationCo
 
     private final ApplicationMapper mapper;
     private final CustomerDAO customerDAO;
+    private final UploadedFileMapper uploadedFileMapper;
     private final String filesDirectory;
     private final String baseUrl;
     private final String apkTrustedUrl;
@@ -74,16 +87,62 @@ public class ApplicationDAO extends AbstractLinkedDAO<Application, ApplicationCo
 
     @Inject
     public ApplicationDAO(ApplicationMapper mapper, CustomerDAO customerDAO,
+                          UploadedFileMapper uploadedFileMapper,
                           @Named("files.directory") String filesDirectory,
                           @Named("base.url") String baseUrl,
                           @Named("apk.trusted.url") String apkTrustedUrl,
                           APKFileAnalyzer apkFileAnalyzer) {
         this.mapper = mapper;
         this.customerDAO = customerDAO;
+        this.uploadedFileMapper = uploadedFileMapper;
         this.filesDirectory = filesDirectory;
         this.baseUrl = baseUrl;
         this.apkTrustedUrl = apkTrustedUrl;
         this.apkFileAnalyzer = apkFileAnalyzer;
+    }
+
+    /**
+     * <p>Resizes an extracted APK icon to a thumbnail (same convention as Settings -> Icons' own upload path,
+     * {@code IconFileResource}) and stores it as a regular {@code UploadedFile} owned by the given customer,
+     * returning its ID - or null if the icon bytes are missing/unreadable/can't be stored, in which case the
+     * caller simply leaves the application's icon as whatever it already is (no partial/broken state).</p>
+     *
+     * <p>Goes straight through {@code UploadedFileMapper} rather than {@code UploadedFileDAO#insert}, which always
+     * forces the record's customerId to the currently logged-in user - the icon backfill runs as a super-admin
+     * across every customer's applications, so the target customer must be the APPLICATION's owner, not whoever
+     * triggered the backfill.</p>
+     */
+    private Integer storeExtractedIcon(byte[] iconPngBytes, Customer customer) {
+        if (iconPngBytes == null) {
+            return null;
+        }
+        try {
+            BufferedImage img = ImageIO.read(new ByteArrayInputStream(iconPngBytes));
+            if (img == null) {
+                return null;
+            }
+
+            final String customerFilesDir = customer.getFilesDir();
+            final File customerFilesDirectory = new File(this.filesDirectory, customerFilesDir == null ? "" : customerFilesDir);
+            if (!customerFilesDirectory.exists()) {
+                customerFilesDirectory.mkdirs();
+            }
+
+            File iconFile = new File(customerFilesDirectory, UUID.randomUUID().toString() + ".png");
+            BufferedImage scaledImage = Scalr.resize(img, 144);
+            ImageIO.write(scaledImage, "png", iconFile);
+
+            UploadedFile uploadedFile = new UploadedFile();
+            uploadedFile.setCustomerId(customer.getId());
+            uploadedFile.setFilePath(iconFile.getName());
+            uploadedFile.setUploadTime(System.currentTimeMillis());
+
+            this.uploadedFileMapper.insert(uploadedFile);
+            return uploadedFile.getId();
+        } catch (Exception e) {
+            log.warn("Failed to store an APK-extracted icon for customer #{}", customer.getId(), e);
+            return null;
+        }
     }
 
     public List<Application> getAllApplications() {
@@ -146,6 +205,8 @@ public class ApplicationDAO extends AbstractLinkedDAO<Application, ApplicationCo
                 application.setVersion(apkFileDetails.getVersion());
                 // APK architecture is determined on a previous step, and can be overridden by user's request
                 //application.setArch(apkFileDetails.getArch());
+
+                application.setApkIconFileId(storeExtractedIcon(apkFileDetails.getIconPngBytes(), customer));
             } else {
                 log.error("Could not move the uploaded .apk-file {}", filePath);
                 throw new DAOException("Could not move the uploaded .apk-file");
@@ -904,6 +965,14 @@ public class ApplicationDAO extends AbstractLinkedDAO<Application, ApplicationCo
                 }
 
                 applicationVersion.setVersion(apkFileDetails.getVersion());
+
+                // A new version may ship a redesigned icon - only overwrite the app-level icon when this version's
+                // APK actually yields one, so an unrelated/icon-less re-upload (e.g. an arch-specific split APK)
+                // never blanks out an icon a previous version already supplied.
+                final Integer newIconFileId = storeExtractedIcon(apkFileDetails.getIconPngBytes(), customer);
+                if (newIconFileId != null) {
+                    this.mapper.updateApplicationApkIcon(applicationVersion.getApplicationId(), newIconFileId);
+                }
             } else {
                 log.error("Could not move the uploaded .apk-file {}", filePath);
                 throw new DAOException("Could not move the uploaded .apk-file");
@@ -1095,5 +1164,143 @@ public class ApplicationDAO extends AbstractLinkedDAO<Application, ApplicationCo
     public boolean isMainApp(String url) {
         List<Long> mainApps = mapper.getMainAppWithUrl(url);
         return mainApps.size() > 0;
+    }
+
+    /**
+     * Bounded size for an external-URL APK download during the icon backfill below - generous for a real APK, but
+     * enough to reject anything clearly wrong (a non-APK response, a misconfigured endpoint streaming forever, etc).
+     */
+    private static final long MAX_ICON_BACKFILL_DOWNLOAD_BYTES = 300L * 1024 * 1024;
+
+    /**
+     * <p>One-off icon backfill for already-uploaded apps that predate APK icon extraction (Applications page's
+     * "Backfill icons" action). A super-admin runs it across every customer's applications; any other user with
+     * the edit_applications permission can still run it, scoped to just their own customer's apps - most
+     * deployments of this product are single-tenant and have no super-admin account at all, so gating this
+     * entirely behind super-admin would make the action unreachable there. Re-opens each app's already-stored APK
+     * (from local disk when it's hosted on this server, or via a bounded download - timeout + size cap, same
+     * spirit as the self-update downloader - when it's an external URL) and runs it through the same
+     * extraction/storage path a fresh upload uses. Every application is handled in its own try/catch so one
+     * broken/unreachable APK never aborts the rest of the batch, and each successful update commits independently
+     * (no single long-running transaction wrapping what can be a slow, network-bound loop).</p>
+     *
+     * @return the number of applications an icon was successfully backfilled for.
+     */
+    public int backfillApkIcons() {
+        if (!SecurityContext.get().hasPermission("edit_applications")) {
+            throw SecurityException.onAdminDataAccessViolation("backfill APK icons");
+        }
+
+        final List<Application> candidates = SecurityContext.get().isSuperAdmin()
+                ? this.mapper.findApplicationsNeedingIconBackfill()
+                : this.mapper.findApplicationsNeedingIconBackfillForCustomer(
+                        SecurityContext.get().getCurrentUser().get().getCustomerId());
+        int updated = 0;
+
+        for (Application app : candidates) {
+            File tempDownload = null;
+            try {
+                final Customer customer = this.customerDAO.findById(app.getCustomerId());
+                if (customer == null) {
+                    continue;
+                }
+
+                String url = app.getUrl();
+                if (StringUtil.isEmpty(url)) {
+                    url = app.getUrlArm64();
+                }
+                if (StringUtil.isEmpty(url)) {
+                    url = app.getUrlArmeabi();
+                }
+                if (StringUtil.isEmpty(url)) {
+                    continue;
+                }
+
+                File apkFile;
+                final String localRelativePath = FileUtil.translateURLToLocalFilePath(customer, url, this.baseUrl);
+                if (localRelativePath != null) {
+                    final String customerFilesDir = customer.getFilesDir();
+                    final File customerDir = new File(this.filesDirectory, customerFilesDir == null ? "" : customerFilesDir);
+                    apkFile = new File(customerDir, localRelativePath);
+                } else {
+                    tempDownload = downloadApkToTempFile(url);
+                    apkFile = tempDownload;
+                }
+
+                if (apkFile == null || !apkFile.exists()) {
+                    continue;
+                }
+
+                final APKFileDetails apkFileDetails = this.apkFileAnalyzer.analyzeFile(apkFile.getAbsolutePath());
+                final Integer iconFileId = storeExtractedIcon(apkFileDetails.getIconPngBytes(), customer);
+                if (iconFileId != null) {
+                    this.mapper.updateApplicationApkIcon(app.getId(), iconFileId);
+                    updated++;
+                }
+            } catch (Exception e) {
+                log.warn("Icon backfill failed for application #{} ({})", app.getId(), app.getPkg(), e);
+            } finally {
+                if (tempDownload != null) {
+                    tempDownload.delete();
+                }
+            }
+        }
+
+        return updated;
+    }
+
+    /**
+     * <p>Downloads an external APK to a temp file for icon backfill purposes only, bounded by a connect/read
+     * timeout and {@link #MAX_ICON_BACKFILL_DOWNLOAD_BYTES}. Returns null (instead of throwing) for any failure -
+     * an unreachable host, a response larger than the cap, etc - since a skipped icon is an acceptable outcome
+     * here, unlike a real upload.</p>
+     */
+    private File downloadApkToTempFile(String url) {
+        HttpURLConnection connection = null;
+        File tempFile = null;
+        try {
+            connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setConnectTimeout(15000);
+            connection.setReadTimeout(30000);
+            connection.setInstanceFollowRedirects(true);
+
+            final long declaredLength = connection.getContentLengthLong();
+            if (declaredLength > MAX_ICON_BACKFILL_DOWNLOAD_BYTES) {
+                log.warn("Skipping icon backfill download from {}: declared size {} exceeds the {} byte cap",
+                        url, declaredLength, MAX_ICON_BACKFILL_DOWNLOAD_BYTES);
+                return null;
+            }
+
+            final String suffix = url.toLowerCase().endsWith(".xapk") ? ".xapk" : ".apk";
+            tempFile = File.createTempFile("apk-icon-backfill-", suffix);
+            long totalRead = 0;
+            try (InputStream in = connection.getInputStream();
+                 OutputStream out = new FileOutputStream(tempFile)) {
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    totalRead += read;
+                    if (totalRead > MAX_ICON_BACKFILL_DOWNLOAD_BYTES) {
+                        log.warn("Aborting icon backfill download from {}: exceeded the {} byte cap",
+                                url, MAX_ICON_BACKFILL_DOWNLOAD_BYTES);
+                        tempFile.delete();
+                        return null;
+                    }
+                    out.write(buffer, 0, read);
+                }
+            }
+
+            return tempFile;
+        } catch (Exception e) {
+            log.warn("Failed to download APK from {} for icon backfill", url, e);
+            if (tempFile != null) {
+                tempFile.delete();
+            }
+            return null;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 }

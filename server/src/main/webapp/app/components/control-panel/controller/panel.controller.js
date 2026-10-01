@@ -463,6 +463,7 @@ angular.module('headwind-kiosk')
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/application.html',
                 controller: 'ApplicationModalController',
+                windowClass: 'app-modal-wide',
                 resolve: {
                     application: function () {
                         return application;
@@ -472,6 +473,9 @@ angular.module('headwind-kiosk')
                     },
                     closeOnSave: function () {
                         return false;
+                    },
+                    pendingFile: function () {
+                        return null;
                     }
                 }
             });

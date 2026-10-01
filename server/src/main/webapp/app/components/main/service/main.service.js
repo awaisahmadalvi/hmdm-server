@@ -65,6 +65,117 @@ angular.module('headwind-kiosk')
             removeIcon: {url: 'rest/private/icons/:id', method: 'DELETE'},
         });
     })
+    // Icon objects (iconService.getAllIcons) only carry id/name/fileId - no
+    // ready-to-use image URL (see icons.controller.js's identical fileUrlById
+    // cross-reference). This centralizes that same "icons -> files -> url"
+    // join into one cached lookup so every place that needs to render an
+    // application's assigned icon (the Applications table, the Add/Edit
+    // dialog header/launcher preview/icon picker, the Configuration editor's
+    // Applications tab) shares one request pair instead of each repeating it.
+    .factory('appIconService', function (iconService, fileService) {
+        var urlByIconId = null;
+        // The raw uploadedFiles id -> url map, kept around (not just folded
+        // into urlByIconId) so an application's own apkIconFileId - a direct
+        // uploadedFiles reference extracted from its APK, with no Settings ->
+        // Icons record in between - can be resolved the same way, without a
+        // second request pair.
+        var fileUrlByIdMap = null;
+        var loading = false;
+        var pending = [];
+        var pendingFiles = [];
+
+        var notifyAll = function () {
+            var callbacks = pending;
+            pending = [];
+            callbacks.forEach(function (callback) {
+                callback(urlByIconId);
+            });
+
+            var fileCallbacks = pendingFiles;
+            pendingFiles = [];
+            fileCallbacks.forEach(function (callback) {
+                callback(fileUrlByIdMap);
+            });
+        };
+
+        var load = function () {
+            if (loading) {
+                return;
+            }
+            loading = true;
+
+            var fileUrlById = {};
+            var icons = null;
+            var filesDone = false;
+            var iconsDone = false;
+
+            var maybeFinish = function () {
+                if (!filesDone || !iconsDone) {
+                    return;
+                }
+                var map = {};
+                (icons || []).forEach(function (icon) {
+                    if (icon.fileId && fileUrlById[icon.fileId]) {
+                        map[icon.id] = fileUrlById[icon.fileId];
+                    }
+                });
+                urlByIconId = map;
+                fileUrlByIdMap = fileUrlById;
+                loading = false;
+                notifyAll();
+            };
+
+            fileService.getAllFiles({}, function (response) {
+                (response.data || []).forEach(function (file) {
+                    fileUrlById[file.id] = file.url;
+                });
+                filesDone = true;
+                maybeFinish();
+            }, function () {
+                filesDone = true;
+                maybeFinish();
+            });
+
+            iconService.getAllIcons(function (response) {
+                icons = response.data || [];
+                iconsDone = true;
+                maybeFinish();
+            }, function () {
+                icons = [];
+                iconsDone = true;
+                maybeFinish();
+            });
+        };
+
+        return {
+            // callback(urlByIconId) - a plain {iconId: fileUrl} map
+            getMap: function (callback) {
+                if (urlByIconId) {
+                    callback(urlByIconId);
+                    return;
+                }
+                pending.push(callback);
+                load();
+            },
+            // callback(fileUrlById) - a plain {uploadedFileId: fileUrl} map,
+            // for resolving apkIconFileId directly (no icons-table indirection)
+            getFileUrlMap: function (callback) {
+                if (fileUrlByIdMap) {
+                    callback(fileUrlByIdMap);
+                    return;
+                }
+                pendingFiles.push(callback);
+                load();
+            },
+            // Call after an icon is added/edited/removed (e.g. addNewIcon's
+            // result) so the next getMap() call picks up the change instead
+            // of serving a stale cached map.
+            refresh: function () {
+                urlByIconId = null;
+                fileUrlByIdMap = null;
+            }
+        };
+    })
     .factory('settingsService', function ($resource) {
         return $resource('', {}, {
             getSettings: {url: 'rest/private/settings', method: 'GET'},
@@ -144,7 +255,8 @@ angular.module('headwind-kiosk')
             getConfigurations: {url: 'rest/private/applications/configurations/:id', method: 'GET'},
             getVersionConfigurations: {url: 'rest/private/applications/version/:id/configurations', method: 'GET'},
             updateApplicationConfigurations: {url: 'rest/private/applications/configurations', method: 'POST'},
-            updateApplicationVersionConfigurations: {url: 'rest/private/applications/version/configurations', method: 'POST'}
+            updateApplicationVersionConfigurations: {url: 'rest/private/applications/version/configurations', method: 'POST'},
+            backfillIcons: {url: 'rest/private/applications/admin/backfillIcons', method: 'GET'}
         })
     })
     .factory('fileService', function ($resource) {
