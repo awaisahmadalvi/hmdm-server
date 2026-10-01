@@ -252,6 +252,300 @@ angular.module('headwind-kiosk')
             { id: 'FAILURE', name: localization.localize('form.devices.selection.install.status.failure') }
         ];
 
+        // ---------------------------------------------------------------
+        // Presentation-only additions for the redesigned filter bar/panel,
+        // status tiles, filter chips, bulk-selection action bar, status
+        // legend and table density. None of this renames or replaces the
+        // existing searchParams/additionalParams/selection/paging bindings
+        // or buildSearchRequest() - it only reads/writes the same fields.
+        // ---------------------------------------------------------------
+
+        // "Filters" button/panel visibility is intentionally decoupled from
+        // additionalParams.enabled (which still means "are these fields
+        // included in the search request", exactly as before) so opening
+        // the panel to look around never silently changes search results.
+        // The panel always starts collapsed, even when filters from a
+        // previous session are already applied - the active-filter badge
+        // and the chips below the bar are what surface that, not the panel
+        // being pre-opened.
+        $scope.filterPanelOpen = false;
+
+        $scope.toggleFilterPanel = function () {
+            $scope.filterPanelOpen = !$scope.filterPanelOpen;
+        };
+
+        $scope.applyAdvancedFilters = function () {
+            $scope.additionalParams.enabled = true;
+            $scope.filterPanelOpen = false;
+            refreshFilterChips();
+            $scope.initSearch();
+        };
+
+        var ADDITIONAL_PARAM_DEFAULTS = {
+            dateFrom: null,
+            dateTo: null,
+            launcherVersion: '',
+            installationStatus: '',
+            androidVersion: '',
+            onlineOrOffline: null,
+            onlineTimeSelect: null,
+            onlineTimeEnter: '15',
+            kioskMode: null,
+            mdmMode: null,
+            imeiChanged: false
+        };
+
+        $scope.resetAdditionalParams = function () {
+            angular.extend($scope.additionalParams, angular.copy(ADDITIONAL_PARAM_DEFAULTS));
+            $scope.activeStatusTile = null;
+            refreshFilterChips();
+            $scope.initSearch();
+        };
+
+        // Counts only the filters that are actually sent (additionalParams.enabled
+        // gates all of them in buildSearchRequest) - drives the "Filters" button badge.
+        $scope.activeFilterCount = function () {
+            var p = $scope.additionalParams;
+            if (!p.enabled) {
+                return 0;
+            }
+            var count = 0;
+            if (p.dateFrom) count++;
+            if (p.dateTo) count++;
+            if (p.installationStatus && p.installationStatus !== 'ALL' && p.installationStatus.length > 0) count++;
+            if (p.launcherVersion && p.launcherVersion.trim().length > 0) count++;
+            if (p.androidVersion && p.androidVersion.trim().length > 0) count++;
+            if (p.onlineOrOffline) count++;
+            if (p.mdmMode !== null && p.mdmMode !== '' && p.mdmMode !== undefined) count++;
+            if (p.kioskMode !== null && p.kioskMode !== '' && p.kioskMode !== undefined) count++;
+            if (p.imeiChanged) count++;
+            return count;
+        };
+
+        var yesNoLabel = function (value) {
+            return value === '1' ? localization.localize('form.selection.status.yes') : localization.localize('form.selection.status.no');
+        };
+
+        // $scope.filterChips is the cached array the template's ng-repeat actually
+        // iterates - computeFilterChips() builds a brand new array every call, and
+        // calling that directly from ng-repeat (its first, broken version) sent
+        // AngularJS into an infinite $digest loop (verified live: "[$rootScope:
+        // infdig] 10 $digest() iterations reached"), since ng-repeat never sees a
+        // stable array reference to settle on. refreshFilterChips() is called
+        // explicitly at every point the underlying filters can change instead.
+        $scope.filterChips = [];
+        var refreshFilterChips = function () {
+            $scope.filterChips = computeFilterChips();
+        };
+
+        var computeFilterChips = function () {
+            var chips = [];
+            if ($scope.selection.groupId !== -1 && $scope.groups) {
+                var g = $scope.groups.find(function (x) { return x.id === $scope.selection.groupId; });
+                if (g) {
+                    chips.push({ key: 'group', label: localization.localize('table.heading.device.group') + ': ' + g.name });
+                }
+            }
+            if ($scope.selection.configurationId !== -1 && $scope.configurations) {
+                var c = $scope.configurations.find(function (x) { return x.id === $scope.selection.configurationId; });
+                if (c) {
+                    chips.push({ key: 'configuration', label: localization.localize('table.heading.device.configuration') + ': ' + c.name });
+                }
+            }
+
+            var p = $scope.additionalParams;
+            if (p.enabled) {
+                if (p.dateFrom || p.dateTo) {
+                    var from = p.dateFrom ? $filter('date')(p.dateFrom, 'yyyy-MM-dd') : '…';
+                    var to = p.dateTo ? $filter('date')(p.dateTo, 'yyyy-MM-dd') : '…';
+                    chips.push({ key: 'dateRange', label: localization.localize('form.settings.common.enrollment.date') + ': ' + from + ' – ' + to });
+                }
+                if (p.onlineOrOffline) {
+                    var statusLabel = p.onlineOrOffline === '1' ? localization.localize('form.devices.selection.online') : localization.localize('form.devices.selection.offline');
+                    chips.push({ key: 'onlineOrOffline', label: localization.localize('table.heading.device.status') + ': ' + statusLabel });
+                }
+                if (p.installationStatus && p.installationStatus !== 'ALL' && p.installationStatus.length > 0) {
+                    var opt = $scope.installStatusOptions.find(function (o) { return o.id === p.installationStatus; });
+                    chips.push({ key: 'installationStatus', label: localization.localize('form.devices.label.installation.status') + ': ' + (opt ? opt.name : p.installationStatus) });
+                }
+                if (p.mdmMode !== null && p.mdmMode !== '' && p.mdmMode !== undefined) {
+                    chips.push({ key: 'mdmMode', label: localization.localize('form.settings.common.mdm.mode') + ': ' + yesNoLabel(p.mdmMode) });
+                }
+                if (p.kioskMode !== null && p.kioskMode !== '' && p.kioskMode !== undefined) {
+                    chips.push({ key: 'kioskMode', label: localization.localize('form.settings.common.kiosk.mode') + ': ' + yesNoLabel(p.kioskMode) });
+                }
+                if (p.launcherVersion && p.launcherVersion.trim().length > 0) {
+                    chips.push({ key: 'launcherVersion', label: localization.localize('search.placeholder.launcher.version') + ': ' + p.launcherVersion });
+                }
+                if (p.androidVersion && p.androidVersion.trim().length > 0) {
+                    chips.push({ key: 'androidVersion', label: localization.localize('form.settings.common.android.version') + ': ' + p.androidVersion });
+                }
+                if (p.imeiChanged) {
+                    chips.push({ key: 'imeiChanged', label: localization.localize('form.devices.selection.imei.changed') });
+                }
+            }
+
+            return chips;
+        };
+
+        $scope.removeFilterChip = function (key) {
+            switch (key) {
+                case 'group': $scope.selection.groupId = -1; break;
+                case 'configuration': $scope.selection.configurationId = -1; break;
+                case 'dateRange': $scope.additionalParams.dateFrom = null; $scope.additionalParams.dateTo = null; break;
+                case 'onlineOrOffline': $scope.additionalParams.onlineOrOffline = null; $scope.activeStatusTile = null; break;
+                case 'installationStatus': $scope.additionalParams.installationStatus = ''; break;
+                case 'mdmMode': $scope.additionalParams.mdmMode = null; break;
+                case 'kioskMode': $scope.additionalParams.kioskMode = null; break;
+                case 'launcherVersion': $scope.additionalParams.launcherVersion = ''; break;
+                case 'androidVersion': $scope.additionalParams.androidVersion = ''; break;
+                case 'imeiChanged': $scope.additionalParams.imeiChanged = false; break;
+            }
+            refreshFilterChips();
+            $scope.initSearch();
+        };
+
+        $scope.clearAllFilterChips = function () {
+            $scope.selection.groupId = -1;
+            $scope.selection.configurationId = -1;
+            $scope.resetAdditionalParams();
+        };
+
+        // ---------- Status summary tiles ----------
+        // Total/Online/Idle/Offline are computed client-side from the full
+        // (unpaginated) device list for the current group/configuration
+        // selection - the same verified-correct approach the redesigned
+        // Summary page uses (its own comments explain why: the server's
+        // /rest/private/summary/devices aggregate was found to disagree
+        // with the per-device statusCode the status dot itself renders).
+        // "Needs attention" is likewise computed from the same per-device
+        // permission/app/files indicator functions already used for the
+        // table's status pills - reusing them, not duplicating the logic.
+        $scope.statusTiles = null;
+        $scope.statusTilesLoading = false;
+        $scope.activeStatusTile = null;
+
+        var loadStatusTiles = function () {
+            if ($scope.statusTilesLoading) {
+                return;
+            }
+            $scope.statusTilesLoading = true;
+            deviceService.getAllDevices({
+                value: '',
+                groupId: $scope.selection.groupId,
+                configurationId: $scope.selection.configurationId,
+                pageNum: 1,
+                pageSize: 10000,
+                sortBy: null,
+                sortDir: 'ASC',
+                fastSearch: false
+            }, function (response) {
+                $scope.statusTilesLoading = false;
+                if (response.data && response.data.devices && response.data.devices.items) {
+                    var items = response.data.devices.items;
+                    var configurations = response.data.configurations || {};
+                    var counts = { green: 0, yellow: 0, red: 0, attention: 0 };
+
+                    items.forEach(function (device) {
+                        if (counts.hasOwnProperty(device.statusCode)) {
+                            counts[device.statusCode]++;
+                        }
+                        device.configuration = configurations[device.configurationId];
+                        try {
+                            var needsAttention =
+                                $scope.getDevicePermissionIndicatorImage(device) === 'images/offline.png' ||
+                                $scope.getDeviceApplicationsIndicatorImage(device) === 'images/offline.png' ||
+                                $scope.getDeviceFilesIndicatorImage(device) === 'images/offline.png';
+                            if (needsAttention) {
+                                counts.attention++;
+                            }
+                        } catch (e) {
+                            // Device missing configuration/info data for one of the 3 checks - just
+                            // don't count it toward "needs attention" rather than fail the whole tile.
+                        }
+                    });
+
+                    $scope.statusTiles = {
+                        total: items.length,
+                        online: counts.green,
+                        idle: counts.yellow,
+                        offline: counts.red,
+                        attention: counts.attention
+                    };
+                }
+            }, function () {
+                $scope.statusTilesLoading = false;
+            });
+        };
+
+        // Online/Offline tiles map to the exact same 2h/4h thresholds the
+        // status dot itself uses (see calculateStatusText/DeviceMapper.xml).
+        // Idle (the 2h-4h band) and "Needs attention" (permission/app/files
+        // status) have no equivalent single-sided request parameter on the
+        // existing search API, so - rather than fake a filter that wouldn't
+        // actually match what the tile counted - those two tiles are
+        // count-only and are not clickable.
+        $scope.selectStatusTile = function (tile) {
+            if ($scope.activeStatusTile === tile) {
+                tile = null;
+            }
+            $scope.activeStatusTile = tile;
+            $scope.additionalParams.enabled = true;
+
+            if (tile === 'online') {
+                $scope.additionalParams.onlineOrOffline = '1';
+                $scope.additionalParams.onlineTimeSelect = '120';
+            } else if (tile === 'offline') {
+                $scope.additionalParams.onlineOrOffline = '2';
+                $scope.additionalParams.onlineTimeSelect = '1';
+                $scope.additionalParams.onlineTimeEnter = '240';
+            } else {
+                $scope.additionalParams.onlineOrOffline = null;
+            }
+
+            refreshFilterChips();
+            $scope.initSearch();
+        };
+
+        // ---------- Bulk-selection action bar ----------
+        $scope.selectedDeviceCount = function () {
+            if (!$scope.devices) {
+                return 0;
+            }
+            return $scope.devices.filter(function (d) { return d.selected; }).length;
+        };
+
+        $scope.clearSelection = function () {
+            if ($scope.devices) {
+                $scope.devices.forEach(function (d) { d.selected = false; });
+            }
+            $scope.selection.all = false;
+        };
+
+        // ---------- Status pill legend popover ----------
+        $scope.statusLegendOpen = false;
+        $scope.toggleStatusLegend = function () {
+            $scope.statusLegendOpen = !$scope.statusLegendOpen;
+        };
+
+        // ---------- Table density (comfortable/compact) ----------
+        $scope.tableDensity = $window.localStorage.getItem('HMDM_devicesTableDensity') || 'comfortable';
+        $scope.setTableDensity = function (mode) {
+            $scope.tableDensity = mode;
+            $window.localStorage.setItem('HMDM_devicesTableDensity', mode);
+        };
+
+        // ---------- "Needs attention" pill click-through ----------
+        // Opens the Detailed Information plugin's per-device page, if that
+        // plugin happens to be installed/enabled - otherwise the pill is
+        // informational only (tooltip still shows the specific problem).
+        $scope.openDeviceDetails = function (device) {
+            var hasDeviceInfoPlugin = ($scope.plugins || []).some(function (p) { return p.identifier === 'deviceinfo'; });
+            if (hasDeviceInfoPlugin) {
+                $state.transitionTo('plugin-deviceinfo', { deviceNumber: device.number });
+            }
+        };
+
         $scope.firstRecord = function () {
             if ($scope.paging.totalItems == 0) {
                 return 0;
@@ -316,11 +610,13 @@ angular.module('headwind-kiosk')
         groupService.getAllGroups(function (response) {
             $scope.groups = response.data;
             $scope.groups.unshift({ id: -1, name: localization.localize('devices.group.options.all') });
+            refreshFilterChips();
         });
 
         configurationService.getAllConfigNames(function (response) {
             $scope.configurations = response.data;
             $scope.configurations.unshift({ id: -1, name: localization.localize('devices.configuration.options.all') });
+            refreshFilterChips();
         });
 
         var loadCommonSettings = function (completion) {
@@ -545,6 +841,16 @@ angular.module('headwind-kiosk')
 
                     $scope.paging.totalItems = response.data.devices.totalItemsCount;
 
+                    // Fired only after this search's own request/response cycle is fully
+                    // done (not in parallel with it) - both calls hit the same
+                    // rest/private/devices/search endpoint, and the app's global spinner
+                    // HTTP interceptor tracks in-flight requests keyed by URL only, so two
+                    // concurrent calls to that same URL corrupt each other's show/close
+                    // bookkeeping and leave the full-page spinner stuck open forever
+                    // (verified live). Sequencing after this response avoids that entirely.
+                    loadStatusTiles();
+                    refreshFilterChips();
+
                     if (callback) {
                         callback();
                     }
@@ -716,6 +1022,46 @@ angular.module('headwind-kiosk')
             res += ' ' + localization.localize('form.devices.status.ago') + "\n" +
                 $filter('date')(device.lastUpdateDate, 'yyyy/MM/dd HH:mm:ss');
             return res;
+        };
+
+        // Presentation-only helpers for the redesigned status dot/pills - map the
+        // exact same statusCode/image-path values getDeviceIndicatorImage and the
+        // 3 getDevice*IndicatorImage functions already compute onto a CSS class
+        // instead of an <img src>, without changing what they compute.
+        $scope.deviceStatusClass = function (device) {
+            if (device.statusCode === 'green') return 'devices-status-dot-online';
+            if (device.statusCode === 'yellow') return 'devices-status-dot-idle';
+            if (device.statusCode === 'red') return 'devices-status-dot-offline';
+            var elapsed = new Date().getTime() - device.lastUpdate;
+            if (elapsed < updateTime) return 'devices-status-dot-online';
+            if (elapsed < 2 * updateTime) return 'devices-status-dot-idle';
+            return 'devices-status-dot-offline';
+        };
+
+        $scope.deviceStatusLabel = function (device) {
+            var cls = $scope.deviceStatusClass(device);
+            if (cls === 'devices-status-dot-online') return localization.localize('devices.tile.online');
+            if (cls === 'devices-status-dot-idle') return localization.localize('devices.tile.idle');
+            return localization.localize('devices.tile.offline');
+        };
+
+        $scope.indicatorClass = function (imagePath) {
+            if (imagePath === 'images/online.png') return 'devices-indicator-ok';
+            if (imagePath === 'images/away.png') return 'devices-indicator-pending';
+            return 'devices-indicator-problem';
+        };
+
+        $scope.indicatorGlyph = function (imagePath) {
+            if (imagePath === 'images/online.png') return 'glyphicon-ok';
+            if (imagePath === 'images/away.png') return 'glyphicon-minus';
+            return 'glyphicon-remove';
+        };
+
+        $scope.hasAnySearchOrFilter = function () {
+            return !!($scope.searchParams.searchValue) ||
+                $scope.selection.groupId !== -1 ||
+                $scope.selection.configurationId !== -1 ||
+                $scope.activeFilterCount() > 0;
         };
 
         // Gets the info on the device parsed from the JSON-string taken from "info" attribute of the device
@@ -1148,6 +1494,10 @@ angular.module('headwind-kiosk')
         };
 
         $scope.openBulkUpdateModal = function () {
+            var count = $scope.selectedDeviceCount();
+            if (count === 0) {
+                return;
+            }
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/device.update.html',
                 controller: 'DeviceUpdateModalController',
@@ -1159,11 +1509,17 @@ angular.module('headwind-kiosk')
             });
 
             modalInstance.result.then(function () {
+                alertService.success(localization.localize('devices.bulk.config.success').replace('${count}', count));
+                $scope.clearSelection();
                 $scope.search();
             });
         };
 
         $scope.openBulkGroupModal = function () {
+            var count = $scope.selectedDeviceCount();
+            if (count === 0) {
+                return;
+            }
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/device.group.html',
                 controller: 'DeviceGroupModalController',
@@ -1175,24 +1531,36 @@ angular.module('headwind-kiosk')
             });
 
             modalInstance.result.then(function () {
+                alertService.success(localization.localize('devices.bulk.group.success').replace('${count}', count));
+                $scope.clearSelection();
                 $scope.search();
             });
         };
 
         $scope.confirmBulkDelete = function () {
-            let localizedText = localization.localize('question.delete.device.bulk');
-            confirmModal.getUserConfirmation(localizedText, function () {
-                var ids = [];
-                for (var i = 0; i < $scope.devices.length; i++) {
-                    if ($scope.devices[i].selected) {
-                        ids.push($scope.devices[i].id);
+            var count = $scope.selectedDeviceCount();
+            if (count === 0) {
+                return;
+            }
+            var modalInstance = $modal.open({
+                templateUrl: 'app/components/main/view/modal/device.bulkDelete.html',
+                controller: 'DeviceBulkDeleteModalController',
+                resolve: {
+                    devices: function () {
+                        return $scope.devices;
+                    },
+                    count: function () {
+                        return count;
                     }
                 }
-                deviceService.removeDeviceBulk({ ids: ids }, function () {
-                    $scope.search();
-                    // Reload settings because the device amount may be changed
-                    loadCommonSettings();
-                });
+            });
+
+            modalInstance.result.then(function () {
+                alertService.success(localization.localize('devices.bulk.delete.success').replace('${count}', count));
+                $scope.clearSelection();
+                $scope.search();
+                // Reload settings because the device amount may be changed
+                loadCommonSettings();
             });
         };
 
@@ -1200,6 +1568,7 @@ angular.module('headwind-kiosk')
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/device.html',
                 controller: 'DeviceModalController',
+                windowClass: 'app-modal-wide',
                 resolve: {
                     device: function () {
                         return device;
@@ -1221,6 +1590,7 @@ angular.module('headwind-kiosk')
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/batchDevice.html',
                 controller: 'DeviceModalController',
+                windowClass: 'app-modal-wide',
                 resolve: {
                     device: function () {
                         return device;
@@ -1319,8 +1689,12 @@ angular.module('headwind-kiosk')
 
         $scope.init();
     })
-    .controller('DeviceUpdateModalController', function ($scope, $modalInstance, configurationService, deviceService, devices) {
+    .controller('DeviceUpdateModalController', function ($scope, $modalInstance, configurationService, deviceService, localization, devices) {
         $scope.device = {};
+        $scope.configSearchText = '';
+        $scope.saving = false;
+        $scope.errorMessage = undefined;
+        $scope.selectedCount = devices.filter(function (d) { return d.selected; }).length;
 
         configurationService.getAllConfigNames(function (response) {
             $scope.device.configurationId = response.data[0].id;
@@ -1328,6 +1702,9 @@ angular.module('headwind-kiosk')
         });
 
         $scope.save = function () {
+            if ($scope.saving) {
+                return;
+            }
             var ids = [];
             for (var i = 0; i < devices.length; i++) {
                 if (devices[i].selected) {
@@ -1335,19 +1712,30 @@ angular.module('headwind-kiosk')
                 }
             }
 
+            $scope.errorMessage = undefined;
+            $scope.saving = true;
             var device = { 'ids': ids, configurationId: $scope.device.configurationId };
             deviceService.updateDevice(device, function () {
+                $scope.saving = false;
                 $modalInstance.close();
+            }, function () {
+                $scope.saving = false;
+                $scope.errorMessage = localization.localize('error.request.failure');
             });
         };
 
         $scope.closeModal = function () {
-            $modalInstance.dismiss();
+            if (!$scope.saving) {
+                $modalInstance.dismiss();
+            }
         }
     })
-    .controller('DeviceGroupModalController', function ($scope, $modalInstance, groupService, deviceService, devices) {
+    .controller('DeviceGroupModalController', function ($scope, $modalInstance, groupService, deviceService, localization, devices) {
         $scope.device = {};
         $scope.groupAction = 'set';
+        $scope.saving = false;
+        $scope.errorMessage = undefined;
+        $scope.selectedCount = devices.filter(function (d) { return d.selected; }).length;
 
         groupService.getAllGroups(function (response) {
             $scope.groups = response.data;
@@ -1359,6 +1747,9 @@ angular.module('headwind-kiosk')
         $scope.groupsSelection = [];
 
         $scope.save = function () {
+            if ($scope.saving) {
+                return;
+            }
             var ids = [];
             for (var i = 0; i < devices.length; i++) {
                 if (devices[i].selected) {
@@ -1371,14 +1762,56 @@ angular.module('headwind-kiosk')
                 'action': $scope.groupAction,
                 'groups': $scope.groupsSelection
             };
+            $scope.errorMessage = undefined;
+            $scope.saving = true;
             deviceService.updateDeviceGroupBulk(device, function () {
+                $scope.saving = false;
                 $modalInstance.close();
+            }, function () {
+                $scope.saving = false;
+                $scope.errorMessage = localization.localize('error.request.failure');
             });
         };
 
         $scope.closeModal = function () {
-            $modalInstance.dismiss();
+            if (!$scope.saving) {
+                $modalInstance.dismiss();
+            }
         }
+    })
+    .controller('DeviceBulkDeleteModalController', function ($scope, $modalInstance, deviceService, localization, devices, count) {
+        $scope.deleting = false;
+        $scope.errorMessage = undefined;
+        $scope.confirmTitle = localization.localize('devices.bulk.delete.title').replace('${count}', count);
+        $scope.confirmBody = localization.localize('devices.bulk.delete.body');
+
+        $scope.closeModal = function () {
+            if (!$scope.deleting) {
+                $modalInstance.dismiss();
+            }
+        };
+
+        $scope.confirmDelete = function () {
+            if ($scope.deleting) {
+                return;
+            }
+            var ids = [];
+            for (var i = 0; i < devices.length; i++) {
+                if (devices[i].selected) {
+                    ids.push(devices[i].id);
+                }
+            }
+
+            $scope.errorMessage = undefined;
+            $scope.deleting = true;
+            deviceService.removeDeviceBulk({ ids: ids }, function () {
+                $scope.deleting = false;
+                $modalInstance.close();
+            }, function () {
+                $scope.deleting = false;
+                $scope.errorMessage = localization.localize('error.request.failure');
+            });
+        };
     })
     .controller('DeviceModalController',
         function ($scope, $modalInstance, deviceService, configurationService, groupService, device, settings,

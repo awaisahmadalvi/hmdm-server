@@ -794,6 +794,7 @@
                                        localized-placeholder="search.placeholder.application"
                                        class="form-control logs-input settings-input"
                                        typeahead="app as (app.name + (app.version && app.version !== '0' ? ' ' + app.version : '')) for app in getApps($viewValue)"
+                                       typeahead-template-url="app/components/main/view/modal/appTypeaheadSuggestion.html"
                                        typeahead-loading="loadingApps"
                                        typeahead-wait-ms="300"
                                        typeahead-input-formatter="appLookupFormatter($model)"
@@ -896,6 +897,7 @@
                                        localized-placeholder="search.placeholder.application"
                                        class="form-control logs-input settings-input"
                                        typeahead="app as (app.name + (app.version && app.version !== '0' ? ' ' + app.version : '')) for app in getApps($viewValue)"
+                                       typeahead-template-url="app/components/main/view/modal/appTypeaheadSuggestion.html"
                                        typeahead-loading="loadingApps"
                                        typeahead-wait-ms="300"
                                        typeahead-input-formatter="appLookupFormatter($model)"
@@ -1175,7 +1177,7 @@
                             <div class="app-settings-group-header" ng-click="toggleAppSettingsGroup(groupKey)">
                                 <span class="glyphicon app-settings-group-chevron"
                                       ng-class="appSettingsCollapsed[groupKey] ? 'glyphicon-chevron-right' : 'glyphicon-chevron-down'"></span>
-                                <span class="app-icon-placeholder glyphicon glyphicon-apps"></span>
+                                <app-icon application="group.application" size="36"></app-icon>
                                 <div class="app-settings-group-info">
                                     <div class="app-name-text">{{group.applicationName || group.applicationPkg}}</div>
                                     <div class="device-details-app-pkg">{{group.applicationPkg}}</div>

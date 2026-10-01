@@ -293,8 +293,13 @@
                 <tbody>
                 <tr ng-repeat="app in deviceInfo.applications">
                     <td>
-                        <div class="device-details-app-name">{{app.applicationName}}</div>
-                        <div class="device-details-app-pkg">{{app.applicationPkg}}</div>
+                        <div class="app-name-cell">
+                            <app-icon application="{iconId: app.applicationIconId, apkIconFileId: app.applicationApkIconFileId, pkg: app.applicationPkg, name: app.applicationName, type: app.applicationType}" size="36"></app-icon>
+                            <div>
+                                <div class="device-details-app-name">{{app.applicationName}}</div>
+                                <div class="device-details-app-pkg">{{app.applicationPkg}}</div>
+                            </div>
+                        </div>
                     </td>
                     <td>{{app.versionInstalled || '—'}}</td>
                     <td>{{app.versionRequired || '—'}}</td>

@@ -1745,6 +1745,25 @@ angular.module('headwind-kiosk')
             $scope.appSettingsSummary = {settings: 0, apps: 0};
             $scope.appSettingsCollapsed = {};
 
+            // Looked up from allApplications (already loaded for this tab's own
+            // table/typeaheads) rather than fetched per-app, since this group
+            // header only needs the icon fields (iconId/apkIconFileId/type)
+            // that object already carries.
+            var findApplicationForGroup = function (applicationId, applicationPkg) {
+                var apps = allApplications || [];
+                for (var i = 0; i < apps.length; i++) {
+                    if (applicationId && apps[i].id === applicationId) {
+                        return apps[i];
+                    }
+                }
+                for (var j = 0; j < apps.length; j++) {
+                    if (applicationPkg && apps[j].pkg === applicationPkg) {
+                        return apps[j];
+                    }
+                }
+                return null;
+            };
+
             var computeApplicationSettingsGroups = function () {
                 var byApp = {};
                 var order = [];
@@ -1755,6 +1774,7 @@ angular.module('headwind-kiosk')
                             applicationId: item.applicationId,
                             applicationName: item.applicationName,
                             applicationPkg: item.applicationPkg,
+                            application: findApplicationForGroup(item.applicationId, item.applicationPkg),
                             settings: []
                         };
                         order.push(key);

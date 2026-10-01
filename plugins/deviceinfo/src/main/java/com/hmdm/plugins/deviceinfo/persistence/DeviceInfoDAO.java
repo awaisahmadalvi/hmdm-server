@@ -220,6 +220,9 @@ public class DeviceInfoDAO {
                 app.setApplicationPkg(pkg);
                 app.setVersionInstalled(deviceAppVersion.map(DeviceApplication::getVersion).orElse(null));
                 app.setVersionRequired(configApp.map(Application::getVersion).orElse(null));
+                app.setApplicationType(configApp.map(Application::getType).map(Enum::name).orElse(null));
+                app.setApplicationIconId(configApp.map(Application::getIconId).orElse(null));
+                app.setApplicationApkIconFileId(configApp.map(Application::getApkIconFileId).orElse(null));
 
                 // Not installed system apps as well as web apps are not displayed
                 if (ApplicationType.app.equals(configApp.map(Application::getType).orElse(null)) &&

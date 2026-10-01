@@ -1,0 +1,22 @@
+<!-- Localization completed -->
+<div class="modern-modal-header">
+    <div class="modern-modal-icon modern-modal-icon-danger">
+        <span class="glyphicon glyphicon-trash"></span>
+    </div>
+    <h4 class="modern-modal-title">{{confirmTitle}}</h4>
+    <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close" ng-disabled="deleting">&times;</button>
+</div>
+
+<div ng-show='errorMessage' class='device-details-inline-error'><span>{{errorMessage}}</span></div>
+
+<div class="modal-body modern-modal-body">
+    <p class="danger-zone-desc">{{confirmBody}}</p>
+
+    <div class="modern-modal-actions">
+        <button type="button" class="btn btn-default" ng-click="closeModal()" ng-disabled="deleting" localized>button.cancel</button>
+        <button type="button" class="btn btn-danger-solid" ng-click="confirmDelete()" ng-disabled="deleting">
+            <span ng-if="!deleting" localized>button.delete</span>
+            <span ng-if="deleting" localized>devices.bulk.deleting</span>
+        </button>
+    </div>
+</div>

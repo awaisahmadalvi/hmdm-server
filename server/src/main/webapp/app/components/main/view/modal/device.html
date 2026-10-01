@@ -1,110 +1,116 @@
 <!-- Localization completed -->
-<div class="modern-modal-header">
-    <div class="modern-modal-icon">
-        <span class="glyphicon glyphicon-phone"></span>
+<div class="modern-modal-header app-modal-header">
+    <div class="app-modal-header-top">
+        <div class="modern-modal-icon">
+            <span class="glyphicon glyphicon-phone"></span>
+        </div>
+        <div class="app-modal-header-text">
+            <h4 class="modern-modal-title">{{(device.id ? 'modal.device.title.edit' : 'modal.device.title.add') | localize}}</h4>
+            <div class="app-modal-header-sub" ng-if="device.id">{{device.number}}</div>
+        </div>
+        <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
     </div>
-    <h4 class="modern-modal-title">{{(device.id ? 'modal.device.title.edit' : 'modal.device.title.add') | localize}}</h4>
-    <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
 </div>
 
-<div ng-show='errorMessage' class='modal-header'>
-    <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
-</div>
+<div ng-show='errorMessage' class='device-details-inline-error'><span>{{errorMessage}}</span></div>
+
 <div class='modal-body modern-modal-body'>
-    <form class='form-horizontal'>
+<div class="app-modal-columns">
+<div class="app-modal-col-left">
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label'><span localized>form.device.number</span><br>
-                <span style="color: #aaa; font-size: 10px" localized>form.device.number.hint</span></label>
-            <div class='col-sm-8'>
-                <input ng-model='device.number' type='text' class='form-control' ng-disabled="!canEditDevice || migratingDevice" title="{{migrationHint}}"
-                       focus-me>
-            </div>
+    <div class="device-details-card app-modal-section">
+        <div class="device-details-card-header" localized>form.device.section.identity</div>
+
+        <div class="design-field">
+            <label class="design-field-label" for="deviceNumber" localized>form.device.number</label>
+            <input ng-model='device.number' id="deviceNumber" type='text' class='form-control logs-input settings-input'
+                   ng-disabled="!canEditDevice || migratingDevice" title="{{migrationHint}}" focus-me>
+            <div class="field-hint" ng-if="!migratingDevice" localized>form.device.number.hint</div>
+            <div class="field-hint" style="color: var(--color-warning-text)" ng-if="migratingDevice">{{migrationHint}}</div>
         </div>
 
-        <div class='form-group'>
-            <label class='col-sm-4 control-label' localized>form.device.desc</label>
-            <div class='col-sm-8'>
-                <textarea ng-model='device.description' class='form-control no-resize' rows="5"></textarea>
-            </div>
+        <div class="design-field">
+            <label class="design-field-label" for="deviceDesc" localized>form.device.desc</label>
+            <textarea ng-model='device.description' id="deviceDesc" class='form-control logs-input settings-input no-resize' rows="4"></textarea>
         </div>
 
-        <div class='form-group' ng-if="canEditDevice">
-            <label class='col-sm-4 control-label' localized>form.device.groups</label>
-            <div class='col-sm-8'>
-                <div ng-dropdown-multiselect
-                     options='groupsList'
-                     translation-texts='tableFilteringTexts'
-                     selected-model='groupsSelection'
-                     class='left margin-right-half custom-multi-select'></div>
-            </div>
+        <div class="design-field" ng-if="canEditDevice">
+            <label class="design-field-label" for="imei" localized>form.device.imei</label>
+            <input ng-model='device.imei' id="imei" maxlength="15" type='text' class='form-control logs-input settings-input'
+                   ui-mask="{{'999999999999999'}}" ui-options="{clearOnBlur: false, allowInvalidValue: true}"/>
         </div>
 
-        <div class='form-group' ng-if="canEditDevice">
-            <label class='col-sm-4 control-label' localized>form.device.config</label>
-            <div class='col-sm-8'>
-                <select class='form-control'
-                        ng-model='device.configurationId'
-                        ng-options="configuration.id as configuration.name for configuration in configurations">
-                </select>
-            </div>
+        <div class="design-field" ng-if="canEditDevice">
+            <label class="design-field-label" for="phone" localized>form.device.phone.number</label>
+            <input ng-model='device.phone' id="phone" type='text' class='form-control logs-input settings-input'
+                   ui-mask="{{settings.phoneNumberFormat}}" ui-options="{clearOnBlur: false, allowInvalidValue: true}">
+        </div>
+    </div>
+
+    <div class="device-details-card app-modal-section" ng-if="canEditDevice && (settings.customPropertyName1 || settings.customPropertyName2 || settings.customPropertyName3)">
+        <div class="device-details-card-header" localized>form.device.section.custom</div>
+
+        <div class="design-field" ng-if="settings.customPropertyName1">
+            <label class="design-field-label" for="custom1">{{settings.customPropertyName1}}</label>
+            <input ng-model='device.custom1' id="custom1" type='text' class='form-control logs-input settings-input'
+                   ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="!settings.customMultiline1">
+            <textarea ng-model='device.custom1' id="custom1t" type='text' class='form-control logs-input settings-input no-resize' rows="4"
+                      ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="settings.customMultiline1"></textarea>
         </div>
 
-        <div class='form-group' ng-if="canEditDevice">
-            <label class='col-sm-4 control-label' for="imei" localized>form.device.imei</label>
-            <div class='col-sm-8'>
-                <input ng-model='device.imei' id="imei" maxlength="15" type='text' class='form-control'
-                       ui-mask="{{'999999999999999'}}" ui-options="{clearOnBlur: false, allowInvalidValue: true}"/>
-            </div>
+        <div class="design-field" ng-if="settings.customPropertyName2">
+            <label class="design-field-label" for="custom2">{{settings.customPropertyName2}}</label>
+            <input ng-model='device.custom2' id="custom2" type='text' class='form-control logs-input settings-input'
+                   ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="!settings.customMultiline2">
+            <textarea ng-model='device.custom2' id="custom2t" type='text' class='form-control logs-input settings-input no-resize' rows="4"
+                      ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="settings.customMultiline2"></textarea>
         </div>
 
-        <div class='form-group' ng-if="canEditDevice">
-            <label class='col-sm-4 control-label' for="phone" localized>form.device.phone.number</label>
-            <div class='col-sm-8'>
-                <input ng-model='device.phone' id="phone" type='text' class='form-control'
-                       ui-mask="{{settings.phoneNumberFormat}}" ui-options="{clearOnBlur: false, allowInvalidValue: true}">
-            </div>
+        <div class="design-field" ng-if="settings.customPropertyName3">
+            <label class="design-field-label" for="custom3">{{settings.customPropertyName3}}</label>
+            <input ng-model='device.custom3' id="custom3" type='text' class='form-control logs-input settings-input'
+                   ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="!settings.customMultiline3">
+            <textarea ng-model='device.custom3' id="custom3t" type='text' class='form-control logs-input settings-input no-resize' rows="4"
+                      ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="settings.customMultiline3"></textarea>
+        </div>
+    </div>
+
+</div>
+<div class="app-modal-col-right">
+
+    <div class="device-details-card app-modal-section" ng-if="canEditDevice">
+        <div class="device-details-card-header" localized>form.device.section.management</div>
+
+        <div class="design-field">
+            <label class="design-field-label" localized>form.device.config</label>
+            <select class='form-control modern-select'
+                    ng-model='device.configurationId'
+                    ng-options="configuration.id as configuration.name for configuration in configurations">
+            </select>
         </div>
 
-        <div class='form-group' ng-if="canEditDevice && settings.customPropertyName1">
-            <label class='col-sm-4 control-label' for="custom1">{{settings.customPropertyName1}}</label>
-            <div class='col-sm-8'>
-                <input ng-model='device.custom1' id="custom1" type='text' class='form-control'
-                       ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="!settings.customMultiline1">
-                <textarea ng-model='device.custom1' id="custom1t" type='text' class='form-control' rows="5"
-                          ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="settings.customMultiline1"></textarea>
-            </div>
+        <div class="design-field">
+            <label class="design-field-label" localized>form.device.groups</label>
+            <div ng-dropdown-multiselect
+                 options='groupsList'
+                 translation-texts='tableFilteringTexts'
+                 selected-model='groupsSelection'
+                 class='left margin-right-half custom-multi-select'></div>
         </div>
+    </div>
 
-        <div class='form-group' ng-if="canEditDevice && settings.customPropertyName2">
-            <label class='col-sm-4 control-label' for="custom2">{{settings.customPropertyName2}}</label>
-            <div class='col-sm-8'>
-                <input ng-model='device.custom2' id="custom2" type='text' class='form-control'
-                       ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="!settings.customMultiline2">
-                <textarea ng-model='device.custom2' id="custom2t" type='text' class='form-control' rows="5"
-                          ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="settings.customMultiline2"></textarea>
-            </div>
-        </div>
+</div>
+</div>
+</div>
+</div>
 
-        <div class='form-group' ng-if="canEditDevice && settings.customPropertyName3">
-            <label class='col-sm-4 control-label' for="custom3">{{settings.customPropertyName3}}</label>
-            <div class='col-sm-8'>
-                <input ng-model='device.custom3' id="custom3" type='text' class='form-control'
-                       ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="!settings.customMultiline3">
-                <textarea ng-model='device.custom3' id="custom3t" type='text' class='form-control' rows="5"
-                          ui-options="{clearOnBlur: false, allowInvalidValue: true}" ng-if="settings.customMultiline3"></textarea>
-
-            </div>
-        </div>
-
-        <div class='form-group modern-modal-actions'>
-            <div class='col-sm-offset-4 col-sm-8'>
-                <button type='button' class='btn btn-default' ng-click='closeModal()'
-                        ng-disabled="loading"
-                        localized>button.cancel</button>
-                <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' ng-disabled="loading"
-                        localized>button.save</button>
-            </div>
-        </div>
-    </form>
+<div class="modern-modal-actions">
+    <span class="app-modal-footer-left"></span>
+    <div class="app-modal-actions-right">
+        <button type='button' class='btn btn-default' ng-click='closeModal()'
+                ng-disabled="loading"
+                localized>button.cancel</button>
+        <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' ng-disabled="loading"
+                localized>button.save</button>
+    </div>
 </div>

@@ -1,22 +1,27 @@
-<div class="modern-modal-header">
-  <div class="modern-modal-icon">
-    <span class="glyphicon glyphicon-import"></span>
+<div class="modern-modal-header app-modal-header">
+  <div class="app-modal-header-top">
+    <div class="modern-modal-icon">
+      <span class="glyphicon glyphicon-import"></span>
+    </div>
+    <div class="app-modal-header-text">
+      <h4 class="modern-modal-title" localized>modal.device.batch.title</h4>
+    </div>
+    <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
   </div>
-  <h4 class="modern-modal-title">Batch Device Import</h4>
-  <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
 </div>
 
-<div class="modal-body modern-modal-body" ng-controller="BatchDeviceController">
+<div ng-controller="BatchDeviceController" style="display: contents">
+<div class="modal-body modern-modal-body">
 
-  <div class="modern-toolbar batch-upload-card">
+  <div class="device-details-card app-modal-section batch-upload-card">
     <div class="batch-template-row">
       <button type="button" class="btn btn-default" ng-click="downloadTemplate()">
-        <span class="glyphicon glyphicon-download-alt"></span> Download File Template
+        <span class="glyphicon glyphicon-download-alt"></span> <span localized>form.device.batch.download.template</span>
       </button>
     </div>
 
     <div class="batch-upload-row">
-      <label class="control-label">Excel File</label>
+      <label class="control-label" localized>form.device.batch.excel.file</label>
       <input
         type="file"
         class="form-control"
@@ -28,36 +33,36 @@
         ng-click="preview()"
         ng-disabled="!importFile || loading"
       >
-        <span class="glyphicon glyphicon-eye-open"></span> Preview
+        <span class="glyphicon glyphicon-eye-open"></span> <span localized>button.preview</span>
       </button>
     </div>
   </div>
 
   <!-- Validation errors -->
-  <div class="alert alert-danger batch-alert-danger" ng-if="validationErrors.length">
-    <strong>Validation Errors:</strong>
-    <ul>
-      <li ng-repeat="e in validationErrors">{{e}}</li>
-    </ul>
+  <div class="device-details-inline-error" ng-if="validationErrors.length">
+    <span>
+      <strong localized>form.device.batch.validation.errors</strong>:
+      <span ng-repeat="e in validationErrors">{{e}}<span ng-if="!$last">; </span></span>
+    </span>
   </div>
 
   <!-- Preview -->
   <div ng-if="devicesPreview.length" class="preview-section">
-    <h4 class="preview-title">
-      <span class="glyphicon glyphicon-list-alt"></span> Preview
-      ({{devicesPreview.length}} device(s))
-    </h4>
+    <div class="device-details-card-header" style="margin: 20px 0 10px; border: none; padding: 0;">
+      <span class="glyphicon glyphicon-list-alt"></span>
+      {{ ('form.device.batch.preview.title' | localize).replace('${count}', devicesPreview.length) }}
+    </div>
 
     <div class="modern-table-wrap">
-      <table class="table table-hover custom-preview-table">
+      <table class="table modern-responsive-table">
         <thead>
           <tr>
-            <th class="text-center">Row Number</th>
-            <th class="text-left">Device Name</th>
-            <th class="text-left">Configuration</th>
-            <th class="text-left">Group</th>
-            <th class="text-center">Status</th>
-            <th class="text-left">Remarks</th>
+            <th class="text-center" localized>table.heading.device.batch.row</th>
+            <th localized>table.heading.device.batch.name</th>
+            <th localized>table.heading.device.batch.configuration</th>
+            <th localized>table.heading.device.batch.group</th>
+            <th class="text-center" localized>table.heading.device.status</th>
+            <th localized>table.heading.device.batch.remarks</th>
           </tr>
         </thead>
         <tbody>
@@ -65,11 +70,11 @@
             ng-repeat="d in devicesPreview"
             ng-class="{'danger': d.valid === false || d.importSuccess === false, 'success': d.importSuccess === true}"
           >
-            <td class="text-center">{{d.rowNumber}}</td>
-            <td class="text-left font-weight-medium">{{d.deviceName}}</td>
-            <td class="text-left">{{d.configurationValue}}</td>
-            <td class="text-left">{{d.groupValue}}</td>
-            <td class="text-center status-cell">
+            <td class="text-center" data-label="{{'table.heading.device.batch.row' | localize}}">{{d.rowNumber}}</td>
+            <td data-label="{{'table.heading.device.batch.name' | localize}}"><strong>{{d.deviceName}}</strong></td>
+            <td data-label="{{'table.heading.device.batch.configuration' | localize}}">{{d.configurationValue}}</td>
+            <td data-label="{{'table.heading.device.batch.group' | localize}}">{{d.groupValue}}</td>
+            <td class="text-center status-cell" data-label="{{'table.heading.device.status' | localize}}">
               <span ng-if="d.valid === false" class="text-danger"
                 ><span class="glyphicon glyphicon-remove"></span
               ></span>
@@ -87,7 +92,7 @@
                 ><span class="glyphicon glyphicon-ok"></span
               ></span>
             </td>
-            <td class="text-left remarks-cell">
+            <td class="remarks-cell" data-label="{{'table.heading.device.batch.remarks' | localize}}">
               <ul class="remarks-list" ng-if="d.errors && d.errors.length">
                 <li class="text-danger" ng-repeat="error in d.errors">
                   {{error}}
@@ -101,7 +106,7 @@
               <span
                 ng-if="importCompleted && d.importSuccess === true"
                 class="text-success"
-                >{{d.importMessage || 'Imported successfully'}}</span
+                >{{d.importMessage || ('form.device.batch.imported.success' | localize)}}</span
               >
             </td>
           </tr>
@@ -110,30 +115,32 @@
     </div>
 
     <!-- Inline Results Block -->
-    <div ng-if="importCompleted" class="result-message-container">
-      <p class="text-muted result-text">
-        <span class="glyphicon glyphicon-info-sign"></span> Result:
-        {{importSuccessCount}} device(s) imported successfully,
-        {{importFailedCount}} device(s) failed to import.
-      </p>
-    </div>
-
-    <!-- Action buttons -->
-    <div class="form-group modern-modal-actions text-right">
-      <button
-        class="btn btn-default"
-        ng-click="closeModal()"
-        ng-disabled="loading"
-      >
-        Cancel
-      </button>
-      <button
-        class="btn btn-default btn-modern-primary"
-        ng-click="import()"
-        ng-disabled="devicesPreview.length==0 || loading"
-      >
-        <span class="glyphicon glyphicon-upload"></span> Import
-      </button>
+    <div ng-if="importCompleted" class="device-details-inline-success">
+      <span>
+        <span class="glyphicon glyphicon-info-sign"></span>
+        <strong localized>form.device.batch.result</strong>:
+        {{ ('form.device.batch.result.text' | localize).replace('${success}', importSuccessCount).replace('${failed}', importFailedCount) }}
+      </span>
     </div>
   </div>
+</div>
+
+<div class="modern-modal-actions">
+    <span class="app-modal-footer-left"></span>
+    <div class="app-modal-actions-right">
+        <button
+          class="btn btn-default"
+          ng-click="closeModal()"
+          ng-disabled="loading"
+          localized
+        >button.cancel</button>
+        <button
+          class="btn btn-default btn-modern-primary"
+          ng-click="import()"
+          ng-disabled="devicesPreview.length==0 || loading"
+        >
+          <span class="glyphicon glyphicon-upload"></span> <span localized>button.import</span>
+        </button>
+    </div>
+</div>
 </div>

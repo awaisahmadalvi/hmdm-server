@@ -400,16 +400,43 @@ angular.module('headwind-kiosk')
             return hash % PALETTE_SIZE;
         };
 
+        // Trailing words too generic to make a name's initials distinctive
+        // (e.g. "Headwind MDM Pager Plugin" and "Headwind MDM update helper"
+        // both ended up as "HM" when this just took the first two words).
+        var GENERIC_TRAILING_WORDS = [
+            'helper', 'plugin', 'utility', 'util', 'service', 'app', 'tool',
+            'module', 'extension', 'addon', 'component', 'agent', 'client',
+            'manager', 'assistant', 'driver', 'daemon'
+        ];
+
+        var firstLetterOf = function (word) {
+            var match = (word || '').match(/[A-Za-z]/);
+            return match ? match[0] : (word ? word.charAt(0) : '?');
+        };
+
         var initialsOf = function (application) {
             var name = ((application && (application.name || application.pkg)) || '?').trim();
             if (!name) {
                 return '?';
             }
             var words = name.split(/\s+/).filter(Boolean);
-            if (words.length > 1) {
-                return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+            if (words.length <= 1) {
+                return name.substring(0, 2).toUpperCase();
             }
-            return name.substring(0, 2).toUpperCase();
+            // First word's initial + the last word that isn't a generic
+            // suffix (falling back to the actual last word if every word
+            // after the first one happens to be generic) - two apps that
+            // only differ by a trailing "Plugin"/"helper" no longer collapse
+            // to the same two letters.
+            var lastDistinctiveWord = words[words.length - 1];
+            for (var i = words.length - 1; i >= 1; i--) {
+                var bareWord = words[i].replace(/[^A-Za-z]/g, '');
+                if (bareWord && GENERIC_TRAILING_WORDS.indexOf(bareWord.toLowerCase()) === -1) {
+                    lastDistinctiveWord = words[i];
+                    break;
+                }
+            }
+            return (firstLetterOf(words[0]) + firstLetterOf(lastDistinctiveWord)).toUpperCase();
         };
 
         return {
@@ -497,7 +524,14 @@ angular.module('headwind-kiosk')
                     var viewportHeight = $window.innerHeight;
                     var viewportWidth = $window.innerWidth;
 
-                    menuEl.css({ top: 'auto', bottom: 'auto', right: (viewportWidth - rect.right) + 'px' });
+                    // left: 'auto' is required here, not optional - Bootstrap's base
+                    // .dropdown-menu class sets left: 0, and a fixed-position box with
+                    // both left and right set to real values doesn't shrink-to-fit, it
+                    // stretches to span between them (full viewport width here). The
+                    // markup should also carry .dropdown-menu-right for this same
+                    // reason, but this directive no longer depends on that convention
+                    // being remembered correctly.
+                    menuEl.css({ top: 'auto', bottom: 'auto', left: 'auto', right: (viewportWidth - rect.right) + 'px' });
 
                     var menuHeight = menu.offsetHeight;
                     var spaceBelow = viewportHeight - rect.bottom;

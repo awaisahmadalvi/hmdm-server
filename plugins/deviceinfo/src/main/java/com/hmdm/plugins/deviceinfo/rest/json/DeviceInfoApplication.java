@@ -47,6 +47,15 @@ public class DeviceInfoApplication implements Serializable {
     @ApiModelProperty("A number of application version which is required to be installed on device")
     private String versionRequired;
 
+    @ApiModelProperty("The application's type (app, web, intent) - drives the fallback icon glyph on the client")
+    private String applicationType;
+
+    @ApiModelProperty("ID of the custom icon assigned to the application via Settings -> Icons, if any")
+    private Integer applicationIconId;
+
+    @ApiModelProperty("ID of the uploaded file holding the icon auto-extracted from the application's APK, if any")
+    private Integer applicationApkIconFileId;
+
     /**
      * <p>Constructs new <code>DeviceInfoApplication</code> instance. This implementation does nothing.</p>
      */
@@ -83,6 +92,30 @@ public class DeviceInfoApplication implements Serializable {
 
     public void setVersionRequired(String versionRequired) {
         this.versionRequired = versionRequired;
+    }
+
+    public String getApplicationType() {
+        return applicationType;
+    }
+
+    public void setApplicationType(String applicationType) {
+        this.applicationType = applicationType;
+    }
+
+    public Integer getApplicationIconId() {
+        return applicationIconId;
+    }
+
+    public void setApplicationIconId(Integer applicationIconId) {
+        this.applicationIconId = applicationIconId;
+    }
+
+    public Integer getApplicationApkIconFileId() {
+        return applicationApkIconFileId;
+    }
+
+    public void setApplicationApkIconFileId(Integer applicationApkIconFileId) {
+        this.applicationApkIconFileId = applicationApkIconFileId;
     }
 
     /**

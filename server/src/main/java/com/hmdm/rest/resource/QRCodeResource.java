@@ -65,6 +65,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.ResponseHeader;
+import com.google.zxing.EncodeHintType;
 import net.glxn.qrgen.core.image.ImageType;
 import net.glxn.qrgen.javase.QRCode;
 
@@ -296,7 +297,13 @@ public class QRCodeResource {
                                 imageSize = size;
                             }
                             try {
-                                QRCode.from(s).withCharset("UTF-8").to(ImageType.PNG).withSize(imageSize, imageSize)
+                                // Explicit 4-module quiet zone so the code keeps scanning
+                                // reliably even when displayed/printed on a non-white
+                                // background (ZXing's own default also happens to be 4,
+                                // but relying on a library default for something readers
+                                // depend on isn't guaranteed to stay that way).
+                                QRCode.from(s).withCharset("UTF-8").withHint(EncodeHintType.MARGIN, 4)
+                                        .to(ImageType.PNG).withSize(imageSize, imageSize)
                                         .writeTo(output);
                                 output.flush();
                             } catch (Exception e) {

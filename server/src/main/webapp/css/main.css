@@ -179,6 +179,11 @@
   margin: 0px auto;
 }
 
+.width-1440 {
+  max-width: 1440px;
+  margin: 0px auto;
+}
+
 .width-800 {
   max-width: 800px;
   margin: 0px auto;
@@ -2390,21 +2395,6 @@ div.form-group input.common-checkbox {
     transform: scaleY(1);
     -webkit-transform: scaleY(1);
   }
-}
-
-div.qr-help-wrapper {
-  text-align: center;
-  margin: auto;
-  margin-top: 10px;
-}
-
-div.qr-help {
-  /*max-width: 500px;*/
-}
-
-div.qr-help-line {
-  text-align: left;
-  margin-bottom: 10px;
 }
 
 div.row.device-app-settings-wrapper {

@@ -565,146 +565,258 @@
   min-height: 100vh;
   box-sizing: border-box;
   background: var(--gradient-surface);
-  padding: 40px 16px 60px 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
-.qr-card {
-  background: var(--color-surface);
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12);
-  padding: 24px;
-  margin-bottom: 24px;
-  display: inline-block;
+.qr-public-header {
+  justify-content: flex-start;
+}
+
+.qr-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 90px 24px 60px;
+}
+
+.qr-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.qr-main-card {
+  text-align: center;
+  padding: 32px;
+  border: 1px solid transparent;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+/* Brief pulse when the QR regenerates after an option change (not on the
+   page's initial render - see flashQrUpdated() in qr.controller.js, only
+   called from the options form's own change handlers). */
+.qr-main-card-flash {
+  border-color: var(--brand-dark);
+  box-shadow: 0 0 0 4px rgba(var(--brand-dark-rgb), 0.12), 0 4px 20px rgba(15, 23, 42, 0.06);
+}
+
+.qr-main-header {
+  margin-bottom: 20px;
+}
+
+.qr-main-title {
+  margin: 0 0 10px;
+  color: var(--color-text-primary);
+}
+
+.qr-config-pill {
+  display: inline-flex;
+}
+
+/* White background + real CSS padding around the backend-rendered PNG
+   (which already has its own ~4-module quiet zone baked in via the
+   MARGIN encode hint - see QRCodeResource.java) - belt and braces so the
+   code scans reliably even against this card's own background. */
+.qr-image-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
 }
 
 .qr-image {
   display: block;
-  width: auto;
-  max-width: min(480px, 100%);
-  height: auto !important;
-  border-radius: 8px;
-}
-
-.qr-options {
   width: 100%;
-  max-width: 640px;
+  max-width: 420px;
+  height: auto !important;
 }
 
-.qr-options .control-label {
-  text-align: left;
-}
-
-.qr-hint {
-  color: var(--color-text-tertiary);
+.qr-device-number {
+  margin-top: 14px;
   font-size: 12px;
-  margin-top: 6px;
+  color: var(--color-text-tertiary);
 }
 
-.qr-checkbox {
-  accent-color: var(--brand-dark);
-  width: 18px;
-  height: 18px;
+.qr-main-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.qr-action-btn {
+  flex: 1 1 0;
+  min-width: 130px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.qr-side-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.qr-options-form .design-field + .design-field {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.qr-radio-group-disabled {
+  opacity: 0.5;
+}
+
+.qr-groups-multiselect {
+  width: 100%;
+}
+
+.qr-json-toggle {
+  margin-top: 16px;
 }
 
 .qr-json {
   width: 100%;
-  height: 140px;
+  height: 120px;
+  margin-top: 8px;
   font-family: monospace;
   font-size: 12px;
   resize: vertical;
 }
 
-.qr-actions {
+.qr-howto-intro {
+  margin: 0 0 16px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.qr-steps {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.qr-step {
+  display: flex;
+  align-items: flex-start;
   gap: 12px;
-  margin-top: 6px;
 }
 
-.qr-help-wrapper {
-  max-width: 640px;
-  width: 100%;
-}
-
-.qr-help {
-  padding: 22px 26px;
-  text-align: left;
-}
-
-.qr-help-line {
-  color: var(--color-text-secondary);
-  font-size: 14px;
-}
-
-.qr-help-intro {
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.qr-help-outro {
-  color: var(--color-text-tertiary);
-  font-size: 13px;
-  margin-top: 10px !important;
-}
-
-.qr-heading {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.qr-title {
-  margin: 0 0 4px;
-  color: var(--color-text-primary);
-}
-
-.qr-subtitle {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
-.qr-instructions {
-  max-width: 420px;
-  margin: 0 auto 20px;
-  padding-left: 20px;
-  text-align: left;
-  color: var(--color-text-secondary);
-  font-size: 13px;
-}
-
-.qr-instructions li + li {
-  margin-top: 6px;
-}
-
-.qr-download-actions {
+.qr-step-number {
   display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-bottom: 28px;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--brand-dark);
+  color: var(--color-surface);
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.qr-options-card {
-  width: 100%;
-  max-width: 640px;
-  margin-bottom: 20px;
+.qr-step-text {
+  padding-top: 2px;
+  color: var(--color-text-primary);
+  font-size: 13px;
 }
 
-/* Isolate just the QR image when printing (button.help/window.print()). */
+.qr-howto-outro {
+  margin: 0 0 12px;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+
+.qr-print-only {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .qr-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .qr-content {
+    padding: 80px 16px 40px;
+  }
+
+  .qr-main-card {
+    padding: 20px;
+  }
+
+  .qr-main-actions {
+    flex-direction: column;
+  }
+
+  .qr-action-btn {
+    width: 100%;
+  }
+}
+
+/* Print output is a dedicated, deliberately simple block (.qr-print-only
+   in qr.html) rather than the interactive two-column grid above - see
+   that block's own comment for why. */
 @media print {
-  .qr-heading,
-  .qr-instructions,
-  .qr-download-actions,
-  .qr-options-card,
-  .qr-help-wrapper {
+  .no-print {
     display: none !important;
   }
 
   .qr-page {
     min-height: 0;
     background: none;
+  }
+
+  .qr-content {
     padding: 0;
+  }
+
+  .qr-print-only {
+    display: block;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .qr-print-config {
+    margin-bottom: 16px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .qr-print-image {
+    width: 320px;
+    height: auto;
+    margin: 0 auto 16px;
+  }
+
+  .qr-print-device {
+    margin-bottom: 20px;
+    font-size: 13px;
+  }
+
+  .qr-print-intro {
+    max-width: 420px;
+    margin: 0 auto 10px;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .qr-print-steps {
+    max-width: 420px;
+    margin: 0 auto;
+    padding-left: 20px;
+    text-align: left;
+  }
+
+  .qr-print-steps li + li {
+    margin-top: 6px;
   }
 }
 
@@ -2097,6 +2209,17 @@
 
 .logs-input {
   height: 40px;
+}
+
+/* The 34px reserve is only correct when an icon actually sits inside the
+   input (search boxes, date inputs - always wrapped in .logs-input-icon-
+   wrap). .logs-input itself used to force this on every field regardless,
+   which is the "extra left padding" bug reported on several pages: any
+   .logs-input used plain (the vast majority - most modal text fields
+   across the app) got a 34px indent with nothing to justify it. Scoping
+   it to the icon-wrap restores Bootstrap's normal ~12px padding
+   everywhere else, with zero change for genuine icon inputs. */
+.logs-input-icon-wrap .logs-input {
   padding-left: 34px !important;
 }
 
@@ -2859,6 +2982,25 @@
   border-radius: 8px !important;
 }
 
+/* A .modern-select rendered as an always-open, scrollable listbox (native
+   <select size="N">) with a search input above it - a dependency-free
+   "searchable select" for a field whose option list can get long, without
+   pulling in a combobox widget. Introduced for the Devices page's bulk
+   "Set configuration" dialog. */
+.modern-select-listbox {
+  height: auto !important;
+  padding: 4px;
+}
+
+.modern-select-listbox option {
+  padding: 7px 8px;
+  border-radius: 4px;
+}
+
+.devices-bulk-search-input {
+  margin-bottom: 8px;
+}
+
 .modern-input-invalid {
   border-color: var(--color-danger) !important;
 }
@@ -3489,6 +3631,16 @@
 
 .actions-menu-list > li.disabled > a.action-danger {
   color: var(--color-text-tertiary);
+}
+
+/* Optional thin separator between menu items, e.g. before a trailing
+   red "Delete" item - added for the Devices page's "Group action" menu
+   but generic for any future appActionsMenu user. */
+.actions-menu-list > li.actions-menu-divider {
+  height: 1px;
+  margin: 5px 6px;
+  padding: 0;
+  background: var(--color-border-subtle);
 }
 
 /* ---------- Add/edit user dialog ---------- */
@@ -4238,6 +4390,29 @@
   border-color: var(--brand-dark);
   background: rgba(var(--brand-dark-rgb), 0.05);
   color: var(--color-text-primary);
+}
+
+/* Two-line variant - a bold title plus a short description underneath,
+   for a radio choice that needs more than a label to explain itself
+   (introduced for the QR page's "Device number assignment" options).
+   Still the same .modern-radio-card(s) container/active-state styling,
+   just top-aligned instead of vertically centered. */
+.modern-radio-card-stacked {
+  align-items: flex-start;
+}
+
+.modern-radio-card-title {
+  display: block;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.modern-radio-card-desc {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  font-weight: 400;
 }
 
 /* ---------- Smooth reveal for conditional sections (ngAnimate) ---------- */
@@ -5899,4 +6074,503 @@
   font-weight: 500;
   text-transform: none;
   letter-spacing: normal;
+}
+
+/* =========================================================
+   Devices page (main nav -> Devices). Scoped under .devices-page.
+   Reuses .logs-page-header(-actions)/-subtitle, .summary-kpi-row/-card/
+   -icon/-value/-label (Summary page's tile component - only the clickable/
+   active modifiers are new here), .modern-toolbar (filter card chrome),
+   .logs-filter-row(-actions), .logs-filter-grow, .logs-input(-icon-wrap),
+   .logs-date-range/-input/-sep (Audit/Push/Messaging/Logs plugin pages'
+   date-range control, reused verbatim), .logs-filter-buttons,
+   .logs-btn-reset, .logs-filter-chips, .logs-chip(-remove), .summary-card
+   + .logs-results-card (results card chrome), .logs-results-toolbar(
+   -bottom), .logs-results-count, .modern-table-wrap/.modern-responsive-
+   table (incl. its own <=700px mobile card-stacking), .design-field(
+   -label), .modern-toggle, .modern-select, .modern-segmented(-option),
+   .device-details-empty*, .device-details-skeleton*, .action-link,
+   .users-row-menu/[app-actions-menu]/.actions-menu-list (shared "..."
+   dropdown), .btn-modern-primary/.btn-default and .modern-modal-*
+   instead of duplicating any of them. New here: the clickable-tile
+   modifiers, the advanced-filters panel grid, the bulk-selection action
+   bar, the status dot/indicator pills (replacing the old plain <img>
+   status icons) and their legend popover, the density toggle, the sticky
+   number column and the split Export/Add buttons.
+   ========================================================= */
+
+.devices-page .logs-page-header-actions {
+  gap: 10px;
+}
+
+/* ---------- Split buttons (Export, Add device + Add batch) ---------- */
+
+.devices-split-group {
+  display: inline-flex;
+}
+
+.devices-split-group .btn {
+  border-radius: 0;
+}
+
+.devices-split-group .btn:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.devices-split-group .btn:last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.devices-split-group .btn-default + .btn-default {
+  border-left: 1px solid var(--color-border);
+}
+
+/* The caret trigger is wrapped in its own appActionsMenu host (see the
+   "Group action" menu fix below for why uib-dropdown was replaced here),
+   so it's no longer a direct :last-child of .devices-split-group - give
+   it the same end-cap styling explicitly instead. */
+.devices-split-group .devices-split-caret {
+  display: inline-flex;
+  margin-left: 0;
+}
+
+.devices-split-group .devices-split-caret .btn {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* ---------- Status summary tiles ---------- */
+
+.devices-page .summary-kpi-card {
+  cursor: default;
+}
+
+.devices-page .summary-kpi-card.devices-tile-clickable {
+  cursor: pointer;
+}
+
+.devices-page .summary-kpi-card.devices-tile-active {
+  box-shadow: 0 0 0 2px var(--brand-dark) inset, 0 10px 28px rgba(15, 23, 42, 0.12);
+}
+
+.devices-tile-loading {
+  opacity: 0.5;
+}
+
+/* ---------- Search + filter bar ---------- */
+
+.devices-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.devices-filters-btn {
+  position: relative;
+}
+
+.devices-filters-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--brand-dark);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.devices-filters-chevron {
+  margin-left: 6px;
+  font-size: 10px;
+  transition: transform 0.2s ease;
+}
+
+.devices-filters-chevron.devices-filters-chevron-open {
+  transform: rotate(180deg);
+}
+
+.devices-filter-field-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 0;
+}
+
+.devices-filter-field {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* The advanced panel's own top border is the single divider between the
+   Group/Configuration row and the panel - do not add any per-field
+   dividers inside the grid (see the .design-field override below for why
+   that matters). ng-if mounts/unmounts this element on toggle; the
+   .ng-enter/.ng-leave rules further down (ngAnimate, already a project
+   dependency) animate its height so open/close isn't an abrupt snap. */
+.devices-advanced-panel {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border-subtle);
+  overflow: hidden;
+}
+
+.devices-advanced-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: 20px;
+  align-items: start;
+}
+
+/* .design-field's generic "+ .design-field" rule (used for vertical
+   single-column forms elsewhere, e.g. the Design Settings tab) adds a
+   margin-top/padding-top/border-top divider between consecutive siblings.
+   Inside a CSS grid that rule doesn't make sense - the "previous sibling"
+   of a grid item isn't necessarily above it, it just pushed every field
+   except the first one (Status) down inside its own cell, which is
+   exactly why Status used to sit higher than the fields next to it, and
+   why the divider lines appeared at different heights. Neutralize it here
+   and lay out each field as label-on-top/control-below instead. */
+.devices-advanced-grid .design-field {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.devices-advanced-grid .design-field + .design-field {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.devices-advanced-grid .design-field-label {
+  margin-bottom: 0;
+}
+
+.devices-advanced-grid .form-control {
+  height: 40px;
+  border-radius: 8px;
+}
+
+/* Enrollment date range: the shared .logs-date-range/.logs-date-input
+   component (reused verbatim from Audit/Push/Messaging/Devicelog) is
+   built for a horizontal filter row and sizes itself to two fixed-140px
+   inputs there - here it should fill the grid column instead, as two
+   equal-width inputs. */
+.devices-advanced-grid .logs-date-range {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.devices-advanced-grid .logs-date-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.devices-advanced-grid .logs-date-input .logs-input {
+  width: 100%;
+}
+
+.devices-advanced-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+@media (max-width: 1100px) {
+  .devices-advanced-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .devices-filter-field-row,
+  .devices-filter-row-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .devices-advanced-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .devices-advanced-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 10px;
+  }
+}
+
+/* Smooth open/close for the advanced panel (ngAnimate, already a project
+   dependency - see .settings-reveal above for the fade/translate version
+   of this same technique). The panel is ng-if'd, not ng-show'd, so it's
+   fully absent from the DOM while collapsed; max-height just needs to be
+   comfortably taller than the panel ever gets (3 grid rows + footer). */
+.devices-advanced-panel.ng-enter {
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+  max-height: 0;
+  opacity: 0;
+}
+
+.devices-advanced-panel.ng-enter.ng-enter-active {
+  max-height: 600px;
+  opacity: 1;
+}
+
+.devices-advanced-panel.ng-leave {
+  transition: max-height 0.2s ease, opacity 0.15s ease;
+  max-height: 600px;
+  opacity: 1;
+}
+
+.devices-advanced-panel.ng-leave.ng-leave-active {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* ---------- Results card toolbar / density toggle ---------- */
+
+.devices-results-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.devices-results-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.devices-density-toggle .modern-segmented-option {
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+/* ---------- Bulk-selection action bar ---------- */
+
+.devices-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent-glow);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  animation: summary-card-in 0.2s ease both;
+}
+
+.devices-bulk-count {
+  font-weight: 700;
+  color: var(--brand-dark);
+  font-size: 13px;
+}
+
+/* Group action trigger used the shared appActionsMenu directive (app/
+   shared/directives.js) instead of uib-dropdown, because .devices-bulk-bar
+   and the .summary-card results card below it each carry their own
+   "animation: summary-card-in ... both" - a non-"none" transform/animation
+   fill-mode makes an element a new stacking context for the rest of its
+   life, so the later .summary-card's whole context painted over any
+   uib-dropdown menu opened inside the (earlier) bulk bar no matter its
+   z-index. appActionsMenu re-parents its menu onto <body> and positions it
+   with position: fixed, so it can no longer be clipped or out-stacked by
+   either ancestor. See the "..." actions-menu block above for the directive
+   itself and the original writeup of this failure mode. */
+.devices-group-action-menu {
+  margin-left: 0;
+}
+
+.devices-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* ---------- Status legend popover ---------- */
+
+.devices-legend-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.devices-legend-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  width: 260px;
+  background: var(--color-surface);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.devices-legend-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 10px;
+}
+
+.devices-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.devices-legend-row:last-child {
+  margin-bottom: 0;
+}
+
+.devices-legend-dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.devices-legend-dot-ok { background: var(--color-success); }
+.devices-legend-dot-pending { background: var(--color-warning); }
+.devices-legend-dot-problem { background: var(--color-danger); }
+
+/* ---------- Status dot + indicator pills (replace the old <img> icons) ---------- */
+
+.devices-status-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.devices-status-dot {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.devices-status-dot-online { background: var(--color-success); }
+.devices-status-dot-idle { background: var(--color-warning); }
+.devices-status-dot-offline { background: var(--color-danger); }
+
+.devices-indicator-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 12px;
+}
+
+.devices-indicator-ok {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.devices-indicator-pending {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.devices-indicator-problem {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.devices-indicator-problem.devices-indicator-clickable {
+  cursor: pointer;
+}
+
+/* ---------- Device number (primary identifier) + sticky column ---------- */
+
+.devices-number-cell strong {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.devices-number-sub {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+.devices-page .devices-sticky-number {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--color-surface);
+}
+
+.devices-page tr:hover .devices-sticky-number {
+  background: var(--color-surface-hover);
+}
+
+/* ---------- Configuration link pill ---------- */
+
+.devices-config-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--brand-dark);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.devices-config-pill:hover {
+  text-decoration: underline;
+  color: var(--brand-dark);
+}
+
+/* ---------- Table density ---------- */
+
+.devices-table-compact.modern-table-wrap td,
+.devices-table-compact.modern-table-wrap th {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+/* ---------- Curated mobile card: hide secondary columns, keep the
+   generic .modern-responsive-table label:value stacking for the rest ---------- */
+
+@media (max-width: 700px) {
+  .devices-page .devices-col-secondary {
+    display: none !important;
+  }
 }

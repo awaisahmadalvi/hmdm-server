@@ -1,11 +1,16 @@
-<!-- Per-suggestion row for the "Add application" dialog's typeahead (see
-     addConfigurationApplication.html's typeahead-template-url) - shows an
-     icon placeholder, name, package and version instead of ui-bootstrap's
-     plain text-only default suggestion template. Selection logic (typeahead-
-     on-select="onMainAppSelected($item)") is untouched. -->
+<!-- Per-suggestion row for the "Add application" dialog's and the MDM
+     Settings tab's main/content-app typeaheads (see
+     addConfigurationApplication.html / configuration.html's
+     typeahead-template-url) - shows the shared app-icon component, name,
+     package and version instead of ui-bootstrap's plain text-only default
+     suggestion template. match.model is one of the same Application
+     objects from allApplications, so it already carries iconId/
+     apkIconFileId/pkg/name/type - no reshaping needed. Selection logic
+     (typeahead-on-select="onMainAppSelected($item)"/"onContentAppSelected($item)")
+     is untouched. -->
 <a>
     <div class="app-name-cell">
-        <span class="app-icon-placeholder glyphicon glyphicon-apps"></span>
+        <app-icon application="match.model" size="36"></app-icon>
         <div>
             <div class="app-name-text" ng-bind-html="match.label | typeaheadHighlight:query"></div>
             <div class="device-details-app-pkg" ng-if="match.model.pkg">
