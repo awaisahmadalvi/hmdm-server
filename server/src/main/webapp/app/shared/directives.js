@@ -1,5 +1,238 @@
 // Localization completed
 angular.module('headwind-kiosk')
+    // Copies text to the clipboard, with a fallback for non-secure contexts
+    // (plain http on an IP address, where navigator.clipboard doesn't
+    // exist/isn't permitted) via a hidden textarea + document.execCommand
+    // ('copy'). Shared by appCopyButton below and any one-off copy action
+    // that doesn't go through that directive (e.g. Files' copyPath/
+    // copyLink, the Configuration editor's copyQrUrl).
+    .factory('clipboardService', function ($q, $document, $window) {
+        return {
+            copy: function (text) {
+                text = (text === undefined || text === null) ? '' : String(text);
+                var deferred = $q.defer();
+
+                if ($window.navigator && $window.navigator.clipboard && $window.isSecureContext) {
+                    $window.navigator.clipboard.writeText(text).then(function () {
+                        deferred.resolve();
+                    }, function (err) {
+                        deferred.reject(err);
+                    });
+                    return deferred.promise;
+                }
+
+                try {
+                    var body = $document[0].body;
+                    var textarea = $document[0].createElement('textarea');
+                    textarea.value = text;
+                    textarea.setAttribute('readonly', '');
+                    // Off-screen, not display:none - some browsers refuse to
+                    // select()/copy from a non-rendered element.
+                    textarea.style.position = 'fixed';
+                    textarea.style.top = '-9999px';
+                    textarea.style.left = '-9999px';
+                    body.appendChild(textarea);
+
+                    var selection = $document[0].getSelection();
+                    var originalRange = (selection && selection.rangeCount > 0) ? selection.getRangeAt(0) : null;
+
+                    textarea.focus();
+                    textarea.select();
+                    textarea.setSelectionRange(0, textarea.value.length);
+                    var successful = $document[0].execCommand('copy');
+
+                    body.removeChild(textarea);
+
+                    // Restore whatever the user had selected on the page
+                    // before this hijacked the selection to do the copy.
+                    if (selection) {
+                        selection.removeAllRanges();
+                        if (originalRange) {
+                            selection.addRange(originalRange);
+                        }
+                    }
+
+                    if (successful) {
+                        deferred.resolve();
+                    } else {
+                        deferred.reject(new Error('document.execCommand("copy") returned false'));
+                    }
+                } catch (e) {
+                    deferred.reject(e);
+                }
+                return deferred.promise;
+            }
+        };
+    })
+    // Calls scope.$apply(fn), except when a digest is already running (e.g.
+    // a click handler fired from inside a $q .then() callback - $q
+    // resolves its callbacks as part of a digest, unlike a native
+    // Promise), in which case $apply() would throw "[$rootScope:inprog]
+    // $digest already in progress". Shared by appExpandableRow and
+    // appCopyButton below, both of which attach their own native
+    // element.on('click', ...) handlers (so, unlike ng-click, Angular
+    // isn't already wrapping them in a digest-safe $apply for us) and can
+    // be invoked either directly from a raw DOM event or from inside a
+    // promise chain.
+    .factory('safeApply', function () {
+        return function (scope, fn) {
+            var phase = scope.$root.$$phase;
+            if (phase === '$apply' || phase === '$digest') {
+                if (fn) {
+                    fn();
+                }
+            } else {
+                scope.$apply(fn);
+            }
+        };
+    })
+    // Shared "is this click actually meant to toggle the row, or did the
+    // user just finish selecting/copying text (or click a link/button)
+    // inside it?" check - used by appExpandableRow below, and available
+    // directly for any expand/collapse handler that isn't a plain ng-click
+    // on the row (e.g. one that also needs its own extra conditions).
+    .factory('selectionGuard', function ($window) {
+        // Only real interactive elements - NOT .app-code-block/.logs-
+        // message-expanded themselves. Those used to be listed here too,
+        // on the theory that a click "inside the expanded area" should be
+        // left alone - but a copy-button click already stops its own
+        // propagation (so that case never needed this list), and on a
+        // page with no copy buttons at all (hide-copy="true", e.g. Push
+        // messages) that blanket exclusion made the whole expanded block
+        // permanently un-collapsible: every click inside it, buttonless or
+        // not, matched .app-code-block and was ignored. A plain click with
+        // no active selection should always be free to toggle.
+        var INTERACTIVE_SELECTOR = 'a, button, .app-copy-btn';
+
+        return {
+            shouldIgnore: function (event) {
+                var selection = $window.getSelection();
+                if (selection && String(selection.toString()).length > 0) {
+                    return true;
+                }
+                if (!event || !event.target || typeof event.target.closest !== 'function') {
+                    return false;
+                }
+                return !!event.target.closest(INTERACTIVE_SELECTOR);
+            }
+        };
+    })
+    // Drop-in replacement for ng-click on a clickable/expandable table row:
+    // <tr app-expandable-row="toggleExpand(row)">. Runs the given
+    // expression exactly like ng-click would, except it does nothing (does
+    // not toggle) when the click is actually the tail end of a text
+    // selection, or when it bubbled up from a link/button/copyable code
+    // block that should handle its own click. Without this, selecting text
+    // in an expandable row's content collapses/re-renders the row on
+    // mouseup and the selection is lost.
+    .directive('appExpandableRow', function (selectionGuard, safeApply) {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                element.on('click', function (event) {
+                    if (selectionGuard.shouldIgnore(event)) {
+                        return;
+                    }
+                    safeApply(scope, function () {
+                        scope.$eval(attrs.appExpandableRow);
+                    });
+                });
+            }
+        };
+    })
+    // Shared copy-to-clipboard button: <button app-copy-button="expr"
+    // app-copy-label="{{'button.copy' | localize}}" app-copy-toast="{{...}}">
+    // - expr is evaluated (in the current scope, like ng-click) to get the
+    // text to copy. Self-contained: stops the click from bubbling (so it
+    // never triggers an ancestor's row-click/expand handler), flips its
+    // icon to a checkmark for ~1.5s, and shows a success/error toast.
+    // app-copy-label is optional - omit it for an icon-only button (the
+    // collapsed-row hover affordance); pass it for a labeled button (the
+    // expanded code block's "Copy"/"Copy formatted" buttons).
+    .directive('appCopyButton', function (clipboardService, alertService, localization, $timeout, safeApply) {
+        return {
+            restrict: 'A',
+            scope: {
+                getText: '&appCopyButton',
+                label: '@appCopyLabel',
+                toastText: '@appCopyToast'
+            },
+            template:
+                '<span class="glyphicon" ng-class="copied ? \'glyphicon-ok\' : \'glyphicon-copy\'" aria-hidden="true"></span>' +
+                '<span class="app-copy-btn-label" ng-if="label">{{copied ? (\'common.copy.copied\' | localize) : label}}</span>',
+            link: function (scope, element) {
+                if (element[0].tagName === 'BUTTON' && !element.attr('type')) {
+                    element.attr('type', 'button');
+                }
+                element.addClass('app-copy-btn');
+                element.on('click', function (event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    var text = scope.getText();
+                    if (text === undefined || text === null || text === '') {
+                        return;
+                    }
+                    // clipboardService.copy()'s promise may settle either
+                    // inside a digest (navigator.clipboard - a $q-wrapped
+                    // native Promise resolves its .then() chain as part of
+                    // one) or outside any digest (the execCommand fallback
+                    // resolves synchronously, before Angular has started
+                    // one for this click at all) - safeApply handles both.
+                    clipboardService.copy(text).then(function () {
+                        safeApply(scope, function () {
+                            scope.copied = true;
+                        });
+                        $timeout(function () {
+                            scope.copied = false;
+                        }, 1500);
+                        alertService.success(scope.toastText || localization.localize('common.copy.success'));
+                    }, function () {
+                        alertService.error(localization.localize('common.copy.error'));
+                    });
+                });
+            }
+        };
+    })
+    // Shared "copyable code" block: the expanded view of a payload/message/
+    // JSON value, with a Copy (raw, exactly as stored) button and, only
+    // when formatting actually changed something (i.e. the raw text was
+    // valid JSON), a second Copy formatted button. One component instead of
+    // every page re-building its own <pre> + buttons - used by the Logs
+    // and Audit pages' expanded rows, and (with hide-copy, see below) the
+    // Push messages page.
+    //   <div app-code-block raw-text="message.payload"
+    //        formatted-text="formatPayload(message.payload)"
+    //        copy-toast="{{'form.plugin.push.payload.copied' | localize}}"></div>
+    // hide-copy="true" removes the actions row entirely (not just hides it)
+    // for a page where copying is meant to happen by manually selecting the
+    // text instead (the Push messages page, after selecting text there
+    // turned out to fight the row's click-to-collapse handling the same
+    // way a copy button's own click could) - cheaper than a second
+    // component for the one page that doesn't want the buttons.
+    .directive('appCodeBlock', function (localization) {
+        return {
+            restrict: 'A',
+            scope: {
+                rawText: '<',
+                formattedText: '<',
+                copyToast: '@',
+                hideCopy: '<'
+            },
+            template:
+                '<div class="app-code-block" ng-class="{\'app-code-block-no-actions\': hideCopy}">' +
+                    '<div class="app-code-block-actions" ng-if="!hideCopy">' +
+                        '<button app-copy-button="rawText" app-copy-label="{{copyRawLabel}}" app-copy-toast="{{copyToast}}"></button>' +
+                        '<button ng-if="showFormatted" app-copy-button="formattedText" app-copy-label="{{copyFormattedLabel}}" app-copy-toast="{{copyToast}}"></button>' +
+                    '</div>' +
+                    '<pre class="logs-message-expanded app-code-block-pre">{{formattedText}}</pre>' +
+                '</div>',
+            link: function (scope) {
+                scope.copyRawLabel = localization.localize('button.copy');
+                scope.copyFormattedLabel = localization.localize('common.copy.formatted');
+                scope.showFormatted = scope.rawText !== scope.formattedText;
+            }
+        };
+    })
     .directive('ngEnter', function () {
         return function (scope, element, attrs) {
             element.bind("keydown keypress", function (event) {
@@ -374,6 +607,57 @@ angular.module('headwind-kiosk')
             }
         };
     })
+    // Renders one Lucide icon (ISC license) from the sprite inlined in
+    // index.html (images/icons/lucide/sprite.svg is the source it was
+    // generated from - regenerate both together if icons are added or
+    // removed). <app-lucide-icon name="shield-check" size="18"></app-
+    // lucide-icon> - size defaults to 18 (px) if omitted. Named
+    // appLucideIcon, not appIcon, specifically so it can't collide with
+    // the existing appIcon directive just below (a completely different
+    // component - an application's package icon/avatar) now that both
+    // exist in the same module: two restrict:'E' directives matching the
+    // same element name, each wanting their own isolate scope, would
+    // throw "Multiple directives asking for new/isolated scope".
+    // Deliberately dumb/presentational - no fetching, no state, just a
+    // thin wrapper around <svg><use></svg> - so every consumer controls
+    // color via CSS currentColor and this directive never needs touching
+    // again when a new icon is added to the sprite.
+    .directive('appLucideIcon', function ($log) {
+        // Shared across every <app-lucide-icon> instance (not per-element) -
+        // a column rendered for 50 devices on the same bad icon name should
+        // warn once, not 50 times.
+        var warnedNames = {};
+
+        return {
+            restrict: 'E',
+            scope: {
+                name: '@',
+                size: '@'
+            },
+            template:
+                '<svg class="app-lucide-icon" ng-style="{width: (size || 18) + \'px\', height: (size || 18) + \'px\'}" aria-hidden="true" focusable="false">' +
+                    '<use ng-attr-href="{{\'#icon-\' + name}}"></use>' +
+                '</svg>',
+            link: function (scope) {
+                // Fails loud instead of silently rendering nothing (or, worse,
+                // something that LOOKS like it rendered but didn't - this is
+                // exactly how the Devices table's "more" button issue went
+                // unnoticed: a <use href="#icon-x"> against a symbol id that
+                // doesn't exist in the sprite is valid SVG, so the browser
+                // just shows an empty box, no error anywhere).
+                scope.$watch('name', function (name) {
+                    if (!name || warnedNames[name]) {
+                        return;
+                    }
+                    if (!document.getElementById('icon-' + name)) {
+                        warnedNames[name] = true;
+                        $log.warn('[app-lucide-icon] Unknown icon name "' + name + '" - no #icon-' + name +
+                            ' symbol in the sprite (images/icons/lucide/sprite.svg / index.html). Rendering empty.');
+                    }
+                });
+            }
+        };
+    })
     // Renders an application's icon, replacing the old plain grey
     // .app-icon-placeholder square. Priority order: (1) the assigned
     // Settings -> Icons image if one is set (application.iconId, resolved
@@ -568,6 +852,7 @@ angular.module('headwind-kiosk')
                     open = false;
                     element.removeClass('open');
                     menuEl.removeClass('actions-menu-list-open');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
                     $document.off('click', onDocumentClick);
                     $document.off('keydown', onKeydown);
                     document.removeEventListener('scroll', closeMenu, true);
@@ -588,6 +873,7 @@ angular.module('headwind-kiosk')
                     document.body.appendChild(menu);
                     menuEl.addClass('actions-menu-list-open');
                     element.addClass('open');
+                    toggleBtn.setAttribute('aria-expanded', 'true');
                     open = true;
                     positionMenu();
 
@@ -612,6 +898,171 @@ angular.module('headwind-kiosk')
                     if (menu.parentNode) {
                         menu.parentNode.removeChild(menu);
                     }
+                });
+            }
+        };
+    })
+    // Hover/focus tooltip rendered as a single shared node appended to
+    // <body> (a "portal", same technique as appActionsMenu above), instead
+    // of the obvious CSS ::after-on-the-element approach. That CSS-only
+    // version is what the Devices table's icon column headers originally
+    // used, and it broke in two ways once a header could be scrolled
+    // inside .modern-table-wrap's overflow-x:auto: the tooltip is
+    // position:absolute relative to the header, so (a) it's clipped
+    // whenever it would render past the wrap's own edge (confirmed live -
+    // overflow-y on that wrap computes to "auto", not the "visible" the
+    // page's CSS asks for, because a non-visible overflow-x forces that per
+    // spec), and (b) a header near the left/right edge of the current
+    // scroll position pushes a centered tooltip partway outside the wrap,
+    // where it gets cut off rather than reflowing. Anchoring from
+    // getBoundingClientRect() and rendering with position:fixed on <body>
+    // sidesteps both - the tooltip is never a descendant of the scrolling
+    // element, so nothing can clip it, and it always reflects the header's
+    // actual current on-screen position whether or not the table is
+    // scrolled.
+    //   <th app-header-tooltip="{{'Full column name' + ' - click to sort'}}"
+    //       aria-label="{{'Full column name'}}" tabindex="0">
+    // aria-label is separate and always just the plain column name - this
+    // directive only controls the visual tooltip, not what a screen reader
+    // announces.
+    .directive('appHeaderTooltip', function ($document, $window) {
+        var SHOW_DELAY = 150;
+        var VIEWPORT_MARGIN = 6;
+        var GAP = 8;
+
+        var tooltipEl = null;
+        var showTimer = null;
+        var activeElement = null;
+
+        function ensureTooltipEl() {
+            if (!tooltipEl) {
+                tooltipEl = document.createElement('div');
+                tooltipEl.className = 'app-header-tooltip';
+                tooltipEl.setAttribute('role', 'tooltip');
+                document.body.appendChild(tooltipEl);
+            }
+            return tooltipEl;
+        }
+
+        function hide() {
+            if (showTimer) {
+                clearTimeout(showTimer);
+                showTimer = null;
+            }
+            activeElement = null;
+            if (tooltipEl) {
+                tooltipEl.classList.remove('app-header-tooltip-visible');
+            }
+        }
+
+        // Positioned above the anchor by default, flipped below when there
+        // isn't room above; clamped horizontally so it never renders
+        // partway off either edge of the viewport.
+        function show(el, text) {
+            if (!text) {
+                return;
+            }
+            var tip = ensureTooltipEl();
+            tip.textContent = text;
+            tip.classList.remove('app-header-tooltip-flipped');
+            tip.classList.add('app-header-tooltip-visible');
+
+            var rect = el.getBoundingClientRect();
+            var tipRect = tip.getBoundingClientRect();
+            var viewportWidth = $window.innerWidth;
+            var viewportHeight = $window.innerHeight;
+
+            var left = rect.left + (rect.width / 2) - (tipRect.width / 2);
+            left = Math.max(VIEWPORT_MARGIN, Math.min(left, viewportWidth - tipRect.width - VIEWPORT_MARGIN));
+
+            var top = rect.top - tipRect.height - GAP;
+            if (top < VIEWPORT_MARGIN) {
+                top = rect.bottom + GAP;
+                tip.classList.add('app-header-tooltip-flipped');
+            }
+            if (top + tipRect.height > viewportHeight - VIEWPORT_MARGIN) {
+                // Neither side fits (a very short viewport) - keep it on
+                // screen rather than let it run off the bottom.
+                top = Math.max(VIEWPORT_MARGIN, viewportHeight - tipRect.height - VIEWPORT_MARGIN);
+            }
+
+            tip.style.left = left + 'px';
+            tip.style.top = top + 'px';
+        }
+
+        var onScrollOrResize = function () {
+            // Deliberately just hides rather than repositions - once the
+            // user scrolls, the delay before a tooltip would reappear on
+            // the same header (another hover/focus) is cheap insurance
+            // against it drifting away from the icon mid-scroll.
+            hide();
+        };
+        document.addEventListener('scroll', onScrollOrResize, true);
+        angular.element($window).on('resize', onScrollOrResize);
+
+        return {
+            restrict: 'A',
+            scope: false,
+            link: function (scope, element, attrs) {
+                var text = attrs.appHeaderTooltip || '';
+                attrs.$observe('appHeaderTooltip', function (value) {
+                    text = value;
+                });
+
+                var scheduleShow = function () {
+                    activeElement = element[0];
+                    if (showTimer) {
+                        clearTimeout(showTimer);
+                    }
+                    showTimer = setTimeout(function () {
+                        if (activeElement === element[0]) {
+                            show(element[0], text);
+                        }
+                    }, SHOW_DELAY);
+                };
+
+                element.on('mouseenter focus', scheduleShow);
+                element.on('mouseleave blur', hide);
+
+                scope.$on('$destroy', function () {
+                    element.off('mouseenter focus', scheduleShow);
+                    element.off('mouseleave blur', hide);
+                    if (activeElement === element[0]) {
+                        hide();
+                    }
+                });
+            }
+        };
+    })
+    // Toggles 'app-scrolled-left'/'app-scrolled-right' classes on a
+    // horizontally-scrolling container based on its actual scrollLeft, so
+    // CSS can show the sticky-column edge shadow (app/css/dashboard.css,
+    // the Devices table's sticky checkbox/Status/Device number/Actions
+    // columns) only while there's really more content scrolled underneath
+    // it, instead of a constant shadow that's misleading at the scroll
+    // extremes. <div class="modern-table-wrap" app-scroll-edge-shadow>
+    .directive('appScrollEdgeShadow', function () {
+        return {
+            restrict: 'A',
+            link: function (scope, element) {
+                var el = element[0];
+
+                function update() {
+                    var maxScroll = el.scrollWidth - el.clientWidth;
+                    var atStart = el.scrollLeft <= 1;
+                    var atEnd = el.scrollLeft >= maxScroll - 1;
+                    element.toggleClass('app-scrolled-left', !atStart && maxScroll > 1);
+                    element.toggleClass('app-scrolled-right', !atEnd && maxScroll > 1);
+                }
+
+                element.on('scroll', update);
+                // Column visibility/density changes (and the initial render)
+                // can change scrollWidth without a scroll event ever firing -
+                // re-check shortly after link so the shadow starts correct.
+                setTimeout(update, 0);
+
+                scope.$on('$destroy', function () {
+                    element.off('scroll', update);
                 });
             }
         };

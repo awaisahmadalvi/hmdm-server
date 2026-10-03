@@ -81,7 +81,7 @@
     <select id="findAllLogRecordsByCustomerId"
             parameterType="com.hmdm.plugins.devicelog.rest.json.DeviceLogFilter"
             resultType="PostgresDeviceLogRecord">
-        SELECT data.*, devices.number AS deviceNumber, applications.pkg AS applicationPkg
+        SELECT data.*, devices.number AS deviceNumber, applications.pkg AS applicationPkg, applications.name AS applicationName
         FROM plugin_devicelog_log data
         INNER JOIN devices ON devices.id = data.deviceid
         INNER JOIN users ON users.id = #{userId}

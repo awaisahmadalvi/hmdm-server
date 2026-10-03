@@ -128,23 +128,24 @@
                     </div>
 
                     <div class="modern-table-wrap logs-table-wrap" ng-if="!loading && messages && messages.length > 0">
-                    <table class='table'>
+                    <table class='table push-messages-table'>
                         <thead>
                         <tr>
                             <th ng-click='sortByCreateTime()' class="push-col-time">
                                 <span localized>table.heading.plugin.push.dateTime</span>
                                 <span class="glyphicon glyphicon-sort-by-attributes-alt logs-sort-icon"></span>
                             </th>
-                            <th ng-click='sortByDeviceNumber()'>
+                            <th ng-click='sortByDeviceNumber()' class="push-col-device">
                                 <span localized>table.heading.plugin.push.deviceNumber</span>
                                 <span ng-if='paging.sortValue === "deviceNumber"' class="glyphicon glyphicon-sort-by-attributes logs-sort-icon"></span>
                             </th>
-                            <th localized>table.heading.plugin.push.messageType</th>
-                            <th localized>table.heading.plugin.push.payload</th>
+                            <th localized class="push-col-type">table.heading.plugin.push.messageType</th>
+                            <th localized class="push-payload-cell">table.heading.plugin.push.payload</th>
+                            <th class="push-col-actions">&nbsp;</th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr ng-repeat='message in messages' ng-click="toggleExpand(message)" class="logs-row">
+                        <tr ng-repeat='message in messages'>
                             <td class="logs-time">{{message.ts | date:createTimeFormat}}</td>
                             <td>{{message.deviceNumber}}</td>
                             <td>
@@ -153,9 +154,20 @@
                                     {{message.messageType}}
                                 </span>
                             </td>
-                            <td>
-                                <div class="logs-message logs-message-clamped device-details-app-pkg" ng-if="expandedMessage !== message">{{message.payload || '—'}}</div>
-                                <pre class="logs-message-expanded" ng-if="expandedMessage === message">{{formatPayload(message.payload) || '—'}}</pre>
+                            <td class="push-payload-cell" ng-class="{'push-payload-cell-expandable': message.payload}"
+                                app-expandable-row="message.payload && toggleExpand(message)">
+                                <div class="logs-message logs-message-clamped device-details-app-pkg" ng-show="expandedMessage !== message">{{message.payload || '—'}}</div>
+                                <div app-code-block ng-show="expandedMessage === message"
+                                     raw-text="message.payload"
+                                     formatted-text="formatPayload(message.payload)"
+                                     hide-copy="true"></div>
+                            </td>
+                            <td class="push-col-actions">
+                                <button type="button" class="push-payload-copy-btn" ng-if="message.payload"
+                                        app-copy-button="message.payload"
+                                        app-copy-toast="{{'plugin.push.payload.copied' | localize}}"
+                                        aria-label="{{'plugin.push.button.copy.payload' | localize}}"
+                                        localized-title="plugin.push.button.copy.payload"></button>
                             </td>
                         </tr>
                         </tbody>

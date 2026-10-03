@@ -71,11 +71,19 @@ angular.module('headwind-kiosk')
         // state for the full rationale.
         $scope.isConfigEditor = ($state.current.name === 'configEditor');
 
+        // Same fix, same reason, for the application versions page
+        // (appVersionsEditor state) - shares this controller/template with
+        // the Applications list (both resolve openTab to 'APPS') so the
+        // main nav renders there too; content.html picks between
+        // applications.html and applicationVersions.html based on this
+        // flag. See app.js's appVersionsEditor state for the full rationale.
+        $scope.isVersionsEditor = ($state.current.name === 'appVersionsEditor');
+
         $scope.functionsPlugins = [];
         $scope.settingsPlugins = [];
 
         $scope.openTab = function (tabName) {
-            if (tabName === $scope.activeTab && !$scope.isConfigEditor) {
+            if (tabName === $scope.activeTab && !$scope.isConfigEditor && !$scope.isVersionsEditor) {
                 return;
             }
             if (routes[tabName]) {

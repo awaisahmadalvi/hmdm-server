@@ -165,24 +165,6 @@ angular.module('headwind-kiosk')
             };
         };
 
-        $scope.copiedAppUrlId = null;
-        $scope.copyAppUrl = function (application) {
-            var info = $scope.appSourceInfo(application);
-            if (!info.url || !navigator.clipboard) {
-                return;
-            }
-            navigator.clipboard.writeText(info.url).then(function () {
-                $timeout(function () {
-                    $scope.copiedAppUrlId = application.id;
-                });
-                $timeout(function () {
-                    if ($scope.copiedAppUrlId === application.id) {
-                        $scope.copiedAppUrlId = null;
-                    }
-                }, 2000);
-            });
-        };
-
         $scope.clarifyOnCommon = function () {
             alertService.showAlertMessage(localization.localize('common.app.clarification'));
         };
@@ -1011,7 +993,9 @@ angular.module('headwind-kiosk')
         });
 
         $scope.removeApplicationVersion = function (applicationVersion) {
-            let localizedText = localization.localize('question.delete.application.version').replace('${applicationVersion}', applicationVersion.version);
+            let localizedText = localization.localize('question.delete.application.version')
+                .replace('${applicationVersion}', applicationVersion.version)
+                .replace('${appName}', ($scope.parentApp && $scope.parentApp.name) || '');
             confirmModal.getUserConfirmation(localizedText, function () {
                 applicationService.removeApplicationVersion({id: applicationVersion.id}, function (response) {
                     if (response.status === 'OK') {
@@ -1027,13 +1011,55 @@ angular.module('headwind-kiosk')
             alertService.showAlertMessage(localization.localize('common.app.clarification'));
         };
 
+        // Table's Native code/architecture pill - a plain '' arch means a
+        // universal (non-split) APK; split is a different, older mechanism
+        // (two separate URLs, see applicationVersion.html's "Split APK"
+        // section) and takes priority over the single arch field when set.
+        $scope.archPillKey = function (application) {
+            if (application.split) {
+                return 'form.application.arch.pill.split';
+            }
+            switch (application.arch) {
+                case 'armeabi':
+                    return 'form.application.arch.pill.armeabi';
+                case 'arm64':
+                    return 'form.application.arch.pill.arm64';
+                default:
+                    return 'form.application.arch.pill.universal';
+            }
+        };
+
+        // Table's Source badge/URL - mirrors ApplicationsTabController's
+        // appSourceInfo (applications.html), just reading a version's own
+        // url/split/urlArmeabi/urlArm64 instead of an application's.
+        $scope.versionSourceInfo = function (application) {
+            var url = (application.split ? (application.urlArm64 || application.urlArmeabi) : application.url) || '';
+            var isRelative = url.length > 0 && !/^https?:\/\//i.test(url);
+            var isSameOrigin = false;
+            if (!isRelative && url) {
+                try {
+                    isSameOrigin = new URL(url, $window.location.href).origin === $window.location.origin;
+                } catch (e) {
+                    isSameOrigin = false;
+                }
+            }
+            return {
+                url: url,
+                uploaded: !!url && (isRelative || isSameOrigin)
+            };
+        };
+
         $scope.addApplicationVersion = function (applicationVersion) {
             var modalInstance = $modal.open({
-                templateUrl: 'app/components/main/view/modal/applicationVersionAdd.html',
+                templateUrl: 'app/components/main/view/modal/applicationVersion.html',
                 controller: 'ApplicationVersionModalController',
+                windowClass: 'app-modal-narrow',
                 resolve: {
                     applicationVersion: function () {
                         return applicationVersion;
+                    },
+                    parentApp: function () {
+                        return $scope.parentApp;
                     },
                     isControlPanel: function () {
                         return false;
@@ -1046,11 +1072,15 @@ angular.module('headwind-kiosk')
 
         $scope.editApplicationVersion = function (applicationVersion) {
             var modalInstance = $modal.open({
-                templateUrl: 'app/components/main/view/modal/applicationVersionEdit.html',
+                templateUrl: 'app/components/main/view/modal/applicationVersion.html',
                 controller: 'ApplicationVersionModalController',
+                windowClass: 'app-modal-narrow',
                 resolve: {
                     applicationVersion: function () {
                         return applicationVersion;
+                    },
+                    parentApp: function () {
+                        return $scope.parentApp;
                     },
                     isControlPanel: function () {
                         return false;
@@ -1084,9 +1114,10 @@ angular.module('headwind-kiosk')
 
     })
     .controller('ApplicationVersionModalController', function ($scope, $modalInstance, applicationService,
-                                                               applicationVersion,
+                                                               applicationVersion, parentApp,
                                                                $modal, isControlPanel, localization) {
         $scope.isControlPanel = isControlPanel;
+        $scope.parentApp = parentApp;
 
         $scope.appType = applicationVersion.type;
 
@@ -1096,20 +1127,42 @@ angular.module('headwind-kiosk')
             $scope.file = {};
             $scope.loading = false;
             $scope.fileName = null;
+            $scope.fileSizeBytes = null;
             $scope.invalidFile = false;
             $scope.fileSelected = false;
+            $scope.uploadProgressPercent = 0;
         }
 
         $scope.application = angular.copy(applicationVersion, {});
+
+        // Purely a presentational choice between the two Source blocks
+        // below (upload-zone vs URL input) - both still bind directly to
+        // the same application.url/file.path the save() below always read,
+        // so switching back and forth never loses what's already entered.
+        // Defaults to whichever this version already has (an existing URL
+        // with no split APK means it was added via URL), upload otherwise.
+        $scope.versionSource = (!$scope.isNewApp && applicationVersion.url && !applicationVersion.split) ? 'url' : 'upload';
+
+        $scope.formatFileSize = function (bytes) {
+            if (!bytes && bytes !== 0) {
+                return '';
+            }
+            if (bytes < 1024 * 1024) {
+                return (bytes / 1024).toFixed(0) + ' KB';
+            }
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        };
 
         $scope.onStartedUpload = function (files) {
             $scope.successMessage = undefined;
             $scope.errorMessage = undefined;
             $scope.invalidFile = false;
             $scope.fileSelected = false;
+            $scope.uploadProgressPercent = 0;
 
             if (files.length > 0) {
                 $scope.fileName = files[0].name;
+                $scope.fileSizeBytes = files[0].size;
                 if ($scope.fileName.endsWith(".apk") || $scope.fileName.endsWith(".xapk")) {
                     $scope.loading = true;
                     $scope.successMessage = localization.localize('success.uploading.file');
@@ -1123,6 +1176,7 @@ angular.module('headwind-kiosk')
         $scope.onUploadProgress = function(progress) {
             var loadedMb = (progress.loaded / 1048576).toFixed(1);
             var totalMb = (progress.total / 1048576).toFixed(1);
+            $scope.uploadProgressPercent = progress.total ? Math.round((progress.loaded / progress.total) * 100) : 0;
             $scope.successMessage = localization.localize('success.uploading.file') +
                 " " + loadedMb + " / " + totalMb + " Mb";
         };
@@ -1187,6 +1241,9 @@ angular.module('headwind-kiosk')
             $scope.fileSelected = false;
             $scope.invalidFile = false;
             $scope.loading = false;
+            $scope.fileName = null;
+            $scope.fileSizeBytes = null;
+            $scope.uploadProgressPercent = 0;
         };
 
         $scope.save = function () {

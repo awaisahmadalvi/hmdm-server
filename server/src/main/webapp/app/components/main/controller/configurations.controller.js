@@ -436,22 +436,6 @@ angular.module('headwind-kiosk')
                 return url.indexOf('localhost') > -1 || url.indexOf('127.0.0.1') > -1;
             };
 
-            $scope.copyQrUrl = function () {
-                if (!navigator.clipboard) {
-                    return;
-                }
-                var url = $scope.configuration.baseUrl + "/#/qr/" + $scope.configuration.qrCodeKey + "/";
-                // navigator.clipboard.writeText() is a native Promise, not $q -
-                // its .then() runs outside Angular's digest, so the toast must
-                // be shown inside a $timeout to actually render (same pattern
-                // as Files' copyPath()).
-                navigator.clipboard.writeText(url).then(function () {
-                    $timeout(function () {
-                        showConfigEditorToast('success', localization.localize('form.configuration.settings.mdm.qrcode.copied'));
-                    });
-                });
-            };
-
             // Sticky section nav factory - identical IntersectionObserver-
             // based approach as the General settings page (settings.
             // controller.js), generalized so every editor tab with its own

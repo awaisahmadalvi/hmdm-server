@@ -6,6 +6,8 @@
   "plugin.devicelog.settings.title": "Logs settings",
   "plugin.devicelog.settings.subtitle": "Log retention and collection rules for devices",
   "plugin.devicelog.option.severyty.default": "Severity search...",
+  "plugin.devicelog.message.copied": "Message copied",
+  "plugin.devicelog.button.copy.message": "Copy message",
   "plugin.devicelog.settings.retention.title": "Retention",
   "plugin.devicelog.settings.log.preserve.period": "Log storage time (days)",
   "plugin.devicelog.settings.log.preserve.period.hint": "Logs older than this are deleted automatically",
@@ -79,11 +81,15 @@
   "success.plugin.devicelog.settings.rule.activated": "Rule activated",
   "success.plugin.devicelog.settings.rule.deactivated": "Rule deactivated",
 
-  "table.heading.plugin.devicelog.deviceNumber": "Device number",
-  "table.heading.plugin.devicelog.dateTime": "Date and Time",
+  "table.heading.plugin.devicelog.deviceNumber": "Device",
+  "table.heading.plugin.devicelog.dateTime": "Time",
   "table.heading.plugin.devicelog.app": "Application",
   "table.heading.plugin.devicelog.severity": "Severity",
   "table.heading.plugin.devicelog.message": "Message",
+
+  "plugin.devicelog.severity.unknown": "Unknown",
+  "plugin.devicelog.message.moreLines.one": "more line",
+  "plugin.devicelog.message.moreLines.other": "more lines",
 
   "format.date.plugin.devicelog.createTime": "dd/MM/yyyy HH:mm:ss",
   "format.date.plugin.devicelog.datePicker": "dd-MM-yyyy",

@@ -144,8 +144,26 @@ angular.module('headwind-kiosk',
             })
             .state('appVersionsEditor', {
                 url: '/application/{id}/versions',
-                templateUrl: 'app/components/main/view/applicationVersions.html',
-                controller: 'ApplicationVersionEditor',
+                // Shares content.html/TabController with every other top-level
+                // page (see the 'applications' state above) instead of using
+                // applicationVersions.html as its own top-level template -
+                // that's what was making the main nav (Devices/Applications/
+                // .../Settings/Functions) disappear on this route, the same
+                // bug the 'configEditor' state below had and was fixed the
+                // same way. ApplicationVersionEditor is now an ng-controller
+                // inside applicationVersions.html itself (nested under
+                // TabController via content.html's APPS tab, same place
+                // applications.html/ApplicationsTabController already lives)
+                // rather than the state's own controller; $stateParams.id
+                // still resolves correctly since that only depends on the
+                // active state's url pattern, not which controller reads it.
+                templateUrl: 'app/components/main/view/content.html',
+                controller: 'TabController',
+                resolve: {
+                    openTab: function () {
+                        return 'APPS';
+                    }
+                },
                 ncyBreadcrumb: {
                     label: '{{"breadcrumb.application.versions" | localize}}', //label to show in breadcrumbs
                     parent: 'applications',

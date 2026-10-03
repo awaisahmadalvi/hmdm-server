@@ -1,0 +1,166 @@
+<!-- Localization completed -->
+<div class="modern-modal-header app-modal-header">
+    <div class="app-modal-header-top">
+        <app-icon application="parentApp" size="40"></app-icon>
+        <div class="app-modal-header-text">
+            <h4 class="modern-modal-title" ng-if="isNewApp" localized>form.application.version.title.add</h4>
+            <h4 class="modern-modal-title" ng-if="!isNewApp">{{ ('form.application.version.title.edit' | localize).replace('${version}', application.version) }}</h4>
+            <div class="app-modal-header-sub">{{parentApp.name}}<span ng-if="parentApp.pkg"> &middot; {{parentApp.pkg}}</span></div>
+        </div>
+        <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
+    </div>
+</div>
+
+<div class='device-details-inline-error' ng-show='errorMessage'><span>{{errorMessage}}</span></div>
+<div class='device-details-inline-success' ng-show='successMessage'><span>{{successMessage}}</span></div>
+
+<div class="modal-body modern-modal-body">
+
+    <!-- SOURCE (app type) -->
+    <div class="device-details-card app-modal-section" ng-if="appType == 'app'">
+        <div class="device-details-card-header" localized>form.application.section.source</div>
+
+        <div class="modern-segmented" ng-if="isNewApp">
+            <button type="button" class="modern-segmented-option" ng-class="{active: versionSource === 'upload'}"
+                    ng-click="versionSource = 'upload'">{{'form.application.version.source.option.upload' | localize}}</button>
+            <button type="button" class="modern-segmented-option" ng-class="{active: versionSource === 'url'}"
+                    ng-click="versionSource = 'url'">{{'form.application.version.source.option.url' | localize}}</button>
+        </div>
+
+        <!-- Upload is only ever offered for a brand new version - editing an
+             existing one can only change its URL (matching what the server
+             side has always accepted here; wiring an upload into an edit's
+             save() would need its own request-shape change, out of scope
+             for a visual-only redesign of this dialog). -->
+        <div class="design-field" ng-if="isNewApp && versionSource === 'upload'">
+            <div class="design-upload-zone" ng-if="!file.path" upload-button drop-upload
+                 file-input-disabler input-disabled="{{application.system}}"
+                 url="rest/private/web-ui-files"
+                 on-upload="onStartedUpload(files)"
+                 on-progress="onUploadProgress(progress)"
+                 on-success="fileUploaded(response)">
+                <span class="glyphicon glyphicon-cloud-upload design-upload-icon"></span>
+                <div class="design-upload-text">{{'form.application.version.upload.hint' | localize}}</div>
+            </div>
+            <div class="progress files-upload-progress" ng-if="loading && !file.path">
+                <div class="progress-bar" ng-style="{width: uploadProgressPercent + '%'}"></div>
+            </div>
+            <div class="design-upload-preview" ng-if="file.path && !invalidFile">
+                <span class="glyphicon glyphicon-file design-upload-icon" style="font-size: 20px;"></span>
+                <div class="files-name-text">
+                    <span class="files-name">{{fileName}}</span>
+                    <span class="field-hint app-version-file-size" ng-if="fileSizeBytes">{{formatFileSize(fileSizeBytes)}}</span>
+                </div>
+                <button type="button" class="logs-btn-reset" ng-click="clearFile()" localized>button.cleanup</button>
+            </div>
+        </div>
+
+        <div class="design-field" ng-if="!isNewApp || versionSource === 'url'">
+            <label class="design-field-label" for="applicationVersionUrl" localized>form.application.url</label>
+            <input ng-model='application.url' type='text' id="applicationVersionUrl"
+                   class="form-control logs-input settings-input design-hex-input"
+                   ng-disabled="application.system">
+            <div class="field-hint" localized>form.application.url.hint</div>
+        </div>
+    </div>
+
+    <!-- SOURCE (web type - URL only, no APK/arch/auto-update at all) -->
+    <div class="device-details-card app-modal-section" ng-if="appType == 'web'">
+        <div class="device-details-card-header" localized>form.application.section.source</div>
+        <div class="design-field">
+            <label class="design-field-label" for="applicationVersionUrlWeb" localized>form.application.url</label>
+            <input ng-model='application.url' type='text' id="applicationVersionUrlWeb"
+                   class="form-control logs-input settings-input design-hex-input"
+                   ng-disabled="application.system">
+        </div>
+    </div>
+
+    <!-- DETAILS -->
+    <div class="device-details-card app-modal-section" ng-if="appType == 'app'">
+        <div class="device-details-card-header" localized>form.application.section.details</div>
+
+        <div class="design-field">
+            <label class="design-field-label" for="applicationVersionVersion" localized>form.application.version</label>
+            <input ng-if="!fileSelected" ng-model='application.version' type='text' id="applicationVersionVersion"
+                   class="form-control logs-input settings-input" localized-placeholder="form.application.version.placeholder">
+            <div class="app-locked-field-wrap" ng-if="fileSelected">
+                <input readonly type='text' class="form-control logs-input settings-input" ng-model="application.version"/>
+                <span class="glyphicon glyphicon-lock app-locked-field-icon"></span>
+            </div>
+        </div>
+
+        <div class="design-field">
+            <label class="design-field-label" for="applicationVersionArch" localized>form.application.arch</label>
+            <select class="form-control modern-select settings-input" ng-model='application.arch' id="applicationVersionArch" ng-disabled="application.split">
+                <option ng-value="''" localized>form.application.arch.universal</option>
+                <option ng-value="'armeabi'" localized>form.application.arch.armeabi</option>
+                <option ng-value="'arm64'" localized>form.application.arch.arm64</option>
+            </select>
+            <div class="field-hint">{{'form.application.arch.select.hint' | localize}}</div>
+            <div class="field-hint" style="color: var(--color-warning-text)" ng-show="appTypeWarning">{{appTypeWarning}}</div>
+            <div class="field-hint" style="color: var(--color-success-text)" ng-show="appTypeSuccess">{{appTypeSuccess}}</div>
+        </div>
+    </div>
+
+    <!-- AUTO UPDATE -->
+    <div class="device-details-card app-modal-section" ng-if="appType == 'app'">
+        <div class="design-field">
+            <div class="settings-field-row">
+                <label class="design-field-label" for="versionAutoUpdateBox" localized>form.application.auto.update</label>
+                <span class="modern-toggle">
+                    <input localized-title="form.application.auto.update.title" ng-model='application.autoUpdate'
+                           type='checkbox' class="modern-toggle-input" id="versionAutoUpdateBox"/>
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
+            </div>
+            <div class="field-hint" localized>form.application.auto.update.title</div>
+        </div>
+    </div>
+
+    <!-- SPLIT APK (legacy two-URL mechanism, predates the single arch
+         select above - kept so existing split versions stay editable, but
+         tucked away since new versions should use Native code instead). -->
+    <div class="modern-collapsible" ng-if="appType == 'app'">
+        <div class="modern-collapsible-header" ng-click="splitOpen = !splitOpen">
+            <span class="glyphicon" ng-class="(splitOpen || application.split) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right'"></span>
+            <span localized>form.application.arch.split</span>
+        </div>
+        <div class="modern-collapsible-body" ng-if="splitOpen || application.split">
+            <div class="design-field">
+                <div class="settings-field-row">
+                    <label class="design-field-label" for="applicationVersionSplit" localized>form.application.arch.split</label>
+                    <span class="modern-toggle">
+                        <input ng-model='application.split' type='checkbox' class="modern-toggle-input" id="applicationVersionSplit"/>
+                        <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                    </span>
+                </div>
+                <div class="field-hint" localized>form.application.arch.title</div>
+            </div>
+            <div class="design-field" ng-if="application.split">
+                <label class="design-field-label" for="applicationVersionUrlArmeabi" localized>form.application.url.armeabi</label>
+                <input ng-model='application.urlArmeabi' type='text' id="applicationVersionUrlArmeabi"
+                       class="form-control logs-input settings-input design-hex-input" ng-disabled="application.system">
+            </div>
+            <div class="design-field" ng-if="application.split">
+                <label class="design-field-label" for="applicationVersionUrlArm64" localized>form.application.url.arm64</label>
+                <input ng-model='application.urlArm64' type='text' id="applicationVersionUrlArm64"
+                       class="form-control logs-input settings-input design-hex-input" ng-disabled="application.system">
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modern-modal-actions">
+    <span class="app-modal-footer-left">
+        <a class="action-link" ng-if="!isNewApp" ng-click="manageConfigurations()" localized>button.set.configurations</a>
+    </span>
+    <div class="app-modal-actions-right">
+        <button type='button' class='btn btn-default' ng-click='closeModal()' ng-disabled="loading" localized>button.cancel</button>
+        <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' ng-disabled="loading">
+            <span ng-if="!loading && isNewApp" localized>button.add</span>
+            <span ng-if="!loading && !isNewApp" localized>button.save</span>
+            <span ng-if="loading" localized>form.application.saving</span>
+        </button>
+    </div>
+</div>

@@ -640,8 +640,15 @@ angular.module('headwind-kiosk')
                 $scope.availableConfigs.push(config.id);
             });
         }
+        // !config guards devices with no assigned configuration at all -
+        // without it, config.id below throws, and since this runs inside
+        // the Configuration cell's ng-if, Angular silently swallows the
+        // exception and skips rendering that one <td> (ng-if's documented
+        // behavior for a throwing expression), which then misaligns every
+        // following cell in that row against the header. Confirmed live:
+        // any device with configuration == null reproduced exactly this.
         $scope.configAvailable = function (config) {
-            return $scope.availableConfigs == null ||
+            return !config || $scope.availableConfigs == null ||
                 $scope.availableConfigs.indexOf(config.id) !== -1;
         };
 
@@ -813,6 +820,17 @@ angular.module('headwind-kiosk')
                         device.imeiTooltip = resolvedIMEI[1];
                         device.imeiTooltipClass = resolvedIMEI[2];
                         device.configuration = configurations[device.configurationId];
+                        if (device.configurationId && !device.configuration) {
+                            // The Configuration column's cell (devices.html) treats a falsy
+                            // device.configuration as "no configuration assigned" and renders
+                            // a dash - which is wrong if the device DOES have a
+                            // configurationId but the server's response.data.configurations
+                            // map just didn't include that id's entry. Loud warning instead
+                            // of a silently-wrong dash, since this case is otherwise
+                            // indistinguishable from a device that genuinely has none.
+                            console.warn('Device ' + device.number + ' has configurationId ' + device.configurationId +
+                                ' but no matching entry in response.data.configurations - Configuration column will show empty for it.');
+                        }
 
                         var serverPhone = device.phone || '';
                         var deviceInfoPhone = deviceInfo ? (deviceInfo.phone || '') : '';
@@ -907,6 +925,133 @@ angular.module('headwind-kiosk')
             }).map(function (column) {
                 return column.key;
             });
+        };
+
+        // ---------------------------------------------------------------
+        // Single source of truth for the table's icon-header columns - the
+        // header row (ng-repeat in devices.html) and the "What do these
+        // mean?" legend's column-icon list both read this exact array, so
+        // a column can't show one icon in the header and a different one
+        // (or none) in the legend, and the two can't silently drift out of
+        // visibility sync. The body <td>s below are still written out by
+        // hand (their contents differ too much per column - status dot,
+        // indicator pill, configuration pill, plain text, formatted date -
+        // to usefully share one generic cell template), but every one of
+        // them guards on this exact same settings.columnDisplayed* flag,
+        // so a column's header and its data cell always appear/disappear
+        // together - the previous bug class (Configuration's cell silently
+        // vanishing while its header stayed put, see configAvailable above)
+        // can't recur from a header/cell condition mismatch, only from a
+        // body expression actually throwing, which configAvailable's own
+        // null-guard now prevents for that column specifically.
+        // Column widths live in dashboard.css (.devices-page .devices-col-
+        // <key>), keyed by the same `key` used here - not duplicated as
+        // numbers in this array, so there's exactly one place per column
+        // where its width can be wrong, not two that could disagree.
+        // Distinct from REPORT_COLUMN_DEFINITIONS above, which is the
+        // unrelated server-side export report's column list.
+        // ---------------------------------------------------------------
+        $scope.deviceColumns = [
+            {key: 'status', icon: 'activity', labelKey: 'table.heading.device.status', sortKey: 'STATUS', visible: function () { return $scope.settings.columnDisplayedDeviceStatus; }},
+            {key: 'number', icon: 'smartphone', labelKey: 'table.heading.device.device.number', sortKey: 'NUMBER', visible: function () { return $scope.settings.columnDisplayedDeviceNumber; }},
+            {key: 'date', icon: 'clock', labelKey: 'table.heading.device.date', sortKey: 'LAST_UPDATE', visible: function () { return $scope.settings.columnDisplayedDeviceDate; }},
+            {key: 'imei', icon: 'scan-barcode', labelKey: 'table.heading.device.imei', sortKey: 'IMEI', visible: function () { return $scope.settings.columnDisplayedDeviceImei; }},
+            {key: 'phone', icon: 'phone', labelKey: 'table.heading.device.phone.number', sortKey: 'PHONE', visible: function () { return $scope.settings.columnDisplayedDevicePhone; }},
+            {key: 'model', icon: 'tablet-smartphone', labelKey: 'table.heading.device.phone.model', sortKey: 'MODEL', visible: function () { return $scope.settings.columnDisplayedDeviceModel; }},
+            {key: 'permissions', icon: 'shield-check', labelKey: 'table.heading.device.status.permissions', sortKey: 'PERMISSIONS', visible: function () { return $scope.settings.columnDisplayedDevicePermissionsStatus; }},
+            {key: 'installations', icon: 'package-check', labelKey: 'table.heading.device.status.installation', sortKey: 'INSTALLATIONS', visible: function () { return $scope.settings.columnDisplayedDeviceAppInstallStatus; }},
+            {key: 'files', icon: 'file-check', labelKey: 'table.heading.device.status.files', sortKey: 'FILES', visible: function () { return $scope.settings.columnDisplayedDeviceFilesStatus; }},
+            {key: 'configuration', icon: 'sliders-horizontal', labelKey: 'table.heading.device.configuration', sortKey: 'CONFIGURATION', visible: function () { return $scope.settings.columnDisplayedDeviceConfiguration; }},
+            {key: 'description', icon: 'align-left', labelKey: 'table.heading.device.desc', sortKey: 'DESCRIPTION', visible: function () { return $scope.settings.columnDisplayedDeviceDesc; }},
+            {key: 'group', icon: 'folder', labelKey: 'table.heading.device.group', sortKey: 'GROUP', visible: function () { return $scope.settings.columnDisplayedDeviceGroup; }},
+            {key: 'launcher-version', icon: 'layout-grid', labelKey: 'table.heading.device.launcher.version', sortKey: 'LAUNCHER_VERSION', visible: function () { return $scope.settings.columnDisplayedLauncherVersion; }},
+            {key: 'battery', icon: 'battery-medium', labelKey: 'table.heading.device.battery.level', sortKey: 'BATTERY_LEVEL', visible: function () { return $scope.settings.columnDisplayedBatteryLevel; }},
+            {key: 'default-launcher', icon: 'layers', labelKey: 'table.heading.device.default.launcher', sortKey: 'DEFAULT_LAUNCHER', visible: function () { return $scope.settings.columnDisplayedDefaultLauncher; }},
+            {key: 'mdm-mode', icon: 'shield', labelKey: 'table.heading.device.mdm.mode', sortKey: 'MDM_MODE', visible: function () { return $scope.settings.columnDisplayedMdmMode; }},
+            {key: 'kiosk-mode', icon: 'lock-keyhole', labelKey: 'table.heading.device.kiosk.mode', sortKey: 'KIOSK_MODE', visible: function () { return $scope.settings.columnDisplayedKioskMode; }},
+            {key: 'android-version', icon: 'cpu', labelKey: 'table.heading.device.android.version', sortKey: 'ANDROID_VERSION', visible: function () { return $scope.settings.columnDisplayedAndroidVersion; }},
+            {key: 'enrollment-date', icon: 'calendar-plus', labelKey: 'table.heading.device.enrollment.date', sortKey: 'ENROLLMENT_DATE', visible: function () { return $scope.settings.columnDisplayedEnrollmentDate; }},
+            {key: 'serial', icon: 'hash', labelKey: 'table.heading.device.serial', sortKey: 'SERIAL', visible: function () { return $scope.settings.columnDisplayedSerial; }},
+            {key: 'mac', icon: 'network', labelKey: 'table.heading.device.mac', sortKey: 'MAC', visible: function () { return $scope.settings.columnDisplayedSerial; }},
+            {key: 'public-ip', icon: 'globe', labelKey: 'table.heading.device.publicip', sortKey: 'PUBLICIP', visible: function () { return $scope.settings.columnDisplayedPublicIp; }},
+            {key: 'custom1', icon: 'asterisk', labelText: function () { return $scope.commonSettings.customPropertyName1; }, sortKey: 'CUSTOM1', visible: function () { return $scope.settings.columnDisplayedCustom1 && $scope.commonSettings.customPropertyName1; }},
+            {key: 'custom2', icon: 'asterisk', labelText: function () { return $scope.commonSettings.customPropertyName2; }, sortKey: 'CUSTOM2', visible: function () { return $scope.settings.columnDisplayedCustom2 && $scope.commonSettings.customPropertyName2; }},
+            {key: 'custom3', icon: 'asterisk', labelText: function () { return $scope.commonSettings.customPropertyName3; }, sortKey: 'CUSTOM3', visible: function () { return $scope.settings.columnDisplayedCustom3 && $scope.commonSettings.customPropertyName3; }}
+        ];
+
+        // Stable function reference for "deviceColumns | filter:columnVisible"
+        // (header ng-repeat + legend) - a fresh anonymous function inline in
+        // the template would still work, but a named one here is reused
+        // identically by both places that need "is this column visible".
+        $scope.columnVisible = function (col) {
+            return !!(col.visible && col.visible());
+        };
+
+        // Custom1/2/3's header has no fixed i18n key - its text is whatever
+        // name the admin gave that custom property (commonSettings.
+        // customPropertyNameN) - labelText covers that case, labelKey the
+        // normal localized-string case, so the template can call this one
+        // function regardless of which column it's showing.
+        $scope.columnLabel = function (col) {
+            if (col.labelText) {
+                return col.labelText() || '';
+            }
+            return localization.localize(col.labelKey);
+        };
+
+        // Full tooltip/aria-label text: "Device number — click to sort" for
+        // a sortable column, just the plain name otherwise (every column in
+        // deviceColumns is currently sortable, but this doesn't assume it).
+        $scope.columnTooltip = function (col) {
+            var label = $scope.columnLabel(col);
+            if (!col.sortKey) {
+                return label;
+            }
+            return label + ' — ' + localization.localize('devices.header.sort.hint');
+        };
+
+        // Left-sticky columns (checkbox, Status, Device number) need a
+        // cumulative pixel offset so they sit side by side instead of
+        // overlapping. Computed from the same fixed widths set in
+        // dashboard.css's .devices-col-check/-status/-number rules
+        // (44/120/180px) rather than measured from the DOM - each of the
+        // three is either rendered at its one fixed width or not rendered
+        // at all, so a running total of whichever precede the column being
+        // asked about is always exact.
+        $scope.stickyLeftOffset = function (key) {
+            var left = 0;
+            if ($scope.hasPermission('edit_devices')) {
+                if (key === 'check') {
+                    return left;
+                }
+                left += 44;
+            }
+            if ($scope.settings && $scope.settings.columnDisplayedDeviceStatus) {
+                if (key === 'status') {
+                    return left;
+                }
+                left += 120;
+            }
+            return left;
+        };
+
+        // Only the rightmost of the three left-sticky columns that's
+        // actually visible gets the edge shadow (and, via the same class,
+        // is the one app-scroll-edge-shadow's conditional box-shadow in
+        // dashboard.css targets) - whichever of checkbox/Status/Device
+        // number that is changes as columns are toggled on/off.
+        $scope.isLastStickyLeft = function (key) {
+            var visible = [];
+            if ($scope.hasPermission('edit_devices')) {
+                visible.push('check');
+            }
+            if ($scope.settings && $scope.settings.columnDisplayedDeviceStatus) {
+                visible.push('status');
+            }
+            if ($scope.settings && $scope.settings.columnDisplayedDeviceNumber) {
+                visible.push('number');
+            }
+            return visible.length > 0 && visible[visible.length - 1] === key;
         };
 
         var downloadDeviceReport = function (resourceAction, fileExtension) {
@@ -1618,6 +1763,20 @@ angular.module('headwind-kiosk')
             $rootScope.$emit('plugin-' + plugin.identifier + '-device-selected', device);
         };
 
+        // Icon for each plugin's row-actions-menu entry, keyed by the same
+        // plugin.identifier notifyPluginOnDevice above switches on - falls
+        // back to a generic "info" glyph for any plugin not in this list
+        // rather than rendering nothing for one we don't know about.
+        var PLUGIN_MENU_ICONS = {
+            deviceinfo: 'info',
+            devicelog: 'scroll-text',
+            messaging: 'message-square',
+            push: 'send'
+        };
+        $scope.pluginMenuIcon = function (plugin) {
+            return (plugin && PLUGIN_MENU_ICONS[plugin.identifier]) || 'info';
+        };
+
         $scope.editConfiguration = function (configuration) {
             $state.transitionTo('configEditor', { "id": configuration.id });
         };
@@ -1639,38 +1798,40 @@ angular.module('headwind-kiosk')
         };
 
         $scope.restartDevice = function (device) {
+            let localizedText = localization.localize('question.restart.device').replace('${deviceNumber}', device.number);
+            confirmModal.getUserConfirmation(localizedText, function () {
+                $scope.message = {
+                    scope: "device",
+                    deviceNumber: device.number,
+                    groupId: "",
+                    configurationId: "",
+                    messageType: "reboot",
+                    customMessageType: "",
+                    payload: ""
+                };
 
-            $scope.message = {
-                scope: "device",
-                deviceNumber: device.number,
-                groupId: "",
-                configurationId: "",
-                messageType: "reboot",
-                customMessageType: "",
-                payload: ""
-            };
-
-            $http.post(
-                "rest/plugins/push/private/send",
-                $scope.message,
-                {
-                    headers: {
-                        "Content-Type": "application/json;charset=UTF-8",
+                $http.post(
+                    "rest/plugins/push/private/send",
+                    $scope.message,
+                    {
+                        headers: {
+                            "Content-Type": "application/json;charset=UTF-8",
+                        }
                     }
-                }
-            ).then(function (response) {
-                $scope.loading = false;
-                if (response.data.status === "OK") {
-                    console.log("Device " + device.number + " restart message sent successfully.");
-                    alertService.success('Device restart message sent successfully.');
-                } else {
-                    console.error("Failed to send device restart message to " + device.number + ".");
-                    alertService.error('Failed to send device restart message.');
-                }
+                ).then(function (response) {
+                    $scope.loading = false;
+                    if (response.data.status === "OK") {
+                        console.log("Device " + device.number + " restart message sent successfully.");
+                        alertService.success('Device restart message sent successfully.');
+                    } else {
+                        console.error("Failed to send device restart message to " + device.number + ".");
+                        alertService.error('Failed to send device restart message.');
+                    }
 
-            }, function () {
-                $scope.loading = false;
-                alertService.onRequestFailure();
+                }, function () {
+                    $scope.loading = false;
+                    alertService.onRequestFailure();
+                });
             });
         };
 

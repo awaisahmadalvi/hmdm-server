@@ -58,6 +58,9 @@ public abstract class DeviceLogRecord implements Serializable {
     @ApiModelProperty("A package ID for application")
     private String applicationPkg;
 
+    @ApiModelProperty("A name for application, if known")
+    private String applicationName;
+
     /**
      * <p>Constructs new <code>DeviceLogRecord</code> instance. This implementation does nothing.</p>
      */
@@ -126,6 +129,14 @@ public abstract class DeviceLogRecord implements Serializable {
 
     public void setApplicationPkg(String applicationPkg) {
         this.applicationPkg = applicationPkg;
+    }
+
+    public String getApplicationName() {
+        return applicationName;
+    }
+
+    public void setApplicationName(String applicationName) {
+        this.applicationName = applicationName;
     }
 
     /**

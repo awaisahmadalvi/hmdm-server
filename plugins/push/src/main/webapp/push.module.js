@@ -250,6 +250,14 @@ angular.module('plugin-push', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTag
 
         $scope.expandedMessage = null;
         $scope.toggleExpand = function (message) {
+            // Guarded in the template (app-expandable-row="message.payload
+            // && toggleExpand(message)") so a row without a payload is
+            // never clickable in the first place - this is just a second,
+            // cheap line of defense against expandedMessage ever pointing
+            // at a message with nothing to show.
+            if (!message || !message.payload) {
+                return;
+            }
             $scope.expandedMessage = ($scope.expandedMessage === message) ? null : message;
         };
 

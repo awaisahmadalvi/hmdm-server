@@ -107,7 +107,7 @@
                         <span ng-if="pkgInfoVisible(application)">{{application.version}}<span ng-if="application.versionCode"> ({{application.versionCode}})</span></span>
                     </td>
                     <td data-label="{{'form.applications.source' | localize}}" ng-click="$event.stopPropagation()">
-                        <span class="files-path-cell" ng-if="appSourceInfo(application).url">
+                        <span class="files-path-cell app-copy-hover-area" ng-if="appSourceInfo(application).url">
                             <span class="device-details-badge app-source-badge" ng-class="appSourceInfo(application).uploaded ? 'users-role-blue' : 'users-role-neutral'"
                                   title="{{appSourceInfo(application).url}}">
                                 <span ng-if="appSourceInfo(application).uploaded" localized>form.applications.source.uploaded</span>
@@ -115,10 +115,10 @@
                             </span>
                             <span class="glyphicon glyphicon-warning-sign" style="color: var(--color-warning-text)" ng-if="appSourceInfo(application).isLocalhost"
                                   title="{{'form.applications.source.localhost.warning' | localize}}"></span>
-                            <button type="button" class="files-path-copy" ng-click="copyAppUrl(application)"
-                                    title="{{ ('form.file.copy.link' | localize).replace('${link}', appSourceInfo(application).url) }}">
-                                <span class="glyphicon" ng-class="copiedAppUrlId === application.id ? 'glyphicon-ok' : 'glyphicon-copy'"></span>
-                            </button>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover"
+                                    app-copy-button="appSourceInfo(application).url"
+                                    app-copy-toast="{{'form.files.toast.link.copied' | localize}}"
+                                    title="{{ ('form.file.copy.link' | localize).replace('${link}', appSourceInfo(application).url) }}"></button>
                         </span>
                         <span class="device-details-badge app-source-badge users-role-neutral" ng-if="!appSourceInfo(application).url"
                               title="{{'form.applications.source.none.tooltip' | localize}}" localized>form.applications.source.none</span>
@@ -128,26 +128,43 @@
                         <span class="app-order-dash" ng-if="!application.showIcon">&mdash;</span>
                     </td>
                     <td class="actions-column" ng-click="$event.stopPropagation()">
+                        <button ng-if="application.type == 'app'" type="button" class="btn btn-default app-action-btn app-options-btn"
+                                ng-click="editVersions(application)" localized-title="form.applications.action.versions"
+                                aria-label="{{'form.applications.action.versions' | localize}}">
+                            <app-lucide-icon name="history" size="16"></app-lucide-icon>
+                            <span class="app-action-badge" ng-if="application.versionsCount">{{application.versionsCount}}</span>
+                        </button>
                         <button ng-if="hasPermission('edit_applications') && (!application.commonApplication || application.customerId == user.customerId)"
-                                type="button" class="btn btn-default app-options-btn" ng-click="editApplication(application)" localized-title="button.edit">
+                                type="button" class="btn btn-default app-action-btn app-options-btn" ng-click="editApplication(application)" localized-title="button.edit">
                             <span class="glyphicon glyphicon-pencil"></span>
                         </button>
                         <button ng-if="hasPermission('edit_applications') && application.commonApplication && application.customerId != user.customerId"
-                                type="button" class="btn btn-default app-options-btn" ng-click="clarifyOnCommon()" localized-title="button.common">
+                                type="button" class="btn btn-default app-action-btn app-options-btn" ng-click="clarifyOnCommon()" localized-title="button.common">
                             <span class="glyphicon glyphicon-cloud"></span>
                         </button>
                         <div class="users-row-menu" app-actions-menu>
-                            <button type="button" class="btn btn-default">
+                            <button type="button" class="btn btn-default app-action-btn" localized-title="devices.action.more.title">
                                 <span class="glyphicon glyphicon-option-vertical"></span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-right actions-menu-list">
-                                <li ng-if="application.type == 'app'"><a ng-click="editVersions(application)" localized>form.applications.action.versions</a></li>
-                                <li><a ng-click="editConfiguration(application)" localized>form.applications.action.configurations</a></li>
+                                <li>
+                                    <a ng-click="editConfiguration(application)">
+                                        <app-lucide-icon name="sliders-horizontal" size="14" class="devices-menu-item-icon"></app-lucide-icon>
+                                        <span localized>form.applications.action.configurations</span>
+                                    </a>
+                                </li>
+                                <li ng-if="hasPermission('edit_applications') && (!application.commonApplication || application.customerId == user.customerId)" class="actions-menu-divider"></li>
                                 <li ng-if="hasPermission('edit_applications') && !application.deletionProhibited && (!application.commonApplication || application.customerId == user.customerId)">
-                                    <a class="action-danger" ng-click="removeApplication(application)" localized>button.delete</a>
+                                    <a class="action-danger" ng-click="removeApplication(application)">
+                                        <app-lucide-icon name="trash-2" size="14" class="devices-menu-item-icon"></app-lucide-icon>
+                                        <span localized>button.delete</span>
+                                    </a>
                                 </li>
                                 <li ng-if="hasPermission('edit_applications') && application.deletionProhibited && (!application.commonApplication || application.customerId == user.customerId)" class="disabled">
-                                    <a class="action-danger" title="{{'error.application.config.reference.exists' | localize}}" localized>button.delete</a>
+                                    <a class="action-danger" title="{{'error.application.config.reference.exists' | localize}}">
+                                        <app-lucide-icon name="trash-2" size="14" class="devices-menu-item-icon"></app-lucide-icon>
+                                        <span localized>button.delete</span>
+                                    </a>
                                 </li>
                             </ul>
                         </div>

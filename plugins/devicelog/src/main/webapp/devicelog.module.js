@@ -66,9 +66,10 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
     })
     .controller('PluginDeviceLogTabController', function ($scope, $rootScope, $window, $location, $interval, $http, $modal, $timeout,
         pluginDeviceLogService, confirmModal,
-        authService, localization) {
+        authService, localization, pushTypeHelper) {
 
         $scope.hasPermission = authService.hasPermission;
+        $scope.formatMessage = pushTypeHelper.formatPayload;
 
         $rootScope.settingsTabActive = false;
         $rootScope.pluginsTabActive = true;
@@ -178,21 +179,113 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
         };
 
         // Severity is a numeric filter level (paging.severity, -1..5) but
-        // each log row's own severity (log.severity) is the descriptive
-        // string the server already returns (ERROR/WARNING/...) - kept
-        // as two separate lookups since they're two different values.
-        var severityFilterLabels = { '-1': '', 0: 'NONE', 1: 'ERROR', 2: 'WARNING', 3: 'INFO', 4: 'DEBUG', 5: 'VERBOSE' };
+        // each log row's own severity (log.severity) is normally the
+        // descriptive string the server returns (ERROR/WARNING/...). Real
+        // data isn't always that clean though - older/legacy rows, a
+        // differently-cased string, or a bare numeric code can all end up
+        // in that same column - so every lookup below goes through
+        // resolveSeverity(), which accepts a string (any case) or a number
+        // and only ever falls through to "unknown" (never empty). This one
+        // table is also what drives the "Severity search" filter's own
+        // options (see severityLevels below), so the filter and the pills
+        // can never disagree on what a given value/label means.
+        var SEVERITY_LEVELS = [
+            { id: 0, key: 'NONE',    label: 'None',    cls: 'push-badge-neutral', icon: 'glyphicon-minus' },
+            { id: 1, key: 'ERROR',   label: 'Error',   cls: 'push-badge-danger',  icon: 'glyphicon-remove-sign' },
+            { id: 2, key: 'WARNING', label: 'Warning', cls: 'push-badge-warn',    icon: 'glyphicon-warning-sign' },
+            { id: 3, key: 'INFO',    label: 'Info',    cls: 'push-badge-info',    icon: 'glyphicon-info-sign' },
+            { id: 4, key: 'DEBUG',   label: 'Debug',   cls: 'push-badge-neutral', icon: 'glyphicon-wrench' },
+            { id: 5, key: 'VERBOSE', label: 'Verbose', cls: 'push-badge-verbose', icon: 'glyphicon-comment' }
+        ];
+        $scope.severityLevels = SEVERITY_LEVELS;
+
+        var SEVERITY_BY_KEY = {};
+        var SEVERITY_BY_ID = {};
+        SEVERITY_LEVELS.forEach(function (lvl) {
+            SEVERITY_BY_KEY[lvl.key] = lvl;
+            SEVERITY_BY_ID[lvl.id] = lvl;
+        });
+        // A couple of common shorthand spellings that aren't the server's
+        // own enum names but are still unambiguous.
+        SEVERITY_BY_KEY.WARN = SEVERITY_BY_KEY.WARNING;
+        SEVERITY_BY_KEY.VERB = SEVERITY_BY_KEY.VERBOSE;
+
+        var resolveSeverity = function (severity) {
+            if (severity === null || severity === undefined || severity === '') {
+                return null;
+            }
+            var str = String(severity).trim();
+            var byKey = SEVERITY_BY_KEY[str.toUpperCase()];
+            if (byKey) {
+                return byKey;
+            }
+            if (/^-?\d+$/.test(str)) {
+                var byId = SEVERITY_BY_ID[parseInt(str, 10)];
+                if (byId) {
+                    return byId;
+                }
+            }
+            return null;
+        };
+
         $scope.severityLabel = function (value) {
-            return severityFilterLabels[value] || '';
+            if (value === -1 || value === '-1' || value === null || value === undefined) {
+                return '';
+            }
+            var lvl = SEVERITY_BY_ID[value];
+            return lvl ? lvl.label : '';
         };
 
         $scope.severityBadgeClass = function (severity) {
-            var s = (severity || '').toString().toUpperCase();
-            if (s === 'ERROR') return 'logs-badge-error';
-            if (s === 'WARNING') return 'logs-badge-warning';
-            if (s === 'INFO') return 'logs-badge-info';
-            if (s === 'DEBUG') return 'logs-badge-debug';
-            return 'logs-badge-neutral';
+            var lvl = resolveSeverity(severity);
+            return lvl ? lvl.cls : 'push-badge-neutral';
+        };
+
+        $scope.severityIcon = function (severity) {
+            var lvl = resolveSeverity(severity);
+            return lvl ? lvl.icon : 'glyphicon-question-sign';
+        };
+
+        $scope.severityDisplayLabel = function (severity) {
+            var lvl = resolveSeverity(severity);
+            if (lvl) {
+                return lvl.label;
+            }
+            if (severity === null || severity === undefined || severity === '') {
+                return localization.localize('plugin.devicelog.severity.unknown');
+            }
+            // An unrecognized value (unexpected string, out-of-range
+            // number) - still show it rather than an empty pill, so
+            // whatever the server actually sent is always visible.
+            return String(severity);
+        };
+
+        // Collapsed-row message preview: the first non-blank line - never
+        // the full multi-line text (that's what the expanded app-code-block
+        // is for). A message that starts with a newline (or several) would
+        // otherwise preview as a blank line with nothing visible next to
+        // the "+N lines" hint; skipping straight to the first line that
+        // actually has content keeps the preview meaningful. A message with
+        // no newline at all is returned as-is; the surrounding CSS still
+        // ellipsizes it if it overflows.
+        $scope.messagePreview = function (message) {
+            if (!message) {
+                return '';
+            }
+            var lines = message.split('\n');
+            for (var i = 0; i < lines.length; i++) {
+                if (lines[i].trim() !== '') {
+                    return lines[i];
+                }
+            }
+            return lines[0];
+        };
+
+        $scope.messageExtraLines = function (message) {
+            if (!message) {
+                return 0;
+            }
+            return message.split('\n').length - 1;
         };
 
         $scope.hasActiveFilters = function () {
@@ -234,6 +327,7 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
 
         $scope.expandedLog = null;
         $scope.toggleExpand = function (log) {
+            if (!log || !log.message) { return; }
             $scope.expandedLog = ($scope.expandedLog === log) ? null : log;
         };
 
@@ -314,7 +408,17 @@ angular.module('plugin-devicelog', ['ngResource', 'ui.bootstrap', 'ui.router', '
                 loading = false;
                 $scope.loading = false;
                 if (response.status === 'OK') {
-                    $scope.logs = response.data.items;
+                    // app-icon (app/shared/directives.js) reads
+                    // application.name/.pkg - alias the log row's own
+                    // applicationName/applicationPkg onto those names so
+                    // the same log object can be passed straight through
+                    // as its "application", without a non-assignable
+                    // object literal in the template.
+                    $scope.logs = (response.data.items || []).map(function (log) {
+                        log.pkg = log.applicationPkg;
+                        log.name = log.applicationName;
+                        return log;
+                    });
                     $scope.paging.totalItems = response.data.totalItemsCount;
 
                 } else {

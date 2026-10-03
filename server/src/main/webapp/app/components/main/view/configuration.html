@@ -1005,9 +1005,10 @@
                                 <div ng-if="mainApp.id > 0 && configuration.eventReceivingComponent">
                                     <div class="settings-readonly-field">{{configuration.baseUrl}}/#/qr/{{configuration.qrCodeKey}}/</div>
                                     <div class="settings-button-row" style="margin-top:10px;">
-                                        <button type="button" class="btn btn-default" ng-click="copyQrUrl()">
-                                            <span class="glyphicon glyphicon-copy"></span> <span localized>form.configuration.settings.mdm.qrcode.copy</span>
-                                        </button>
+                                        <button type="button" class="btn btn-default"
+                                                app-copy-button="configuration.baseUrl + '/#/qr/' + configuration.qrCodeKey + '/'"
+                                                app-copy-label="{{'form.configuration.settings.mdm.qrcode.copy' | localize}}"
+                                                app-copy-toast="{{'form.configuration.settings.mdm.qrcode.copied' | localize}}"></button>
                                         <a class="btn btn-default" href="{{configuration.baseUrl}}/#/qr/{{configuration.qrCodeKey}}/" target="_blank">
                                             <span class="glyphicon glyphicon-new-window"></span> <span localized>form.configuration.settings.mdm.qrcode.open</span>
                                         </a>
@@ -1199,12 +1200,16 @@
                                     </thead>
                                     <tbody>
                                     <tr class="app-settings-row" ng-repeat="setting in group.settings track by (setting.id || setting.tempId)"
-                                        ng-click="editApplicationSetting(setting)">
+                                        app-expandable-row="editApplicationSetting(setting)">
                                         <td data-label="{{'table.heading.application.setting.name' | localize}}">
                                             <span class="device-details-app-pkg">{{setting.name}}</span>
                                         </td>
-                                        <td data-label="{{'table.heading.application.setting.value' | localize}}">
+                                        <td class="app-copy-hover-area" data-label="{{'table.heading.application.setting.value' | localize}}">
                                             <span class="app-setting-value" title="{{setting.value}}">{{setting.value}}</span>
+                                            <button type="button" class="app-copy-btn app-copy-btn-hover" ng-if="setting.value"
+                                                    app-copy-button="setting.value"
+                                                    app-copy-toast="{{'common.copy.success' | localize}}"
+                                                    localized-title="button.copy"></button>
                                             <span class="device-details-badge" ng-class="settingTypeBadgeClass(setting)">{{settingTypeLabel(setting)}}</span>
                                         </td>
                                         <td class="app-settings-comment" data-label="{{'table.heading.application.setting.comment' | localize}}">{{setting.comment}}</td>

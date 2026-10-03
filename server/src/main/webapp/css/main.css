@@ -184,6 +184,36 @@
   margin: 0px auto;
 }
 
+/* Fluid page modifier for table-heavy pages that need more horizontal room
+   than the fixed-width pages (width-1440 etc.) - width:100% up to a much
+   wider cap instead of a fixed max-width, with side padding instead of
+   auto-margins so content still has breathing room against the viewport
+   edge on an ultrawide monitor. Applied alongside .modern-page (e.g.
+   class="page--wide modern-page devices-page"), not a replacement for it -
+   .modern-page still provides the page's own vertical rhythm/typography.
+   First user: the Devices page (main nav -> Devices); reusable later for
+   any other table-heavy page that outgrows width-1440.
+   Selector is .modern-page.page--wide (not just .page--wide) so its
+   padding-left/-right reliably beat .modern-page's own `padding: 4px 4px
+   10px 4px` (dashboard.css) regardless of which stylesheet happens to be
+   loaded last - same single-class specificity would otherwise make that
+   an accident of file order instead of a real override. */
+.modern-page.page--wide {
+  width: 100%;
+  max-width: 1880px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1600px) {
+  .modern-page.page--wide {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
 .width-800 {
   max-width: 800px;
   margin: 0px auto;
@@ -2268,18 +2298,6 @@ div.form-group input.common-checkbox {
 .btn-transparent {
   background-color: transparent;
   border: none;
-}
-
-.audit-info {
-  text-align: left;
-  padding-top: 7px;
-}
-
-.audit-payload {
-  overflow: auto;
-  max-height: 300px;
-  font-size: 12px;
-  width: 98%;
 }
 
 .btn-attention {

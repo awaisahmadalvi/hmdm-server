@@ -74,12 +74,13 @@
                     <td data-label="{{'table.heading.file.updated' | localize}}">
                         <span class="files-updated" ng-if="!file.external && file.size != -1" title="{{relativeTime(file.uploadTime)}}">{{file.uploadTime | date:updateTimeFormat}}</span>
                     </td>
-                    <td data-label="{{'table.heading.file.device.path' | localize}}" ng-click="$event.stopPropagation()">
+                    <td data-label="{{'table.heading.file.device.path' | localize}}" class="app-copy-hover-area" ng-click="$event.stopPropagation()">
                         <div class="files-path-cell" ng-if="file.devicePath">
                             <span class="device-details-app-pkg files-path-text" title="{{file.devicePath}}">{{file.devicePath}}</span>
-                            <button type="button" class="files-path-copy" ng-click="copyPath(file)" localized-title="button.copy">
-                                <span class="glyphicon" ng-class="copiedPathId === file.id ? 'glyphicon-ok' : 'glyphicon-copy'"></span>
-                            </button>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover"
+                                    app-copy-button="file.devicePath"
+                                    app-copy-toast="{{'form.files.toast.path.copied' | localize}}"
+                                    localized-title="button.copy"></button>
                         </div>
                     </td>
                     <td class="actions-column" data-label="{{'table.heading.file.actions' | localize}}" ng-click="$event.stopPropagation()">

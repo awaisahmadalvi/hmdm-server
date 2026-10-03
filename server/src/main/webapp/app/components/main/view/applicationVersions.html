@@ -1,17 +1,29 @@
 <!-- Localization completed -->
-<div class='content-wrapper width-1200 modern-page logs-page'>
+<div class='width-1200 modern-page logs-page app-versions-page' ng-controller="ApplicationVersionEditor">
 
-    <div ncy-breadcrumb></div>
+    <div class="plugin-settings-breadcrumb">
+        <a ui-sref="applications">{{'breadcrumb.applications' | localize}}</a>
+        <span class="plugin-settings-breadcrumb-sep">/</span>
+        <span>{{parentApp.name}}</span>
+        <span class="plugin-settings-breadcrumb-sep">/</span>
+        <span>{{'breadcrumb.application.versions' | localize}}</span>
+    </div>
 
     <div class="logs-page-header">
         <div>
-            <h4>{{ ('form.applications.versions.title' | localize).replace('${name}', parentApp.name || '') }}</h4>
+            <div class="app-versions-title-row">
+                <app-icon application="parentApp" size="40"></app-icon>
+                <div class="app-versions-title-text">
+                    <h4 class="app-versions-title">{{parentApp.name}}</h4>
+                    <div class="device-details-app-pkg" ng-if="parentApp.pkg">{{parentApp.pkg}}</div>
+                </div>
+            </div>
             <div class="logs-page-subtitle" localized>form.applications.versions.subtitle</div>
         </div>
         <div class="logs-page-header-actions" ng-if="parentApp.type !== 'web'">
             <button type='button' class="btn btn-modern-primary"
                     ng-if="hasPermission('edit_application_versions') && !(parentApp.commonApplication && parentApp.customerId != user.customerId)"
-                    ng-click='addApplicationVersion( {system: parentApp.system, applicationId: parentApp.id, arch: null} )'>
+                    ng-click='addApplicationVersion( {system: parentApp.system, applicationId: parentApp.id, arch: null, type: parentApp.type} )'>
                 <span class="glyphicon glyphicon-plus"></span> <span localized>button.add</span>
             </button>
         </div>
@@ -19,12 +31,23 @@
 
     <div class="summary-card logs-results-card">
 
+        <div class="device-details-skeleton-group" ng-if="loading">
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+            <div class="device-details-skeleton logs-skeleton-row"></div>
+        </div>
+
         <div class="device-details-empty" ng-if="!loading && applications.length === 0">
             <span class="glyphicon glyphicon-list-alt device-details-empty-icon"></span>
             <div class="device-details-empty-title" localized>notfound.app.versions.for.display</div>
+            <button type='button' class="btn btn-modern-primary margin-top"
+                    ng-if="hasPermission('edit_application_versions') && parentApp.type !== 'web' && !(parentApp.commonApplication && parentApp.customerId != user.customerId)"
+                    ng-click='addApplicationVersion( {system: parentApp.system, applicationId: parentApp.id, arch: null, type: parentApp.type} )'>
+                <span class="glyphicon glyphicon-plus"></span> <span localized>button.add</span>
+            </button>
         </div>
 
-        <div class="logs-results-toolbar" ng-if="applications.length > paging.pageSize">
+        <div class="logs-results-toolbar" ng-if="!loading && applications.length > paging.pageSize">
             <pagination
                     boundary-links='true' class='pagination-sm'
                     max-size='3'
@@ -35,13 +58,15 @@
                     last-text='&raquo;'></pagination>
         </div>
 
-        <div class="modern-table-wrap" ng-if="applications && applications.length > 0">
-            <table class="table modern-responsive-table">
+        <div class="modern-table-wrap" ng-if="!loading && applications.length > 0">
+            <table class="table modern-responsive-table app-versions-table">
                 <thead>
                 <tr>
                     <th localized>table.heading.application.version</th>
                     <th localized>form.application.version.code</th>
+                    <th localized>form.application.arch</th>
                     <th localized>form.applications.source</th>
+                    <th localized>form.application.auto.update</th>
                     <th>&nbsp;</th>
                 </tr>
                 </thead>
@@ -50,42 +75,53 @@
                     ng-click="hasPermission('edit_application_versions') && (!parentApp.commonApplication || parentApp.customerId == user.customerId) && editApplicationVersion(application)">
                     <td data-label="{{'table.heading.application.version' | localize}}">
                         <span class="app-name-text">{{application.version}}</span>
+                        <span class="device-details-badge device-details-badge-ok app-versions-current-badge"
+                              ng-if="parentApp.latestVersion && application.id === parentApp.latestVersion" localized>form.application.version.current</span>
                     </td>
-                    <td data-label="{{'form.application.version.code' | localize}}">{{application.versionCode != 0 ? application.versionCode : ''}}</td>
-                    <td data-label="{{'form.applications.source' | localize}}" ng-if="!application.split">
-                        <span class="device-details-app-pkg" title="{{application.url}}">{{application.url}}</span>
+                    <td data-label="{{'form.application.version.code' | localize}}">
+                        <span ng-class="{'devices-cell-empty': !application.versionCode}">{{application.versionCode || '—'}}</span>
                     </td>
-                    <td data-label="{{'form.applications.source' | localize}}" ng-if="application.split">
-                        <span class="field-hint" style="margin: 0;">arm64:</span>
-                        <span ng-if="application.urlArm64" class="device-details-app-pkg">{{application.urlArm64}}</span>
-                        <span style="color: var(--color-warning-text)" ng-if="!application.urlArm64" localized>form.configuration.apps.no.apk</span><br>
-                        <span class="field-hint" style="margin: 0;">armeabi:</span>
-                        <span ng-if="application.urlArmeabi" class="device-details-app-pkg">{{application.urlArmeabi}}</span>
-                        <span style="color: var(--color-warning-text)" ng-if="!application.urlArmeabi" localized>form.configuration.apps.no.apk</span>
+                    <td data-label="{{'form.application.arch' | localize}}">
+                        <span class="device-details-badge users-role-neutral">{{archPillKey(application) | localize}}</span>
+                    </td>
+                    <td data-label="{{'form.applications.source' | localize}}" ng-click="$event.stopPropagation()">
+                        <span ng-if="versionSourceInfo(application).url">
+                            <span class="device-details-badge app-source-badge"
+                                  ng-class="versionSourceInfo(application).uploaded ? 'users-role-blue' : 'users-role-neutral'">
+                                <span ng-if="versionSourceInfo(application).uploaded" localized>form.applications.source.uploaded</span>
+                                <span ng-if="!versionSourceInfo(application).uploaded" localized>form.applications.source.external</span>
+                            </span>
+                            <div class="device-details-app-pkg app-versions-source-url" title="{{versionSourceInfo(application).url}}">{{versionSourceInfo(application).url}}</div>
+                        </span>
+                        <span class="device-details-badge app-source-badge users-role-neutral" ng-if="!versionSourceInfo(application).url" localized>form.applications.source.none</span>
+                    </td>
+                    <td data-label="{{'form.application.auto.update' | localize}}">
+                        <span class="device-details-badge users-role-blue" ng-if="application.autoUpdate" localized>form.application.auto.update.on</span>
+                        <span class="devices-cell-empty" ng-if="!application.autoUpdate">—</span>
                     </td>
                     <td class="actions-column" ng-click="$event.stopPropagation()">
-                        <button localized-title="button.set.configurations"
-                                type='button' class="btn btn-default app-options-btn" ng-click='manageConfigurations( application )'>
-                            <span class='glyphicon glyphicon-list'></span>
+                        <button localized-title="button.set.configurations" aria-label="{{'button.set.configurations' | localize}}"
+                                type='button' class="btn btn-default app-action-btn" ng-click='manageConfigurations( application )'>
+                            <app-lucide-icon name="sliders-horizontal" size="16"></app-lucide-icon>
                         </button>
                         <button ng-if="hasPermission('edit_application_versions') && (!parentApp.commonApplication || parentApp.customerId == user.customerId)"
-                                localized-title="button.edit"
-                                type='button' class="btn btn-default app-options-btn" ng-click='editApplicationVersion( application )'>
-                            <span class='glyphicon glyphicon-pencil'></span>
+                                localized-title="button.edit" aria-label="{{'button.edit' | localize}}"
+                                type='button' class="btn btn-default app-action-btn" ng-click='editApplicationVersion( application )'>
+                            <app-lucide-icon name="pencil" size="16"></app-lucide-icon>
                         </button>
                         <button ng-if="hasPermission('edit_application_versions') && !application.deletionProhibited && (!parentApp.commonApplication || parentApp.customerId == user.customerId)"
-                                localized-title="button.delete"
-                                type='button' class="btn btn-default app-options-btn" ng-click='removeApplicationVersion( application )'>
-                            <span class='glyphicon glyphicon-trash'></span>
+                                localized-title="button.delete" aria-label="{{'button.delete' | localize}}"
+                                type='button' class="btn btn-default app-action-btn app-action-btn-danger" ng-click='removeApplicationVersion( application )'>
+                            <app-lucide-icon name="trash-2" size="16"></app-lucide-icon>
                         </button>
                         <button ng-if="hasPermission('edit_application_versions') && application.deletionProhibited && (!parentApp.commonApplication || parentApp.customerId == user.customerId)"
-                                localized-title="error.application.version.deletion.prohibited" disabled="disabled"
-                                type='button' class="btn btn-default app-options-btn">
-                            <span class='glyphicon glyphicon-trash'></span>
+                                localized-title="error.application.version.deletion.prohibited" aria-label="{{'error.application.version.deletion.prohibited' | localize}}" disabled="disabled"
+                                type='button' class="btn btn-default app-action-btn">
+                            <app-lucide-icon name="trash-2" size="16"></app-lucide-icon>
                         </button>
                         <button ng-if="hasPermission('edit_application_versions') && parentApp.commonApplication && parentApp.customerId != user.customerId"
                                 ng-click="clarifyOnCommon()"
-                                localized-title="button.common" type='button' class="btn btn-default app-options-btn">
+                                localized-title="button.common" aria-label="{{'button.common' | localize}}" type='button' class="btn btn-default app-action-btn">
                             <span class='glyphicon glyphicon-cloud'></span>
                         </button>
                     </td>
@@ -94,7 +130,7 @@
             </table>
         </div>
 
-        <div class="logs-results-toolbar logs-results-toolbar-bottom" ng-if="applications.length > paging.pageSize">
+        <div class="logs-results-toolbar logs-results-toolbar-bottom" ng-if="!loading && applications.length > paging.pageSize">
             <pagination
                     boundary-links='true' class='pagination-sm'
                     max-size='3'

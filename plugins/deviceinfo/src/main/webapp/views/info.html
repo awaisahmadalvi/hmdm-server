@@ -133,17 +133,25 @@
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.model</div>
                         <div class="device-details-row-value">{{deviceInfo.model || '—'}}</div>
                     </div>
-                    <div class="device-details-row">
+                    <div class="device-details-row app-copy-hover-area">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.serial</div>
-                        <div class="device-details-row-value">{{deviceInfo.serial || '—'}}</div>
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.serial || '—'}}</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover" ng-if="deviceInfo.serial"
+                                    app-copy-button="deviceInfo.serial" localized-title="button.copy"></button>
+                        </div>
                     </div>
                     <div class="device-details-row">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.cpu</div>
                         <div class="device-details-row-value">{{deviceInfo.cpu || '—'}}</div>
                     </div>
-                    <div class="device-details-row">
+                    <div class="device-details-row app-copy-hover-area">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.mac</div>
-                        <div class="device-details-row-value">{{deviceInfo.mac || '—'}}</div>
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.mac || '—'}}</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover" ng-if="deviceInfo.mac"
+                                    app-copy-button="deviceInfo.mac" localized-title="button.copy"></button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -154,55 +162,91 @@
                     <span localized>plugin.deviceinfo.section.connectivity</span>
                 </div>
                 <div class="device-details-rows">
-                    <div class="device-details-row">
+                    <div class="device-details-row app-copy-hover-area">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.imei.required</div>
-                        <div class="device-details-row-value">{{deviceInfo.imeiRequired || '—'}}</div>
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.imeiRequired || '—'}}</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover" ng-if="deviceInfo.imeiRequired"
+                                    app-copy-button="deviceInfo.imeiRequired" localized-title="button.copy"></button>
+                        </div>
                     </div>
-                    <div class="device-details-row">
+                    <div class="device-details-row app-copy-hover-area">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.imei</div>
-                        <div class="device-details-row-value">
-                            {{deviceInfo.imeiActual || '—'}}
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.imeiActual || '—'}}</span>
                             <span class="device-details-badge device-details-badge-warn"
                                   ng-if="deviceInfo.imeiRequired && deviceInfo.imeiActual && deviceInfo.imeiRequired !== deviceInfo.imeiActual"
                                   localized>plugin.deviceinfo.mismatch</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover" ng-if="deviceInfo.imeiActual"
+                                    app-copy-button="deviceInfo.imeiActual" localized-title="button.copy"></button>
                         </div>
                     </div>
-                    <div class="device-details-row">
+                    <div class="device-details-row app-copy-hover-area">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.phone.required</div>
-                        <div class="device-details-row-value">{{deviceInfo.phoneNumberRequired || '—'}}</div>
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.phoneNumberRequired || '—'}}</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover" ng-if="deviceInfo.phoneNumberRequired"
+                                    app-copy-button="deviceInfo.phoneNumberRequired" localized-title="button.copy"></button>
+                        </div>
                     </div>
-                    <div class="device-details-row">
+                    <div class="device-details-row app-copy-hover-area">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.phone</div>
-                        <div class="device-details-row-value">
-                            {{deviceInfo.phoneNumberActual || '—'}}
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.phoneNumberActual || '—'}}</span>
                             <span class="device-details-badge device-details-badge-warn"
                                   ng-if="deviceInfo.phoneNumberRequired && deviceInfo.phoneNumberActual && deviceInfo.phoneNumberRequired !== deviceInfo.phoneNumberActual"
                                   localized>plugin.deviceinfo.mismatch</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover" ng-if="deviceInfo.phoneNumberActual"
+                                    app-copy-button="deviceInfo.phoneNumberActual" localized-title="button.copy"></button>
                         </div>
                     </div>
-                    <div class="device-details-row">
+                    <div class="device-details-row app-copy-hover-area">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.iccid</div>
-                        <div class="device-details-row-value">{{deviceInfo.iccid || '—'}}</div>
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.iccid || '—'}}</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover" ng-if="deviceInfo.iccid"
+                                    app-copy-button="deviceInfo.iccid" localized-title="button.copy"></button>
+                        </div>
                     </div>
-                    <div class="device-details-row" ng-if="deviceInfo.imsi">
+                    <div class="device-details-row app-copy-hover-area" ng-if="deviceInfo.imsi">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.imsi</div>
-                        <div class="device-details-row-value">{{deviceInfo.imsi}}</div>
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.imsi}}</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover"
+                                    app-copy-button="deviceInfo.imsi" localized-title="button.copy"></button>
+                        </div>
                     </div>
-                    <div class="device-details-row" ng-if="deviceInfo.imei2">
+                    <div class="device-details-row app-copy-hover-area" ng-if="deviceInfo.imei2">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.imei2</div>
-                        <div class="device-details-row-value">{{deviceInfo.imei2}}</div>
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.imei2}}</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover"
+                                    app-copy-button="deviceInfo.imei2" localized-title="button.copy"></button>
+                        </div>
                     </div>
-                    <div class="device-details-row" ng-if="deviceInfo.phone2">
+                    <div class="device-details-row app-copy-hover-area" ng-if="deviceInfo.phone2">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.phone2</div>
-                        <div class="device-details-row-value">{{deviceInfo.phone2}}</div>
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.phone2}}</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover"
+                                    app-copy-button="deviceInfo.phone2" localized-title="button.copy"></button>
+                        </div>
                     </div>
-                    <div class="device-details-row" ng-if="deviceInfo.iccid2">
+                    <div class="device-details-row app-copy-hover-area" ng-if="deviceInfo.iccid2">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.iccid2</div>
-                        <div class="device-details-row-value">{{deviceInfo.iccid2}}</div>
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.iccid2}}</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover"
+                                    app-copy-button="deviceInfo.iccid2" localized-title="button.copy"></button>
+                        </div>
                     </div>
-                    <div class="device-details-row" ng-if="deviceInfo.imsi2">
+                    <div class="device-details-row app-copy-hover-area" ng-if="deviceInfo.imsi2">
                         <div class="device-details-row-label" localized>plugin.deviceinfo.title.imsi2</div>
-                        <div class="device-details-row-value">{{deviceInfo.imsi}}</div>
+                        <div class="device-details-row-value device-details-row-value-copyable">
+                            <span>{{deviceInfo.imsi2}}</span>
+                            <button type="button" class="app-copy-btn app-copy-btn-hover"
+                                    app-copy-button="deviceInfo.imsi2" localized-title="button.copy"></button>
+                        </div>
                     </div>
                 </div>
             </div>

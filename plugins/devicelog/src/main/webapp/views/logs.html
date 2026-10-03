@@ -84,12 +84,7 @@
 
             <select name="kdkdk" ng-model="paging.severity" class="form-control logs-severity-select">
                 <option ng-value="-1" ng-selected="paging.severity === -1" localized>plugin.devicelog.option.severyty.default</option>
-                <option ng-value="0" ng-selected="paging.severity === 0">NONE</option>
-                <option ng-value="1" ng-selected="paging.severity === 1" style="color: #dc2626">ERROR</option>
-                <option ng-value="2" ng-selected="paging.severity === 2" style="color: #d97706">WARNING</option>
-                <option ng-value="3" ng-selected="paging.severity === 3" style="color: #2563eb">INFO</option>
-                <option ng-value="4" ng-selected="paging.severity === 4" style="color: #6b7280">DEBUG</option>
-                <option ng-value="5" ng-selected="paging.severity === 5">VERBOSE</option>
+                <option ng-repeat="lvl in severityLevels" ng-value="lvl.id" ng-selected="paging.severity === lvl.id">{{lvl.label}}</option>
             </select>
 
             <div class="logs-filter-buttons">
@@ -126,7 +121,7 @@
         </div>
     </form>
 
-    <div class="summary-card logs-results-card">
+    <div class="summary-card logs-results-card" ng-class="{'logs-results-card-compact': !(paging.totalItems > paging.pageSize)}">
 
         <div class="logs-results-toolbar" ng-if="!loading && logs && logs.length > 0">
             <div class="logs-results-count">
@@ -153,33 +148,53 @@
         </div>
 
         <div class="modern-table-wrap logs-table-wrap" ng-if="!loading && logs && logs.length > 0">
-        <table class='table'>
+        <table class='table devicelog-logs-table'>
             <thead>
             <tr>
-                <th ng-click='sortByCreateTime()'>
+                <th ng-click='sortByCreateTime()' class="devicelog-col-time">
                     <span localized>table.heading.plugin.devicelog.dateTime</span>
-                    <span class="glyphicon glyphicon-sort-by-attributes-alt"></span>
+                    <span class="glyphicon glyphicon-sort-by-attributes-alt logs-sort-icon"></span>
                 </th>
-                <th localized>table.heading.plugin.devicelog.severity</th>
-                <th ng-click='sortByDeviceNumber()'>
+                <th localized class="devicelog-col-severity">table.heading.plugin.devicelog.severity</th>
+                <th ng-click='sortByDeviceNumber()' class="devicelog-col-device">
                     <span localized>table.heading.plugin.devicelog.deviceNumber</span>
-                    <span ng-if='paging.sortValue === "deviceNumber"' class="glyphicon glyphicon-sort-by-attributes"></span>
+                    <span ng-if='paging.sortValue === "deviceNumber"' class="glyphicon glyphicon-sort-by-attributes logs-sort-icon"></span>
                 </th>
-                <th localized>table.heading.plugin.devicelog.app</th>
-                <th localized>table.heading.plugin.devicelog.message</th>
+                <th localized class="devicelog-col-app">table.heading.plugin.devicelog.app</th>
+                <th localized class="push-payload-cell">table.heading.plugin.devicelog.message</th>
+                <th class="push-col-actions">&nbsp;</th>
             </tr>
             </thead>
             <tbody>
-            <tr ng-repeat='log in logs' ng-click="toggleExpand(log)" class="logs-row">
-                <td class="logs-time">{{log.createTime | date:createTimeFormat}}.{{("00000" + (log.createTime % 1000)).slice(-3) }}</td>
-                <td><span class="device-details-badge" ng-class="severityBadgeClass(log.severity)">{{log.severity}}</span></td>
-                <td>{{log.deviceNumber}}</td>
+            <tr ng-repeat='log in logs'>
+                <td class="logs-time" title="{{(log.createTime | date:createTimeFormat) + '.' + (('00000' + (log.createTime % 1000)).slice(-3)) + ' ms'}}">{{log.createTime | date:createTimeFormat}}</td>
                 <td>
-                    <div class="device-details-app-pkg">{{log.applicationPkg}}</div>
+                    <span class="device-details-badge" ng-class="severityBadgeClass(log.severity)">
+                        <span class="glyphicon" ng-class="severityIcon(log.severity)"></span>
+                        {{severityDisplayLabel(log.severity)}}
+                    </span>
                 </td>
-                <td>
-                    <div class="logs-message logs-message-clamped" ng-if="expandedLog !== log">{{log.message}}</div>
-                    <pre class="logs-message-expanded" ng-if="expandedLog === log">{{log.message}}</pre>
+                <td>{{log.deviceNumber}}</td>
+                <td class="devicelog-app-cell">
+                    <app-icon ng-if="log.pkg" application="log" size="24"></app-icon>
+                    <div class="devicelog-app-text">
+                        <div class="devicelog-app-name" ng-if="log.name">{{log.name}}</div>
+                        <div class="device-details-app-pkg">{{log.applicationPkg}}</div>
+                    </div>
+                </td>
+                <td class="push-payload-cell" ng-class="{'push-payload-cell-expandable': log.message}" app-expandable-row="log.message && toggleExpand(log)">
+                    <div class="logs-message-row" ng-show="expandedLog !== log">
+                        <span class="logs-message logs-message-clamped devicelog-message-preview device-details-app-pkg">{{log.message ? messagePreview(log.message) : '—'}}</span>
+                        <span class="logs-message-more-hint" ng-if="messageExtraLines(log.message) > 0">+{{messageExtraLines(log.message)}} {{(messageExtraLines(log.message) === 1 ? 'plugin.devicelog.message.moreLines.one' : 'plugin.devicelog.message.moreLines.other') | localize}}</span>
+                    </div>
+                    <div app-code-block ng-show="expandedLog === log" raw-text="log.message" formatted-text="formatMessage(log.message)" hide-copy="true"></div>
+                </td>
+                <td class="push-col-actions">
+                    <button type="button" class="push-payload-copy-btn" ng-if="log.message"
+                            app-copy-button="log.message"
+                            app-copy-toast="{{'plugin.devicelog.message.copied' | localize}}"
+                            aria-label="{{'plugin.devicelog.button.copy.message' | localize}}"
+                            localized-title="plugin.devicelog.button.copy.message"></button>
                 </td>
             </tr>
             </tbody>

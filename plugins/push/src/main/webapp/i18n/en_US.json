@@ -25,6 +25,8 @@
   "plugin.push.label.payload": "Payload",
   "plugin.push.label.sample.payload": "Sample payload: ",
   "plugin.push.label.no.payload": "No payload",
+  "plugin.push.button.copy.payload": "Copy payload",
+  "plugin.push.payload.copied": "Payload copied",
   "plugin.push.error.empty.device": "Please select the device receiving the message",
   "plugin.push.error.empty.group": "Please select the group receiving the message",
   "plugin.push.error.empty.configuration": "Please select the configuration receiving the message",

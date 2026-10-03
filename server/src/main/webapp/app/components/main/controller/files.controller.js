@@ -1,7 +1,7 @@
 // Localization completed
 angular.module('headwind-kiosk')
     .controller('FilesTabController', function ($scope, $rootScope, $state, $modal, $timeout, alertService, confirmModal, fileService,
-                                                authService, $window, localization, storageService) {
+                                                authService, $window, localization, storageService, clipboardService) {
         $scope.search = {};
 
         $scope.paging = {
@@ -198,29 +198,18 @@ angular.module('headwind-kiosk')
             }, 400);
         });
 
-        $scope.copyLink = function(file) {
-            navigator.clipboard.writeText(file.url);
-            showFilesToast('success', localization.localize('form.files.toast.link.copied'));
-        };
-
-        $scope.copiedPathId = null;
-        $scope.copyPath = function (file) {
-            if (!file.devicePath || !navigator.clipboard) {
-                return;
-            }
-            // navigator.clipboard.writeText() is a native Promise, not $q -
-            // its .then() runs outside Angular's digest, so scope changes
-            // made directly inside it never render. $timeout() (even with
-            // no delay) is the safe way to hop back into a digest.
-            navigator.clipboard.writeText(file.devicePath).then(function () {
-                $timeout(function () {
-                    $scope.copiedPathId = file.id;
-                });
-                $timeout(function () {
-                    if ($scope.copiedPathId === file.id) {
-                        $scope.copiedPathId = null;
-                    }
-                }, 2000);
+        // clipboardService (app/shared/directives.js) covers the non-
+        // secure-context fallback (plain http) that a bare
+        // navigator.clipboard.writeText() can't - this is a dropdown menu
+        // action (not a standalone button), so it stays its own function
+        // rather than moving to the shared appCopyButton directive, whose
+        // own stopPropagation() would stop the "..." menu's click-to-close
+        // handling from ever seeing the click.
+        $scope.copyLink = function (file) {
+            clipboardService.copy(file.url).then(function () {
+                showFilesToast('success', localization.localize('form.files.toast.link.copied'));
+            }, function () {
+                showFilesToast('error', localization.localize('common.copy.error'));
             });
         };
 

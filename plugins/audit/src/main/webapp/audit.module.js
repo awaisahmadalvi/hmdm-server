@@ -344,17 +344,6 @@ angular.module('plugin-audit', ['ngResource', 'ui.bootstrap', 'ui.router', 'ngTa
                     return log.payload;
                 }
             };
-
-            $scope.copied = false;
-            $scope.copyPayload = function () {
-                if (!log.payload || !navigator.clipboard) {
-                    return;
-                }
-                navigator.clipboard.writeText(log.payload).then(function () {
-                    $scope.copied = true;
-                    $timeout(function () { $scope.copied = false; }, 2000);
-                });
-            };
     })
     .run(function ($rootScope, $location, localization) {
         localization.loadPluginResourceBundles("audit");

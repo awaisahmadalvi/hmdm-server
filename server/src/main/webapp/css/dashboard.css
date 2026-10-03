@@ -416,34 +416,6 @@
   color: var(--color-text-secondary);
 }
 
-.modern-modal-body .audit-payload {
-  margin: 0 0 18px 0;
-  padding: 12px 14px;
-  background: var(--color-surface-hover);
-  border-radius: 8px;
-  border: 1px solid var(--color-border-subtle);
-  /* Now a <pre> (was a plain div) so long JSON pretty-print keeps its
-     line breaks/indentation instead of collapsing to one line. */
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 12px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-.audit-payload-header {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 18px;
-  margin-bottom: 8px;
-}
-
-.audit-copy-btn {
-  font-size: 12px;
-  padding: 4px 10px;
-}
-
 .modern-modal-body .panel-default {
   border: none;
   border-radius: 12px;
@@ -2043,6 +2015,12 @@
   word-break: break-word;
 }
 
+.device-details-row-value-copyable {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* ---------- Permissions card ---------- */
 
 .device-details-permission-row {
@@ -2377,6 +2355,211 @@
   max-width: 640px;
 }
 
+/* A row whose content (payload/message/details) is meant to be selected
+   and copied, not just clicked - cursor:pointer here would visually
+   suggest "click anywhere" over text that's actually meant to be
+   selected. Pair with .logs-expand-toggle (the dedicated chevron button)
+   below, which keeps the pointer cursor since it's a real click target.
+   Used together with the appExpandableRow directive (app/shared/
+   directives.js) instead of a plain ng-click, so a click that's really
+   the tail end of a text selection doesn't toggle the row. */
+.logs-row-expandable {
+  cursor: default;
+}
+
+.logs-expand-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+}
+
+.logs-expand-toggle:hover,
+.logs-expand-toggle:focus {
+  color: var(--color-text-primary);
+  background: var(--color-surface-hover);
+}
+
+.logs-expand-toggle .glyphicon {
+  transition: transform 0.15s ease;
+}
+
+.logs-expand-toggle.logs-expand-toggle-open .glyphicon {
+  transform: rotate(90deg);
+}
+
+/* =========================================================
+   Shared hover/focus tooltip (app/shared/directives.js: appHeaderTooltip).
+   A single node, appended to <body> and positioned via getBoundingClientRect
+   + position:fixed rather than a ::after on the triggering element, so nes-
+   ting it inside a horizontally-scrolling container (e.g. the Devices
+   table's .modern-table-wrap) never clips or mispositions it - see the
+   directive itself for the fuller writeup of why the CSS-only version this
+   replaced broke there. Introduced for the Devices table's icon column
+   headers; reusable anywhere else a hover/focus tooltip needs to survive
+   living inside a scrollable/overflow:hidden ancestor.
+   ========================================================= */
+
+.app-header-tooltip {
+  position: fixed;
+  z-index: 2000;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: var(--color-text-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.1s ease;
+}
+
+.app-header-tooltip-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* =========================================================
+   Lucide icons (app/shared/directives.js: appLucideIcon). stroke-width and
+   stroke-linecap/-linejoin live here, not on the sprite's <symbol>s
+   (images/icons/lucide/sprite.svg / the copy inlined in index.html), so
+   every icon is visually consistent regardless of what its own source
+   file happened to set, and currentColor means a single `color` on
+   whatever wraps the icon (e.g. a header's hover state) re-colors it with
+   no extra binding. First used by the Devices table's column headers.
+   ========================================================= */
+
+.app-lucide-icon {
+  display: inline-block;
+  vertical-align: middle;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: 0 0 auto;
+}
+
+/* =========================================================
+   Shared copy-to-clipboard button + "copyable code" block
+   (app/shared/directives.js: clipboardService, appCopyButton,
+   appCodeBlock, selectionGuard/appExpandableRow). Introduced to fix
+   payload text selection on the Push messages page, then reused
+   wherever copyable technical text is shown (Logs messages, Audit
+   details, Applications Settings values, Files URLs/paths, the MDM
+   Settings QR code URL, Applications source URL tooltips, Device
+   details) instead of each page re-implementing its own copy button.
+   ========================================================= */
+
+.app-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.app-copy-btn:hover,
+.app-copy-btn:focus {
+  color: var(--color-text-primary);
+  background: var(--color-surface-hover);
+}
+
+.app-copy-btn .glyphicon {
+  font-size: 12px;
+}
+
+.app-copy-btn-label {
+  white-space: nowrap;
+}
+
+/* Icon-only, hidden until its row/cell is hovered or focused (the
+   collapsed-payload affordance) - always visible on a touch device,
+   which has no hover state to reveal it with. */
+.app-copy-btn-hover {
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.logs-row:hover .app-copy-btn-hover,
+.app-copy-hover-area:hover .app-copy-btn-hover,
+.app-copy-btn-hover:focus {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .app-copy-btn-hover {
+    opacity: 1;
+  }
+}
+
+/* Always-visible, labeled button - the expanded code block's "Copy"/
+   "Copy formatted" corner buttons, and any other spot that wants a
+   normal (not hover-reveal) copy button. */
+.app-copy-btn-labeled {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.app-copy-btn-labeled:hover,
+.app-copy-btn-labeled:focus {
+  border-color: var(--color-border-strong);
+}
+
+.app-code-block {
+  position: relative;
+}
+
+.app-code-block-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  display: flex;
+  gap: 6px;
+}
+
+.app-code-block-pre {
+  padding-top: 40px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* hide-copy="true" (appCodeBlock, app/shared/directives.js) removes the
+   actions row entirely, so there's no floating corner buttons left to
+   clear - the block doesn't need the extra top padding reserved for them. */
+.app-code-block-no-actions .app-code-block-pre {
+  padding-top: 10px;
+}
+
+/* Selection must always work in a row's copyable content, even though
+   clicking elsewhere on the row toggles it open/closed. */
+.logs-message,
+.logs-message-clamped,
+.logs-message-expanded,
+.app-code-block-pre {
+  user-select: text;
+  cursor: text;
+}
+
 .logs-empty-subtitle {
   font-size: 13px;
   color: var(--color-text-tertiary);
@@ -2606,6 +2789,187 @@
   white-space: nowrap;
 }
 
+/* table-layout: fixed (below) needs every column's width fixed up front -
+   the three narrow columns get an explicit width, the Payload column (no
+   width set) absorbs whatever's left. Without this, expanding a long
+   payload could reflow/shift the other columns. */
+.push-messages-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.push-messages-table .push-col-time {
+  width: 190px;
+}
+
+.push-messages-table .push-col-device {
+  width: 160px;
+}
+
+.push-messages-table .push-col-type {
+  width: 150px;
+}
+
+.push-messages-table .push-col-actions {
+  width: 56px;
+  text-align: center;
+}
+
+.push-messages-table th,
+.push-messages-table td {
+  vertical-align: middle;
+}
+
+/* The standalone "Copy payload" button at the row's right end (separate
+   from the payload cell/code block, which never shows its own copy
+   buttons - see app-code-block's hide-copy="true" in push.html). Reuses
+   appCopyButton's own ghost look/icon-flip/toast (app/shared/
+   directives.js) via app-copy-btn, just fixed at 32x32 and icon-only
+   (no app-copy-label, so its template never renders a text label). */
+.push-payload-copy-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.push-payload-cell {
+  position: relative;
+}
+
+/* Only a row with a payload is clickable - see app-expandable-row's guard
+   in push.html (app-expandable-row="message.payload && toggleExpand(...)")
+   and the matching ng-class here, so an empty "—" row doesn't look
+   clickable with nothing to expand. */
+.push-payload-cell-expandable {
+  cursor: pointer;
+}
+
+.push-payload-cell .app-code-block-pre {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 12px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.logs-expand-col {
+  width: 36px;
+  text-align: center;
+}
+
+/* Logs (Functions > Logs) table - same table-layout:fixed approach as
+   .push-messages-table above, with its own column set/widths. Reuses the
+   generic .push-payload-cell/.push-payload-copy-btn/.push-col-actions
+   rules as-is (message column, trailing copy button). */
+.devicelog-logs-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.devicelog-logs-table .devicelog-col-time {
+  width: 180px;
+}
+
+.devicelog-logs-table .devicelog-col-severity {
+  width: 120px;
+}
+
+.devicelog-logs-table .devicelog-col-device {
+  width: 160px;
+}
+
+.devicelog-logs-table .devicelog-col-app {
+  width: 220px;
+}
+
+.devicelog-logs-table .push-col-actions {
+  width: 56px;
+  text-align: center;
+}
+
+.devicelog-logs-table th,
+.devicelog-logs-table td {
+  vertical-align: middle;
+}
+
+/* Severity pill: icon + text, min-width so a short label ("Info") never
+   collapses down to looking like a bare colored dash the way a pill with
+   no min-width and only short text can. Scoped to this table only - other
+   .device-details-badge consumers (Push's type pill, device status pills,
+   etc.) keep their existing sizing. */
+.devicelog-logs-table .device-details-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 72px;
+}
+
+.devicelog-logs-table .device-details-badge .glyphicon {
+  font-size: 10px;
+}
+
+/* Collapsed message cell: the first-line preview ellipsizes on its own
+   (min-width: 0 lets it shrink inside the flex row instead of forcing the
+   row wider), while the "+N lines" hint next to it always stays fully
+   visible instead of being clipped along with the preview text. */
+.logs-message-row {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.devicelog-message-preview {
+  display: block;
+  min-width: 0;
+}
+
+.logs-message-more-hint {
+  flex: 0 0 auto;
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+/* Application cell: shared app-icon component (24px) + name/package stack
+   - name on top, package underneath in the existing small muted monospace
+   style, or just the package alone when the name isn't known. */
+.devicelog-app-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.devicelog-app-text {
+  min-width: 0;
+}
+
+.devicelog-app-name {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Only when the bottom pagination control is hidden (a single page of
+   results) - .summary-card's own fixed padding-bottom (28px) otherwise
+   reads as a dead empty strip below the table with nothing to justify it. */
+.logs-results-card-compact {
+  padding-bottom: 16px;
+}
+
 .logs-sort-icon {
   font-size: 11px;
   color: var(--color-text-tertiary);
@@ -2635,6 +2999,14 @@
 .push-badge-neutral {
   background: var(--color-surface-muted);
   color: var(--color-text-secondary);
+}
+
+/* Same purple already used for VERBOSE on the Logs plugin's settings/rules
+   page (.logs-badge-verbose) - the Logs table's severity pill reuses this
+   exact color instead of introducing a different one. */
+.push-badge-verbose {
+  background: #f5f3ff;
+  color: #7c3aed;
 }
 
 .push-schedule-badge {
@@ -5086,22 +5458,6 @@
   white-space: nowrap;
 }
 
-.files-path-copy {
-  flex: 0 0 auto;
-  border: none;
-  background: transparent;
-  color: var(--color-text-tertiary);
-  padding: 2px 4px;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.1s ease;
-}
-
-.logs-row:hover .files-path-copy,
-.files-path-copy:focus {
-  opacity: 1;
-}
-
 /* ---------- Add/Edit file dialog upload progress ---------- */
 
 .files-upload-progress {
@@ -5117,10 +5473,6 @@
 @media (max-width: 900px) {
   .files-path-cell {
     max-width: none;
-  }
-
-  .files-path-copy {
-    opacity: 1;
   }
 }
 
@@ -5620,6 +5972,94 @@
   font-size: 12px;
 }
 
+/* Row-action buttons (Applications' Versions/Edit/"...", the Versions
+   page's own row actions): identical 32x32 squares, icon centered -
+   overrides the generic ".modern-page td .btn-default" shorthand padding
+   (5px 9px), which produced a non-square box. Scoped to any page's
+   .actions-column rather than .app-options-btn itself, so a plain
+   .app-options-btn elsewhere (without .app-action-btn) keeps its old
+   sizing if it ever needs to. */
+.actions-column .app-action-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Delete's icon only - same 32x32 box, just colored to match the red
+   ".action-danger" treatment used for "Delete" everywhere else it's a
+   menu item rather than its own row button. */
+.app-action-btn-danger {
+  color: var(--color-danger);
+}
+
+.app-action-btn-danger:hover {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger);
+}
+
+/* Versions button's version-count badge - only rendered when
+   application.versionsCount is already present on the loaded application
+   object (applications.controller.js never fetches it specially to avoid
+   an extra per-row request), so most installs simply won't show it. */
+.app-action-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--brand-dark);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* Versions + Edit/Common + "..." now need more room than the two buttons
+   this column used to hold. */
+.applications-page .actions-column,
+.app-versions-page .actions-column {
+  min-width: 140px;
+}
+
+/* =========================================================
+   Application Versions page (applicationVersions.html). Reuses
+   .logs-page-header/-subtitle, .device-details-card(-empty/-skeleton),
+   .device-details-app-pkg, .device-details-badge(-ok, .users-role-*),
+   .devices-cell-empty, .modern-table-wrap/.modern-responsive-table,
+   .plugin-settings-breadcrumb(-sep), .actions-column .app-action-btn and
+   the shared app-icon component - only the few things below are new.
+   ========================================================= */
+
+.app-versions-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-versions-title {
+  margin: 0;
+}
+
+.app-versions-current-badge {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.app-versions-source-url {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 700px) {
   .apps-toolbar {
     flex-direction: column;
@@ -5966,6 +6406,72 @@
   .app-modal-wide .modal-content {
     max-height: 100vh;
   }
+}
+
+/* =========================================================
+   Narrower single-column dialog shell (windowClass: 'app-modal-narrow',
+   applications.controller.js's add/editApplicationVersion) - same
+   structural idea as .app-modal-wide above (flex-column modal-content,
+   sticky header/footer, scrolling body) just at ~640px and without its
+   two-column grid, for a dialog with far fewer fields than the main
+   Application one. Reuses every inner class .app-modal-wide also reuses
+   (.modern-modal-header/-title/-close/-body/-actions, .device-details-
+   card.app-modal-section, .design-field, .design-upload-zone, .modern-
+   toggle, .modern-segmented, .modern-collapsible, .action-link,
+   .btn-modern-primary) - nothing in this block duplicates those. */
+.app-modal-narrow .modal-dialog {
+  width: 640px;
+  max-width: 92vw;
+}
+
+.app-modal-narrow .modal-content {
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-modal-narrow .modern-modal-header {
+  flex: 0 0 auto;
+}
+
+.app-modal-narrow .modern-modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 18px 24px;
+}
+
+.app-modal-narrow .modern-modal-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 14px 24px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.app-modal-narrow .app-modal-section + .app-modal-section,
+.app-modal-narrow .app-modal-section + .modern-collapsible,
+.app-modal-narrow .modern-collapsible + .app-modal-section {
+  margin-top: 16px;
+}
+
+@media (max-width: 700px) {
+  .app-modal-narrow .modal-dialog {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-modal-narrow .modal-content {
+    max-height: 100vh;
+  }
+}
+
+.app-version-file-size {
+  margin: 0;
+  white-space: nowrap;
 }
 
 /* ---------- Launcher preview tile ---------- */
@@ -6426,12 +6932,43 @@
   top: calc(100% + 8px);
   right: 0;
   z-index: 20;
-  width: 260px;
+  width: 340px;
+  max-height: 70vh;
+  overflow-y: auto;
   background: var(--color-surface);
   border-radius: 10px;
   box-shadow: var(--shadow-lg);
   padding: 14px 16px;
   text-align: left;
+}
+
+.devices-legend-section + .devices-legend-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+/* Two columns so the ~20 column-icon entries don't make the popover
+   unreasonably tall - a plain vertical list of one entry per row would run
+   well past a typical viewport height. */
+.devices-legend-icon-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 14px;
+  row-gap: 8px;
+}
+
+.devices-legend-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.devices-legend-icon-row .app-lucide-icon {
+  flex: 0 0 auto;
+  color: var(--color-text-tertiary);
 }
 
 .devices-legend-title {
@@ -6527,22 +7064,13 @@
   margin-top: 2px;
 }
 
-.devices-page .devices-sticky-number {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  background: var(--color-surface);
-}
-
-.devices-page tr:hover .devices-sticky-number {
-  background: var(--color-surface-hover);
-}
-
 /* ---------- Configuration link pill ---------- */
 
 .devices-config-pill {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
+  max-width: 100%;
   padding: 3px 10px;
   border-radius: 999px;
   background: var(--color-accent-soft);
@@ -6551,6 +7079,14 @@
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.devices-config-pill-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .devices-config-pill:hover {
@@ -6558,10 +7094,41 @@
   color: var(--brand-dark);
 }
 
+/* ---------- Empty cell ---------- */
+
+.devices-cell-empty {
+  color: var(--color-text-tertiary);
+}
+
+/* ---------- Row actions menu item icons ----------
+   Scoped to .devices-menu-item-icon specifically (not a bare ".actions-
+   menu-list a" rule) because .actions-menu-list/app-actions-menu is the
+   shared dropdown component used by every page's "..." menu, not just
+   Devices - styling the generic <a> here would have re-laid-out every
+   other page's menu items too. inline-flex keeps the icon an inline-level
+   box, so it sits next to the item's label text with no change needed to
+   the <a>'s own display. */
+.actions-menu-list .devices-menu-item-icon {
+  display: inline-flex;
+  margin-right: 8px;
+  vertical-align: middle;
+  color: var(--color-text-tertiary);
+}
+
+.actions-menu-list a.action-danger .devices-menu-item-icon {
+  color: inherit;
+}
+
 /* ---------- Table density ---------- */
 
-.devices-table-compact.modern-table-wrap td,
-.devices-table-compact.modern-table-wrap th {
+/* .devices-page prefix (not just .devices-table-compact.modern-table-wrap)
+   so this reliably beats the "@media (min-width: 701px) .devices-page
+   .modern-responsive-table td/th { padding: 10px 12px }" compact-column
+   rule further below on specificity - without it, that rule's shorthand
+   `padding` would win the padding-top/-bottom tie by source order instead
+   of the density toggle actually doing anything. */
+.devices-page .devices-table-compact.modern-table-wrap td,
+.devices-page .devices-table-compact.modern-table-wrap th {
   padding-top: 6px;
   padding-bottom: 6px;
 }
@@ -6573,4 +7140,304 @@
   .devices-page .devices-col-secondary {
     display: none !important;
   }
+
+  /* Bootstrap's own base stylesheet (lib/bootstrap-css-only/css/bootstrap.css)
+     ships `table td[class*="col-"], table th[class*="col-"] { display:
+     table-cell; ... }`, apparently meant for its grid-column classes used
+     inside a table. Every devices-col-* class added for the compact fixed-
+     width columns above incidentally matches that same attribute selector,
+     and at (0,0,1,2) it's specific enough to beat the generic
+     .modern-responsive-table mobile rule's plain `td` selector - without
+     this, every "primary" column here (checkbox, status, device number,
+     the three indicator columns, configuration) would stay a rigid
+     table-cell instead of becoming a stacked block like the rest of the
+     mobile card. :not(.actions-column) excludes the one column that
+     already has its own, different mobile treatment (display:flex, for the
+     right-aligned action buttons) a few rules up. */
+  .devices-page .modern-responsive-table tbody td:not(.actions-column) {
+    display: block;
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Devices table - compact fixed column widths (so the default visible
+   columns fit at 1366px+ without horizontal scroll) + sticky checkbox/
+   device-number (left) and Actions (right) for when more columns than fit
+   are enabled in Settings -> Visible columns. All of this is desktop-only
+   (min-width: 701px) - below that, the existing .modern-responsive-table
+   media query above switches every <td> to display:block/width:100% for
+   the stacked-card mobile layout, and table-layout/sticky-position rules
+   on a display:block element would do nothing useful and risk fighting
+   that width:100% on specificity. Cell padding here (10px 12px, slightly
+   tighter than the 12px/16px .modern-table-wrap default) is likewise only
+   worth doing once a real fixed-width table layout is in play - .devices-
+   table-compact above already covers the density-toggle's own, further
+   reduction in both states. */
+@media (min-width: 701px) {
+  .devices-page table.modern-responsive-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .devices-page .modern-responsive-table th,
+  .devices-page .modern-responsive-table td {
+    padding: 10px 12px;
+  }
+
+  /* Every cell is single-line with an ellipsis, full text in a tooltip
+     where that matters (device number, configuration, group, description,
+     IMEI/phone already carry their own title attribute) - so a long value
+     never wraps and grows that row taller than its neighbors. */
+  .devices-page .modern-responsive-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .devices-page .devices-col-check { width: 44px; }
+  .devices-page .devices-col-status { width: 120px; }
+  .devices-page .devices-col-number { width: 180px; }
+  .devices-page .devices-col-date { width: 130px; }
+  .devices-page .devices-col-imei { width: 170px; }
+  .devices-page .devices-col-phone { width: 140px; }
+  .devices-page .devices-col-model { width: 160px; }
+  .devices-page .devices-col-group { width: 160px; }
+  .devices-page .devices-col-launcher-version { width: 110px; }
+  .devices-page .devices-col-android-version { width: 110px; }
+  .devices-page .devices-col-battery { width: 90px; }
+  .devices-page .devices-col-enrollment-date { width: 130px; }
+  .devices-page .devices-col-serial { width: 150px; }
+  .devices-page .devices-col-mac { width: 160px; }
+  .devices-page .devices-col-public-ip { width: 140px; }
+  .devices-page .devices-col-custom1,
+  .devices-page .devices-col-custom2,
+  .devices-page .devices-col-custom3 { width: 140px; }
+  .devices-page .devices-col-actions { width: 100px; }
+
+  /* Configuration/Description used to get only a min-width here (no
+     `width`), on the theory that table-layout:fixed would split whatever
+     space was left over between them. It doesn't: per the fixed-table
+     algorithm, ONLY a cell's `width` sets its column's size - `min-width`
+     is not part of that calculation at all, so an unset `width` column is
+     sized purely from the equal-division-of-leftover-space step. Worse,
+     when (as here) the OTHER columns' explicit widths already sum to more
+     than the table's own 100%-of-container width, there IS no leftover
+     space to divide - a fixed table still has to fit every explicit width,
+     so it grows past 100% to do so, and that growth exactly consumes
+     whatever the no-width columns might otherwise have claimed. Confirmed
+     live: both rendered at a literal 0px, not a cramped-but-visible small
+     width - the whole column (icon header included) was invisible despite
+     its <td> and real device data still being in the DOM, which is why an
+     earlier content-only check (querying textContent, not rendered width)
+     didn't catch it. Explicit widths, like every other column, fixes it
+     unconditionally rather than depending on there happening to be slack
+     left in the table's own width. */
+  .devices-page .devices-col-configuration { width: 200px; }
+  .devices-page .devices-col-description { width: 200px; }
+
+  .devices-page .devices-col-permissions,
+  .devices-page .devices-col-installations,
+  .devices-page .devices-col-files {
+    width: 64px;
+    text-align: center;
+  }
+
+  .devices-page .devices-col-default-launcher,
+  .devices-page .devices-col-mdm-mode,
+  .devices-page .devices-col-kiosk-mode {
+    width: 72px;
+    text-align: center;
+  }
+
+  .devices-page .devices-col-battery {
+    text-align: center;
+  }
+
+  .devices-page .devices-col-actions {
+    text-align: right;
+  }
+
+  /* Device number: truncate with a tooltip (title attribute in the
+     markup) instead of wrapping/widening the column. */
+  .devices-page .devices-number-cell strong {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Configuration pill: truncates a long configuration name with its own
+     ellipsis (.devices-config-pill-text) rather than forcing the 200px
+     column (and the whole table) wider. */
+  .devices-page .devices-config-pill {
+    max-width: 100%;
+    vertical-align: bottom;
+  }
+
+  /* ---------- Icon column headers ----------
+     Headers show a single icon (18px, muted) instead of text - a centered
+     flex box for the narrow icon/mode columns (their pill/text content
+     below is centered too) and a left-aligned one everywhere else
+     (matching that column's own left-aligned data). The sort arrow
+     (14px chevron, toggled by paging.sortBy/sortAsc) renders small, right
+     next to the icon rather than at body text size. */
+  /* display:flex on the <th> itself breaks table layout entirely (a flex
+     <th> stops participating as a table-cell, so every header collapses
+     into a single stacked column instead of lining up with its own body
+     column). table-cell has to stay. The actual fix: wrap each header's
+     content in its own flex <span>, so alignment/height are controlled on
+     that inner wrapper while the <th> keeps display:table-cell for real
+     column layout. */
+  .devices-page .devices-col-icon-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 18px;
+  }
+
+  .devices-page .devices-col-permissions .devices-col-icon-header-inner,
+  .devices-page .devices-col-installations .devices-col-icon-header-inner,
+  .devices-page .devices-col-files .devices-col-icon-header-inner,
+  .devices-page .devices-col-battery .devices-col-icon-header-inner,
+  .devices-page .devices-col-default-launcher .devices-col-icon-header-inner,
+  .devices-page .devices-col-mdm-mode .devices-col-icon-header-inner,
+  .devices-page .devices-col-kiosk-mode .devices-col-icon-header-inner {
+    justify-content: center;
+  }
+
+  .devices-page .devices-col-header-icon {
+    color: #64748b;
+    transition: color 0.12s ease;
+  }
+
+  .devices-page th.pointer:hover .devices-col-header-icon,
+  .devices-page th.pointer:focus .devices-col-header-icon {
+    color: var(--color-text-primary);
+  }
+
+  .devices-page thead th.devices-col-check .devices-col-icon-header-inner,
+  .devices-page thead th.devices-col-actions .devices-col-icon-header-inner {
+    height: auto;
+  }
+
+  .devices-page .devices-col-sort-indicator {
+    margin-left: 4px;
+    vertical-align: middle;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Pill icon (Configuration's sliders) - smaller than a header icon, sits
+     inline with the pill's own text so it needs no independent alignment
+     rules. */
+  .devices-page .devices-pill-icon {
+    flex: 0 0 auto;
+    vertical-align: middle;
+  }
+
+  /* Keyboard-focusable (tabindex="0") so the tooltip below is reachable
+     without a mouse, per the aria-label (full column name, read by a
+     screen reader) living on the same element. */
+  .devices-page th.pointer:focus {
+    outline: 2px solid var(--brand-dark);
+    outline-offset: -2px;
+  }
+
+  /* The hover/focus tooltip itself is no longer CSS - see appHeaderTooltip
+     in app/shared/directives.js (and its .app-header-tooltip* rules
+     earlier in this file) for why a ::after on the header broke once the
+     table could scroll horizontally, and how the portal-based replacement
+     avoids it. */
+
+  /* ---------- Sticky checkbox + Status + Device number (left), Actions
+     (right) ----------
+     Only meaningfully different from .modern-table-wrap's existing
+     overflow-x:auto (already scrolling inside the card, never the page)
+     when enough optional columns are enabled that the table doesn't fit -
+     these columns then stay in view while the rest scrolls underneath
+     them. Each one's `left` offset is set inline (ng-style, devices.html)
+     from $scope.stickyLeftOffset() in the controller - a cumulative total
+     of whichever of the three precede it and are currently visible - so
+     this stylesheet doesn't duplicate those widths as a second set of
+     magic numbers that could drift out of sync with the ones above.
+     Header cells get a grey background (matching the rest of the header
+     row) and body cells a white one (matching the rest of the body,
+     var(--color-surface-hover) on row hover) - mixing the two up here is
+     exactly what caused scrolled content to visibly show through/overlap
+     a sticky cell in an earlier version of this. */
+  .devices-page .devices-sticky-check,
+  .devices-page .devices-sticky-left,
+  .devices-page .devices-sticky-actions {
+    position: sticky;
+    z-index: 2;
+    background: var(--color-surface);
+  }
+
+  .devices-page .devices-sticky-actions {
+    right: 0;
+  }
+
+  .devices-page thead .devices-sticky-check,
+  .devices-page thead .devices-sticky-left,
+  .devices-page thead .devices-sticky-actions {
+    z-index: 4;
+    background: var(--color-surface-hover);
+  }
+
+  .devices-page tbody tr:hover .devices-sticky-check,
+  .devices-page tbody tr:hover .devices-sticky-left,
+  .devices-page tbody tr:hover .devices-sticky-actions {
+    background: var(--color-surface-hover);
+  }
+
+  /* Edge shadow only while there's really more content scrolled
+     underneath - app-scroll-edge-shadow (app/shared/directives.js) toggles
+     these two classes on .modern-table-wrap from its actual scrollLeft, so
+     the shadow isn't shown at the scroll extremes where it would be
+     misleading. .devices-sticky-edge marks whichever of checkbox/Status/
+     Device number is currently the rightmost of the three (computed by
+     $scope.isLastStickyLeft in the controller, since any of the three can
+     be hidden via Settings -> Visible columns). */
+  .devices-page .modern-table-wrap.app-scrolled-left .devices-sticky-edge {
+    box-shadow: 2px 0 6px rgba(15, 23, 42, 0.08);
+  }
+
+  .devices-page .modern-table-wrap.app-scrolled-right .devices-sticky-actions {
+    box-shadow: -2px 0 6px rgba(15, 23, 42, 0.08);
+  }
+
+  /* Edit + the "more" trigger stay on one line regardless of the column's
+     own width - without this, the trigger (a block-by-default div wrapping
+     an inline-block button) could wrap under the edit button, growing that
+     row taller than the rest. */
+  .devices-page .devices-col-actions {
+    white-space: nowrap;
+  }
+
+  .devices-page .devices-col-actions .btn,
+  .devices-page .devices-col-actions .users-row-menu {
+    display: inline-flex;
+    vertical-align: middle;
+  }
+
+  .devices-page .devices-col-actions .btn + .users-row-menu {
+    margin-left: 6px;
+  }
+
+  /* Edit + "more" buttons: identical fixed 32x32 squares, icon centered -
+     overrides .modern-page .deviceActions .btn-default's shorthand
+     padding (5px 9px), which produced a non-square ~36x28 box that the
+     "more" button's content then had to fit inside a too-narrow column
+     alongside, clipping its border/background off entirely (the devices-
+     col-actions width below is sized for the 32x32 box, not that one). */
+  .devices-page .devices-col-actions .devices-action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
 }
