@@ -944,10 +944,8 @@ angular.module('headwind-kiosk')
         // can't recur from a header/cell condition mismatch, only from a
         // body expression actually throwing, which configAvailable's own
         // null-guard now prevents for that column specifically.
-        // Column widths live in dashboard.css (.devices-page .devices-col-
-        // <key>), keyed by the same `key` used here - not duplicated as
-        // numbers in this array, so there's exactly one place per column
-        // where its width can be wrong, not two that could disagree.
+        // Column widths live in DEVICE_COLUMN_WIDTHS / DEVICE_FLEX_COLUMNS
+        // below, keyed by the same `key` used here.
         // Distinct from REPORT_COLUMN_DEFINITIONS above, which is the
         // unrelated server-side export report's column list.
         // ---------------------------------------------------------------
@@ -1010,27 +1008,165 @@ angular.module('headwind-kiosk')
             return label + ' — ' + localization.localize('devices.header.sort.hint');
         };
 
+        // Desktop (>700px) column sizing for the table-layout:fixed devices
+        // table. Compact columns (checkbox, status, icons, dates, versions,
+        // actions) get a fixed pixel width. The text columns in
+        // DEVICE_FLEX_COLUMNS get no width at all, so the fixed-layout
+        // algorithm splits whatever is left of the table's width evenly
+        // between them - on a wide screen long configuration/group names
+        // show in full. A fixed table never shrinks an explicit width, and a
+        // width-less column gets 0px once there's no leftover space, so the
+        // table also carries a min-width (deviceTableStyle) of every visible
+        // fixed width plus DEVICE_FLEX_COLUMN_MIN per text column: below
+        // that the wrapper scrolls horizontally instead of collapsing them.
+        // Keys match deviceColumns above; 'check' and 'actions' are the two
+        // non-repeated columns.
+        var DEVICE_COLUMN_WIDTHS = {
+            'check': 44,
+            'status': 120,
+            'date': 130,
+            'imei': 170,
+            'phone': 140,
+            'permissions': 64,
+            'installations': 64,
+            'files': 64,
+            'launcher-version': 110,
+            'battery': 90,
+            'default-launcher': 72,
+            'mdm-mode': 72,
+            'kiosk-mode': 72,
+            'android-version': 110,
+            'enrollment-date': 130,
+            'serial': 150,
+            'mac': 160,
+            'public-ip': 140,
+            'custom1': 140,
+            'custom2': 140,
+            'custom3': 140,
+            'actions': 100
+        };
+        var DEVICE_FLEX_COLUMNS = ['number', 'model', 'description', 'group'];
+        var DEVICE_FLEX_COLUMN_MIN = 180;
+
+        // Configuration is never truncated: its column is a fixed width
+        // sized to the longest configuration name on the current page
+        // (floor DEVICE_FLEX_COLUMN_MIN), so the remaining flex columns
+        // (Description, Group, ...) are the ones that give up space, and
+        // when nothing fits the table's min-width grows and the wrapper
+        // scrolls horizontally instead. Measured with a canvas in the
+        // page's own font: the pill is 600 14px text (main.css's global
+        // `* { font-size: 14px }` reaches the text <span> and overrides
+        // the pill's own 12px - this measures what actually renders) + 39px of chrome
+        // (10px padding each side, 14px icon, 5px gap - .devices-config-
+        // pill), the no-permission fallback is plain cell text, and the
+        // cell adds 24px of padding (.devices-page .modern-responsive-
+        // table td). Cached per devices array, re-measured once web fonts
+        // finish loading so the first (fallback-font) measurement can't
+        // stick.
+        var CONFIG_PILL_CHROME = 39;
+        var CONFIG_CELL_PADDING = 24;
+        var configWidthCache = {devices: null, width: DEVICE_FLEX_COLUMN_MIN};
+        var measureCanvas = null;
+
+        var measureText = function (text, font) {
+            measureCanvas = measureCanvas || document.createElement('canvas');
+            var ctx = measureCanvas.getContext('2d');
+            ctx.font = font;
+            return ctx.measureText(text).width;
+        };
+
+        var configColumnWidth = function () {
+            if (configWidthCache.devices === $scope.devices) {
+                return configWidthCache.width;
+            }
+            var bodyStyle = window.getComputedStyle(document.body);
+            var family = bodyStyle.fontFamily;
+            var pill = $scope.hasPermission('configurations');
+            var widest = 0;
+            angular.forEach($scope.devices || [], function (device) {
+                if (device.configuration && device.configuration.name) {
+                    var w = pill
+                        ? measureText(device.configuration.name, '600 14px ' + family) + CONFIG_PILL_CHROME
+                        : measureText(device.configuration.name, bodyStyle.fontSize + ' ' + family);
+                    widest = Math.max(widest, w);
+                }
+            });
+            configWidthCache = {
+                devices: $scope.devices,
+                width: Math.max(DEVICE_FLEX_COLUMN_MIN, Math.ceil(widest) + CONFIG_CELL_PADDING + 6)
+            };
+            return configWidthCache.width;
+        };
+
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(function () {
+                configWidthCache = {devices: null, width: DEVICE_FLEX_COLUMN_MIN};
+                $scope.$applyAsync();
+            });
+        }
+
+        var columnWidth = function (key) {
+            return key === 'configuration' ? configColumnWidth() : DEVICE_COLUMN_WIDTHS[key];
+        };
+
+        $scope.deviceTableStyle = function () {
+            var total = 0;
+            if ($scope.hasPermission('edit_devices')) {
+                total += DEVICE_COLUMN_WIDTHS.check + DEVICE_COLUMN_WIDTHS.actions;
+            }
+            angular.forEach($scope.deviceColumns, function (col) {
+                if ($scope.columnVisible(col)) {
+                    total += DEVICE_FLEX_COLUMNS.indexOf(col.key) >= 0 ? DEVICE_FLEX_COLUMN_MIN : (columnWidth(col.key) || 0);
+                }
+            });
+            return {'min-width': total + 'px'};
+        };
+
+        // Header cell style: fixed width for compact columns and the
+        // content-sized Configuration column (flex columns stay width-less,
+        // see above) plus the cumulative sticky offset for the left-sticky
+        // Status/Device number columns.
+        $scope.deviceColumnStyle = function (key) {
+            var style = {};
+            var width = columnWidth(key);
+            if (width) {
+                style.width = width + 'px';
+            }
+            if (key === 'check' || key === 'status' || key === 'number') {
+                style.left = $scope.stickyLeftOffset(key) + 'px';
+            }
+            return style;
+        };
+
+        // One-line "A, B, C" for the Group cell and its tooltip - a cell
+        // never wraps on desktop, so one name per line would just be clipped.
+        $scope.deviceGroupNames = function (device) {
+            return (device.groups || []).map(function (group) {
+                return group.name;
+            }).join(', ');
+        };
+
         // Left-sticky columns (checkbox, Status, Device number) need a
         // cumulative pixel offset so they sit side by side instead of
-        // overlapping. Computed from the same fixed widths set in
-        // dashboard.css's .devices-col-check/-status/-number rules
-        // (44/120/180px) rather than measured from the DOM - each of the
-        // three is either rendered at its one fixed width or not rendered
-        // at all, so a running total of whichever precede the column being
-        // asked about is always exact.
+        // overlapping. Only checkbox and Status ever precede another sticky
+        // column, and both are always rendered at their one fixed width
+        // (DEVICE_COLUMN_WIDTHS) or not at all, so a running total of
+        // whichever precede the column being asked about is always exact -
+        // Device number being a flexible-width column doesn't matter, since
+        // nothing sticky sits to its right.
         $scope.stickyLeftOffset = function (key) {
             var left = 0;
             if ($scope.hasPermission('edit_devices')) {
                 if (key === 'check') {
                     return left;
                 }
-                left += 44;
+                left += DEVICE_COLUMN_WIDTHS.check;
             }
             if ($scope.settings && $scope.settings.columnDisplayedDeviceStatus) {
                 if (key === 'status') {
                     return left;
                 }
-                left += 120;
+                left += DEVICE_COLUMN_WIDTHS.status;
             }
             return left;
         };

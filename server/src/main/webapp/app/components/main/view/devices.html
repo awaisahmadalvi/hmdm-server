@@ -387,12 +387,12 @@
         </div>
 
         <div class="modern-table-wrap logs-table-wrap" ng-class="{'devices-table-compact': tableDensity === 'compact'}" ng-if='devices && devices.length > 0' app-scroll-edge-shadow>
-        <table class='table modern-responsive-table'>
+        <table class='table modern-responsive-table' ng-style="deviceTableStyle()">
             <thead>
             <tr>
                 <th ng-if="hasPermission('edit_devices')" class="devices-col-check devices-sticky-check"
                     ng-class="{'devices-sticky-edge': isLastStickyLeft('check')}"
-                    ng-style="{left: stickyLeftOffset('check') + 'px'}">
+                    ng-style="deviceColumnStyle('check')">
                     <input ng-model='selection.all'
                            ng-change='selectAll()'
                            type='checkbox'
@@ -403,7 +403,7 @@
                     class="pointer devices-col-{{col.key}}"
                     ng-class="{'devices-sticky-left': col.key === 'status' || col.key === 'number',
                                'devices-sticky-edge': isLastStickyLeft(col.key)}"
-                    ng-style="(col.key === 'status' || col.key === 'number') ? {left: stickyLeftOffset(col.key) + 'px'} : {}"
+                    ng-style="deviceColumnStyle(col.key)"
                     app-header-tooltip="{{columnTooltip(col)}}"
                     aria-label="{{columnLabel(col)}}"
                     tabindex="0">
@@ -415,7 +415,7 @@
                     </span>
                 </th>
 
-                <th ng-if="hasPermission('edit_devices')" class='actions-column devices-col-actions devices-sticky-actions'></th>
+                <th ng-if="hasPermission('edit_devices')" class='actions-column devices-col-actions devices-sticky-actions' ng-style="deviceColumnStyle('actions')"></th>
             </tr>
             </thead>
             <tbody>
@@ -439,7 +439,7 @@
                     ng-class="{'devices-sticky-edge': isLastStickyLeft('number')}"
                     ng-style="{left: stickyLeftOffset('number') + 'px'}" data-label="{{'table.heading.device.device.number' | localize}}">
                     <strong title="{{device.number}}">{{device.number}}</strong>
-                    <div class="devices-number-sub" ng-if="settings.columnDisplayedDeviceDesc && device.description">{{device.description}}</div>
+                    <div class="devices-number-sub" ng-if="settings.columnDisplayedDeviceDesc && device.description" title="{{device.description}}">{{device.description}}</div>
                 </td>
                 <td ng-if='settings.columnDisplayedDeviceDate' class="devices-col-secondary devices-col-date" data-label="{{'table.heading.device.date' | localize}}">
                     <span ng-if="device.lastUpdateDate > 0">{{device.lastUpdateDate|date:dateFormat}}</span>
@@ -451,7 +451,7 @@
                 <td ng-if="settings.columnDisplayedDevicePhone" class="devices-col-secondary devices-col-phone" data-label="{{'table.heading.device.phone.number' | localize}}">
                     <span title="{{device.phoneTooltip}}" class="{{device.phoneTooltipClass}}" ng-class="{'devices-cell-empty': !device.displayedPhone}">{{device.displayedPhone || '—'}}</span>
                 </td>
-                <td ng-if="settings.columnDisplayedDeviceModel" class="devices-col-secondary devices-col-model" data-label="{{'table.heading.device.phone.model' | localize}}"><span>{{getDeviceModel(device)}}</span></td>
+                <td ng-if="settings.columnDisplayedDeviceModel" class="devices-col-secondary devices-col-model" data-label="{{'table.heading.device.phone.model' | localize}}"><span title="{{getDeviceModel(device)}}">{{getDeviceModel(device)}}</span></td>
                 <td ng-if="settings.columnDisplayedDevicePermissionsStatus" class="devices-col-permissions" data-label="{{'table.heading.device.status.permissions' | localize}}">
                     <span class="devices-indicator-pill"
                           ng-class="[indicatorClass(getDevicePermissionIndicatorImage(device)), {'devices-indicator-clickable': indicatorClass(getDevicePermissionIndicatorImage(device)) === 'devices-indicator-problem'}]"
@@ -478,19 +478,19 @@
                 </td>
                 <td ng-if="settings.columnDisplayedDeviceConfiguration" class="devices-col-configuration" data-label="{{'table.heading.device.configuration' | localize}}">
                     <a ng-if="device.configuration && hasPermission('configurations') && configAvailable(device.configuration)"
-                       class="devices-config-pill" ng-click="editConfiguration(device.configuration)">
+                       class="devices-config-pill" title="{{device.configuration.name}}" ng-click="editConfiguration(device.configuration)">
                         <app-lucide-icon name="sliders-horizontal" size="14" class="devices-pill-icon"></app-lucide-icon>
                         <span class="devices-config-pill-text">{{device.configuration.name}}</span>
                     </a>
-                    <span ng-if="device.configuration && (!hasPermission('configurations') || !configAvailable(device.configuration))">{{device.configuration.name}}</span>
+                    <span ng-if="device.configuration && (!hasPermission('configurations') || !configAvailable(device.configuration))" title="{{device.configuration.name}}">{{device.configuration.name}}</span>
                     <span ng-if="!device.configuration" class="devices-cell-empty">—</span>
                 </td>
                 <td ng-if="settings.columnDisplayedDeviceDesc" class="devices-col-secondary devices-col-description" data-label="{{'table.heading.device.desc' | localize}}">
-                    <span ng-if="device.description" ng-bind-html="formatMultiLine(device.description)"></span>
+                    <span ng-if="device.description" title="{{device.description}}" ng-bind-html="formatMultiLine(device.description)"></span>
                     <span ng-if="!device.description" class="devices-cell-empty">—</span>
                 </td>
                 <td ng-if="settings.columnDisplayedDeviceGroup" class="devices-col-secondary devices-col-group" data-label="{{'table.heading.device.group' | localize}}">
-                    <span ng-repeat="group in device.groups">{{group.name}}<br/></span>
+                    <span ng-if="device.groups && device.groups.length > 0" title="{{deviceGroupNames(device)}}">{{deviceGroupNames(device)}}</span>
                     <span ng-if="!device.groups || device.groups.length === 0" class="devices-cell-empty">—</span>
                 </td>
                 <td ng-if="settings.columnDisplayedLauncherVersion" class="devices-col-secondary devices-col-launcher-version" data-label="{{'table.heading.device.launcher.version' | localize}}">

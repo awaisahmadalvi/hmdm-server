@@ -924,6 +924,25 @@
   margin: 0 14px; /* ~28px gap between items */
 }
 
+/* Long user names (> ~10 chars, flagged by HeaderController) get up to
+   200px (.username-label, main.css) instead of fitting the 300px right
+   reservation above. From 1760px there's room to simply reserve 120px
+   more for the nav tabs; between the 1200px hamburger breakpoint and
+   that, widening the reservation would push the tabs into the dark brand
+   badge, so the date/time drops out instead and the name takes its
+   place. Short names keep the original layout at every width. */
+@media (min-width: 1201px) and (max-width: 1759px) {
+  .app-header-merged.header-long-username .navbar-right > li.header-datetime-item {
+    display: none;
+  }
+}
+
+@media (min-width: 1760px) {
+  .app-nav-tabset.long-username > .nav-tabs {
+    right: 420px;
+  }
+}
+
 .app-nav-tabset > .nav-tabs > li:last-child {
   margin-right: 0;
 }
@@ -6655,6 +6674,32 @@
 
 /* ---------- Status summary tiles ---------- */
 
+/* Five equal columns across the full page width (the generic flex
+   .summary-kpi-row would leave a ragged last row when wrapping), then
+   3 / 2 / 1 per row on smaller screens. */
+.devices-page .summary-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 1279px) {
+  .devices-page .summary-kpi-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .devices-page .summary-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 479px) {
+  .devices-page .summary-kpi-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .devices-page .summary-kpi-card {
   cursor: default;
 }
@@ -7083,9 +7128,10 @@
   vertical-align: middle;
 }
 
+/* Full name, never an ellipsis: one line on the desktop table (whose
+   Configuration column is sized to fit it), wrapping onto further lines
+   on the mobile card (see the max-width: 700px rule below). */
 .devices-config-pill-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -7141,6 +7187,24 @@
     display: none !important;
   }
 
+  /* The inline desktop min-width (deviceTableStyle) would otherwise force
+     the stacked-card layout wider than the phone. */
+  .devices-page table.modern-responsive-table {
+    min-width: 0 !important;
+  }
+
+  /* Mobile card: a long configuration name wraps inside the pill instead
+     of being cut off; the smaller radius keeps a two-line pill tidy. */
+  .devices-page .devices-config-pill {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .devices-page .devices-config-pill-text {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
   /* Bootstrap's own base stylesheet (lib/bootstrap-css-only/css/bootstrap.css)
      ships `table td[class*="col-"], table th[class*="col-"] { display:
      table-cell; ... }`, apparently meant for its grid-column classes used
@@ -7161,19 +7225,31 @@
 }
 
 /* =========================================================
-   Devices table - compact fixed column widths (so the default visible
-   columns fit at 1366px+ without horizontal scroll) + sticky checkbox/
-   device-number (left) and Actions (right) for when more columns than fit
-   are enabled in Settings -> Visible columns. All of this is desktop-only
-   (min-width: 701px) - below that, the existing .modern-responsive-table
-   media query above switches every <td> to display:block/width:100% for
-   the stacked-card mobile layout, and table-layout/sticky-position rules
-   on a display:block element would do nothing useful and risk fighting
-   that width:100% on specificity. Cell padding here (10px 12px, slightly
+   Devices table - compact columns at a fixed width, text columns
+   (Device number, Phone model, Configuration, Description, Group) sharing
+   whatever width is left, + sticky checkbox/status/device-number (left)
+   and Actions (right) for when more columns than fit are enabled in
+   Settings -> Visible columns. All of this is desktop-only (min-width:
+   701px) - below that, the existing .modern-responsive-table media query
+   above switches every <td> to display:block/width:100% for the stacked-
+   card mobile layout, and table-layout/sticky-position rules on a
+   display:block element would do nothing useful and risk fighting that
+   width:100% on specificity. Cell padding here (10px 12px, slightly
    tighter than the 12px/16px .modern-table-wrap default) is likewise only
    worth doing once a real fixed-width table layout is in play - .devices-
    table-compact above already covers the density-toggle's own, further
-   reduction in both states. */
+   reduction in both states.
+
+   Column widths are NOT set here: the <th> cells get them inline from
+   DevicesTabController.deviceColumnStyle (compact columns only - text
+   columns stay width-less so table-layout:fixed splits the leftover
+   space evenly between them), and the <table> gets an inline min-width
+   from deviceTableStyle (every visible fixed width + a 180px floor per
+   text column). Without that floor a fixed table whose explicit widths
+   already exceed its container renders the width-less columns at a
+   literal 0px - min-width makes it scroll horizontally instead. Both
+   inline styles come from the one DEVICE_COLUMN_WIDTHS map in the
+   controller, which the sticky-left offsets also read. */
 @media (min-width: 701px) {
   .devices-page table.modern-responsive-table {
     table-layout: fixed;
@@ -7186,55 +7262,32 @@
   }
 
   /* Every cell is single-line with an ellipsis, full text in a tooltip
-     where that matters (device number, configuration, group, description,
-     IMEI/phone already carry their own title attribute) - so a long value
-     never wraps and grows that row taller than its neighbors. */
+     where that matters (device number, model, configuration, group,
+     description, IMEI/phone each carry their own title attribute) - so a
+     long value never wraps and grows that row taller than its neighbors. */
   .devices-page .modern-responsive-table td {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .devices-page .devices-col-check { width: 44px; }
-  .devices-page .devices-col-status { width: 120px; }
-  .devices-page .devices-col-number { width: 180px; }
-  .devices-page .devices-col-date { width: 130px; }
-  .devices-page .devices-col-imei { width: 170px; }
-  .devices-page .devices-col-phone { width: 140px; }
-  .devices-page .devices-col-model { width: 160px; }
-  .devices-page .devices-col-group { width: 160px; }
-  .devices-page .devices-col-launcher-version { width: 110px; }
-  .devices-page .devices-col-android-version { width: 110px; }
-  .devices-page .devices-col-battery { width: 90px; }
-  .devices-page .devices-col-enrollment-date { width: 130px; }
-  .devices-page .devices-col-serial { width: 150px; }
-  .devices-page .devices-col-mac { width: 160px; }
-  .devices-page .devices-col-public-ip { width: 140px; }
-  .devices-page .devices-col-custom1,
-  .devices-page .devices-col-custom2,
-  .devices-page .devices-col-custom3 { width: 140px; }
-  .devices-page .devices-col-actions { width: 100px; }
+  /* The description sub-line under the device number only exists for the
+     mobile card, where the Description column itself is hidden
+     (.devices-col-secondary). On desktop that column is right there, so
+     showing it under the number too would just repeat it. */
+  .devices-page .devices-number-sub {
+    display: none;
+  }
 
-  /* Configuration/Description used to get only a min-width here (no
-     `width`), on the theory that table-layout:fixed would split whatever
-     space was left over between them. It doesn't: per the fixed-table
-     algorithm, ONLY a cell's `width` sets its column's size - `min-width`
-     is not part of that calculation at all, so an unset `width` column is
-     sized purely from the equal-division-of-leftover-space step. Worse,
-     when (as here) the OTHER columns' explicit widths already sum to more
-     than the table's own 100%-of-container width, there IS no leftover
-     space to divide - a fixed table still has to fit every explicit width,
-     so it grows past 100% to do so, and that growth exactly consumes
-     whatever the no-width columns might otherwise have claimed. Confirmed
-     live: both rendered at a literal 0px, not a cramped-but-visible small
-     width - the whole column (icon header included) was invisible despite
-     its <td> and real device data still being in the DOM, which is why an
-     earlier content-only check (querying textContent, not rendered width)
-     didn't catch it. Explicit widths, like every other column, fixes it
-     unconditionally rather than depending on there happening to be slack
-     left in the table's own width. */
-  .devices-page .devices-col-configuration { width: 200px; }
-  .devices-page .devices-col-description { width: 200px; }
+  /* Sticky thead needs the wrapper to be its own vertical scroller (see
+     .logs-table-wrap). Instead of the generic 70vh - a short scroll box
+     with empty page below it - let the table fill the viewport below the
+     50px app header and the card's own toolbar: the page scrolls until
+     the card reaches the top, then the rows scroll under the sticky
+     header. */
+  .devices-page .logs-table-wrap {
+    max-height: calc(100vh - 140px);
+  }
 
   .devices-page .devices-col-permissions,
   .devices-page .devices-col-installations,
@@ -7268,11 +7321,11 @@
     white-space: nowrap;
   }
 
-  /* Configuration pill: truncates a long configuration name with its own
-     ellipsis (.devices-config-pill-text) rather than forcing the 200px
-     column (and the whole table) wider. */
+  /* Configuration pill: never truncated - one line at its full natural
+     width, and the column itself is sized to the longest name on the page
+     (DevicesTabController.configColumnWidth), so it always fits. */
   .devices-page .devices-config-pill {
-    max-width: 100%;
+    max-width: none;
     vertical-align: bottom;
   }
 

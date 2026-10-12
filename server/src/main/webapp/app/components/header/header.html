@@ -1,5 +1,5 @@
 <!-- Localization completed -->
-<nav class='navbar navbar-default navbar-fixed-top header app-header-merged' ng-class="{'brand-intro-play': playBrandIntro}">
+<nav class='navbar navbar-default navbar-fixed-top header app-header-merged' ng-class="{'brand-intro-play': playBrandIntro, 'header-long-username': $root.headerLongUserName}">
     <div class='header-brand-badge' aria-hidden='true'></div>
     <div class='nav navbar-nav navbar-left logo-text'><a ng-click='mainPanel()'><img src='rest/public/logo' class='header-brand-logo' alt=''>{{appName}}</a></div>
     <button type='button' class='mobile-nav-toggle' ng-click='$root.mobileNavOpen = !$root.mobileNavOpen' ng-class="{open: $root.mobileNavOpen}" aria-label="Toggle navigation">
@@ -7,13 +7,13 @@
     </button>
     <ul class='nav navbar-nav navbar-right'>
         <li ng-if="expiryWarning"><a id='headerExpiryWarning' class="expiry-warning" localized-change-tracking>account.expired.short</a></li>
-        <li class='hide-on-small-screen'>
+        <li class='hide-on-small-screen header-datetime-item'>
             <a id='headerDateTime'>{{dateTime}}</a>
         </li>
         <li class='dropdown margin-right' uib-dropdown>
             <a class='dropdown-toggle' uib-dropdown-toggle role='button' aria-expanded='false'>
 <!--                <span class='hide-on-small-screen username-tip' localized-change-tracking>header.label.username</span> -->
-                <span class='username-label'>{{getUserName()}}</span>
+                <span class='username-label' title='{{getUserName()}}'>{{getUserName()}}</span>
                 <span class='caret username-caret'></span>
             </a>
             <ul class='dropdown-menu' uib-dropdown-menu role='menu'>
