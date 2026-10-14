@@ -935,6 +935,223 @@ angular.module('headwind-kiosk')
                 $scope.appActionFilter = 'all';
             };
 
+            // ---------------------------------------------------------------
+            // Per-configuration app blocking ("Blocked" column + card).
+            // Purely additive and independent of the Action dropdown: the
+            // block list is kept in this configuration's Application Settings
+            // of the agent (com.hmdm.launcher) - blocked_packages (comma-
+            // separated), block_message, block_contact - so it's saved by the
+            // existing Save (configuration.applicationSettings is copied into
+            // the request as-is) and synced to this configuration's devices,
+            // where the agent shows its PITB block screen for those apps.
+            // Nothing here reads or writes application.action, the row list,
+            // allApplications or the saved applications. An empty list removes
+            // the setting, so devices get no list at all (= today's behavior).
+            // ---------------------------------------------------------------
+            var AGENT_PKG = 'com.hmdm.launcher';
+            var BLOCK_KEYS = {list: 'blocked_packages', message: 'block_message', contact: 'block_contact'};
+
+            // Apps the agent never blocks either (it checks the device's real
+            // home app/dialer/keyboard at runtime too): blocking them could
+            // brick the device or prevent emergency calls
+            var NEVER_BLOCK = [
+                AGENT_PKG, 'android', 'com.android.systemui',
+                'com.android.launcher', 'com.android.launcher2', 'com.android.launcher3',
+                'com.google.android.apps.nexuslauncher', 'com.sec.android.app.launcher',
+                'com.miui.home', 'com.huawei.android.launcher', 'com.oppo.launcher',
+                'com.bbk.launcher2', 'net.oneplus.launcher', 'com.realme.launcher',
+                'com.android.phone', 'com.android.server.telecom', 'com.android.incallui',
+                'com.android.dialer', 'com.google.android.dialer', 'com.samsung.android.dialer',
+                'com.samsung.android.incallui',
+                'com.android.packageinstaller', 'com.google.android.packageinstaller',
+                'com.android.permissioncontroller', 'com.google.android.permissioncontroller'
+            ];
+            var PKG_PATTERN = /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)+$/;
+
+            $scope.blockedOnly = false;
+            $scope.blocking = {manualPkg: '', manualError: null};
+
+            var findBlockSetting = function (key) {
+                var settings = ($scope.configuration && $scope.configuration.applicationSettings) || [];
+                for (var i = 0; i < settings.length; i++) {
+                    if (settings[i].applicationPkg === AGENT_PKG && settings[i].name === key) {
+                        return settings[i];
+                    }
+                }
+                return null;
+            };
+
+            var agentApplication = function () {
+                return (allApplications || []).filter(function (app) {
+                    return app.pkg === AGENT_PKG;
+                })[0];
+            };
+
+            // Writes one of the 3 settings; an empty value removes it entirely
+            var writeBlockSetting = function (key, value) {
+                if (!$scope.configuration) {
+                    return;
+                }
+                if (!$scope.configuration.applicationSettings) {
+                    $scope.configuration.applicationSettings = [];
+                }
+                var settings = $scope.configuration.applicationSettings;
+                var existing = findBlockSetting(key);
+                var empty = value === null || value === undefined || String(value).trim() === '';
+                if (empty) {
+                    if (existing) {
+                        settings.splice(settings.indexOf(existing), 1);
+                    }
+                } else if (existing) {
+                    existing.value = value;
+                    existing.lastUpdate = new Date().getTime();
+                } else {
+                    var agent = agentApplication();
+                    if (!agent) {
+                        $scope.blocking.manualError = localization.localize('form.configuration.blocking.no.agent');
+                        return;
+                    }
+                    settings.push({
+                        tempId: new Date().getTime() + settings.length,
+                        applicationId: agent.id,
+                        applicationPkg: AGENT_PKG,
+                        applicationName: agent.name,
+                        name: key,
+                        type: 'STRING',
+                        value: value,
+                        comment: localization.localize('form.configuration.blocking.setting.comment'),
+                        readonly: false,
+                        lastUpdate: new Date().getTime()
+                    });
+                }
+                if ($scope.configurationForm) {
+                    $scope.configurationForm.$setDirty();
+                }
+                filterApplicationSettings();
+            };
+
+            $scope.blockedPackages = function () {
+                var setting = findBlockSetting(BLOCK_KEYS.list);
+                if (!setting || !setting.value) {
+                    return [];
+                }
+                var seen = {};
+                return setting.value.split(/[,\s]+/).filter(function (pkg) {
+                    if (!pkg || seen[pkg]) {
+                        return false;
+                    }
+                    seen[pkg] = true;
+                    return true;
+                });
+            };
+
+            var setBlockedPackages = function (list) {
+                writeBlockSetting(BLOCK_KEYS.list, list.join(','));
+            };
+
+            $scope.isNeverBlock = function (pkg) {
+                return NEVER_BLOCK.indexOf(pkg) >= 0;
+            };
+
+            $scope.isBlockable = function (application) {
+                return application && application.type === 'app' && !!application.pkg;
+            };
+
+            $scope.isAppBlocked = function (pkgOrApp) {
+                var pkg = typeof pkgOrApp === 'string' ? pkgOrApp : (pkgOrApp && pkgOrApp.pkg);
+                return !!pkg && $scope.blockedPackages().indexOf(pkg) >= 0;
+            };
+
+            $scope.toggleAppBlocked = function (pkg) {
+                if (!pkg || $scope.isNeverBlock(pkg)) {
+                    return;
+                }
+                var list = $scope.blockedPackages();
+                var index = list.indexOf(pkg);
+                if (index >= 0) {
+                    list.splice(index, 1);
+                } else {
+                    list.push(pkg);
+                }
+                setBlockedPackages(list);
+            };
+
+            $scope.blockToggleTitle = function (pkg) {
+                return $scope.isNeverBlock(pkg)
+                    ? localization.localize('form.configuration.blocking.never.hint')
+                    : localization.localize('form.configuration.blocking.toggle.hint');
+            };
+
+            // Display info for any blocked package, registered in the panel or
+            // not. Always the same object per package (the app record, or a
+            // cached stand-in), since a fresh object on every digest makes
+            // AngularJS's watchers (app-icon binding) never settle.
+            var unknownBlockedApps = {};
+            $scope.blockedAppInfo = function (pkg) {
+                var app = (allApplications || []).filter(function (a) {
+                    return a.pkg === pkg;
+                })[0];
+                if (app) {
+                    return app;
+                }
+                if (!unknownBlockedApps[pkg]) {
+                    unknownBlockedApps[pkg] = {pkg: pkg, name: pkg, type: 'app', unknown: true};
+                }
+                return unknownBlockedApps[pkg];
+            };
+
+            // Blocked packages that aren't rows of the list as currently shown
+            // (action 0, a system app while system apps are hidden, or not
+            // registered in the panel) - shown in their own section so a
+            // blocked app never "disappears" after saving
+            $scope.blockedNotInList = function () {
+                var shown = {};
+                ($scope.applications || []).forEach(function (app) {
+                    shown[app.pkg] = true;
+                });
+                return $scope.blockedPackages().filter(function (pkg) {
+                    return !shown[pkg];
+                });
+            };
+
+            $scope.setBlockedOnly = function (value) {
+                $scope.blockedOnly = value;
+            };
+
+            $scope.addManualBlockedPackage = function () {
+                var pkg = ($scope.blocking.manualPkg || '').trim();
+                $scope.blocking.manualError = null;
+                if (!PKG_PATTERN.test(pkg)) {
+                    $scope.blocking.manualError = localization.localize('form.configuration.blocking.invalid.pkg');
+                    return;
+                }
+                if ($scope.isNeverBlock(pkg)) {
+                    $scope.blocking.manualError = localization.localize('form.configuration.blocking.never.hint');
+                    return;
+                }
+                if (!$scope.isAppBlocked(pkg)) {
+                    $scope.toggleAppBlocked(pkg);
+                }
+                $scope.blocking.manualPkg = '';
+            };
+
+            // ng-model getter/setters for the card's message/contact fields
+            $scope.blockMessage = function (value) {
+                if (arguments.length) {
+                    writeBlockSetting(BLOCK_KEYS.message, value);
+                }
+                var setting = findBlockSetting(BLOCK_KEYS.message);
+                return setting ? setting.value : '';
+            };
+
+            $scope.blockContact = function (value) {
+                if (arguments.length) {
+                    writeBlockSetting(BLOCK_KEYS.contact, value);
+                }
+                var setting = findBlockSetting(BLOCK_KEYS.contact);
+                return setting ? setting.value : '';
+            };
+
             $scope.desktopHeaderTemplatePlaceholder = localization.localize('form.configuration.settings.design.desktop.header.template.placeholder') + ' deviceId, description, custom1, custom2, custom3';
 
             var transFunction = function(trans) {

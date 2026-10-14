@@ -5873,6 +5873,162 @@
   color: var(--color-surface);
 }
 
+/* ---------- App blocking (Configuration -> Applications) ----------
+   Additive: the "Blocked" pill/badge/column/section/card that edit the
+   configuration's blocked_packages agent setting. */
+.apps-filter-pill.apps-filter-pill-blocked {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.apps-filter-pill.apps-filter-pill-blocked.active {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-surface);
+}
+
+.apps-blocked-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.apps-block-toggle-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.apps-blocked-section {
+  margin-top: 16px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  padding: 8px 16px;
+}
+
+.apps-blocked-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  padding: 6px 0;
+}
+
+.apps-blocked-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.apps-blocked-section-title + .apps-blocked-row,
+.apps-blocked-section > .apps-blocked-row:first-child {
+  border-top: none;
+}
+
+.apps-blocked-row-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.apps-blocking-card {
+  margin-top: 20px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--color-surface);
+}
+
+.apps-blocking-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.apps-blocking-card-head > .glyphicon {
+  color: var(--color-danger);
+  font-size: 18px;
+}
+
+.apps-blocking-card-head > div {
+  flex: 1 1 auto;
+}
+
+.apps-blocking-card-title {
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.apps-blocking-count {
+  min-width: 28px;
+  text-align: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.apps-blocking-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.apps-blocking-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.apps-blocking-chip-remove {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 6px;
+  cursor: pointer;
+}
+
+.apps-blocking-empty,
+.apps-blocking-note {
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.apps-blocking-note {
+  margin: 12px 0 0;
+}
+
+.apps-blocking-add {
+  display: flex;
+  gap: 8px;
+  max-width: 560px;
+}
+
+.apps-blocking-fields {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  max-width: 560px;
+}
+
 .apps-sort-segmented {
   flex: 0 0 auto;
 }

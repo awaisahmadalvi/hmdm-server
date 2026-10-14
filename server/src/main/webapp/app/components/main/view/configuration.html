@@ -601,6 +601,13 @@
                                 <button type="button" class="apps-filter-pill" ng-repeat="f in appActionFilterOptions"
                                         ng-class="{active: appActionFilter === f.key}"
                                         ng-click="setAppActionFilter(f.key)">{{f.label}}</button>
+                                <!-- App blocking: switches to the blocked-apps view below (display only) -->
+                                <button type="button" class="apps-filter-pill apps-filter-pill-blocked"
+                                        ng-if="blockedPackages().length > 0"
+                                        ng-class="{active: blockedOnly}"
+                                        ng-click="setBlockedOnly(!blockedOnly)">
+                                    <span localized>form.configuration.blocking.badge</span> ({{blockedPackages().length}})
+                                </button>
                             </div>
 
                             <div class="modern-segmented apps-sort-segmented">
@@ -625,7 +632,7 @@
                             <button type="button" class="apps-info-banner-dismiss" ng-click="dismissAppsHint()" aria-label="Dismiss">&times;</button>
                         </div>
 
-                        <div class="device-details-empty" ng-if="applications.length === 0">
+                        <div class="device-details-empty" ng-if="applications.length === 0 && !blockedOnly">
                             <span class="device-details-empty-icon glyphicon glyphicon-th-large"></span>
                             <div class="device-details-empty-title" localized>form.configuration.apps.empty.none</div>
                             <button type="button" class="btn btn-modern-primary" style="margin-top: 12px" ng-click="addApp()">
@@ -633,13 +640,13 @@
                             </button>
                         </div>
 
-                        <div class="device-details-empty" ng-if="applications.length > 0 && (applications | filter : filterApps).length === 0">
+                        <div class="device-details-empty" ng-if="applications.length > 0 && (applications | filter : filterApps).length === 0 && !blockedOnly">
                             <span class="device-details-empty-icon glyphicon glyphicon-filter"></span>
                             <div class="device-details-empty-title" localized>form.configuration.apps.empty.filtered</div>
                             <button type="button" class="btn btn-default" style="margin-top: 12px" ng-click="resetAppsFilters()" localized>form.configuration.apps.empty.reset</button>
                         </div>
 
-                        <div class="modern-table-wrap apps-table-wrap" ng-if="applications.length > 0 && (applications | filter : filterApps).length > 0">
+                        <div class="modern-table-wrap apps-table-wrap" ng-if="applications.length > 0 && (applications | filter : filterApps).length > 0 && !blockedOnly">
                             <table class="table modern-responsive-table">
                                 <thead>
                                 <tr>
@@ -648,6 +655,7 @@
                                     <th localized>table.heading.application.actions</th>
                                     <th localized>table.heading.application.label</th>
                                     <th localized>table.heading.application.order</th>
+                                    <th localized>form.configuration.blocking.column</th>
                                     <th>&nbsp;</th>
                                 </tr>
                                 </thead>
@@ -658,7 +666,7 @@
                                         <div class="app-name-cell">
                                             <app-icon application="application" size="36"></app-icon>
                                             <div>
-                                                <div class="app-name-text">{{application.name}}</div>
+                                                <div class="app-name-text">{{application.name}}<span class="apps-blocked-badge" ng-if="isAppBlocked(application)" localized>form.configuration.blocking.badge</span></div>
                                                 <div class="device-details-app-pkg" ng-if="pkgInfoVisible(application)">{{application.pkg}}</div>
                                             </div>
                                         </div>
@@ -713,6 +721,18 @@
                                                title="{{'form.configuration.apps.order.hint' | localize}}">
                                         <span class="app-order-dash" ng-if="!(application.action == 1 && application.showIcon == 1)">&mdash;</span>
                                     </td>
+                                    <td data-label="{{'form.configuration.blocking.column' | localize}}">
+                                        <span class="modern-toggle apps-block-toggle" ng-if="isBlockable(application)"
+                                              title="{{blockToggleTitle(application.pkg)}}"
+                                              ng-class="{'apps-block-toggle-disabled': isNeverBlock(application.pkg)}">
+                                            <input type="checkbox" class="modern-toggle-input"
+                                                   ng-checked="isAppBlocked(application)"
+                                                   ng-disabled="isNeverBlock(application.pkg)"
+                                                   ng-click="toggleAppBlocked(application.pkg)">
+                                            <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                                        </span>
+                                        <span class="app-order-dash" ng-if="!isBlockable(application)">&mdash;</span>
+                                    </td>
                                     <td class="actions-column" data-label="{{'form.configuration.apps.edit.details' | localize}}">
                                         <button type="button" class="btn btn-default app-options-btn"
                                                 ng-disabled="!(application.action == 1 && application.showIcon == 1)"
@@ -727,7 +747,7 @@
                         </div>
 
                         <div class="text-center apps-pagination"
-                             ng-if="(applications | filter : filterApps).length > paging.pageSize">
+                             ng-if="(applications | filter : filterApps).length > paging.pageSize && !blockedOnly">
                             <pagination ng-if="sort.by === 'name'"
                                         boundary-links='true' class='pagination-sm'
                                         max-size='3'
@@ -744,6 +764,85 @@
                                         items-per-page='paging.pageSize'
                                         previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
                                         last-text='&raquo;'></pagination>
+                        </div>
+
+                        <!-- ===== App blocking (additive; see configurations.controller.js
+                             "Per-configuration app blocking"). Independent of the Action
+                             column: only edits this configuration's blocked_packages /
+                             block_message / block_contact agent settings. ===== -->
+
+                        <!-- "Blocked" pill: every blocked app of this configuration -->
+                        <div class="apps-blocked-section" ng-if="blockedOnly">
+                            <div class="device-details-empty" ng-if="blockedPackages().length === 0">
+                                <div class="device-details-empty-title" localized>form.configuration.blocking.none</div>
+                            </div>
+                            <div ng-repeat="pkg in blockedPackages()" class="apps-blocked-row">
+                                <app-icon application="blockedAppInfo(pkg)" size="32"></app-icon>
+                                <div class="apps-blocked-row-text">
+                                    <div class="app-name-text">{{blockedAppInfo(pkg).name}}<span class="apps-blocked-badge" localized>form.configuration.blocking.badge</span></div>
+                                    <div class="device-details-app-pkg">{{pkg}}</div>
+                                </div>
+                                <span class="modern-toggle apps-block-toggle" title="{{blockToggleTitle(pkg)}}">
+                                    <input type="checkbox" class="modern-toggle-input" ng-checked="true" ng-click="toggleAppBlocked(pkg)">
+                                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Blocked apps that aren't rows of the list above (action 0, hidden
+                             system apps, or not registered in the panel) -->
+                        <div class="apps-blocked-section" ng-if="!blockedOnly && blockedNotInList().length > 0">
+                            <div class="apps-blocked-section-title" localized>form.configuration.blocking.not.in.list</div>
+                            <div ng-repeat="pkg in blockedNotInList()" class="apps-blocked-row">
+                                <app-icon application="blockedAppInfo(pkg)" size="32"></app-icon>
+                                <div class="apps-blocked-row-text">
+                                    <div class="app-name-text">{{blockedAppInfo(pkg).name}}<span class="apps-blocked-badge" localized>form.configuration.blocking.badge</span></div>
+                                    <div class="device-details-app-pkg">{{pkg}}</div>
+                                </div>
+                                <span class="modern-toggle apps-block-toggle" title="{{blockToggleTitle(pkg)}}">
+                                    <input type="checkbox" class="modern-toggle-input" ng-checked="true" ng-click="toggleAppBlocked(pkg)">
+                                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Blocked apps card -->
+                        <div class="apps-blocking-card">
+                            <div class="apps-blocking-card-head">
+                                <span class="glyphicon glyphicon-ban-circle"></span>
+                                <div>
+                                    <div class="apps-blocking-card-title" localized>form.configuration.blocking.card.title</div>
+                                    <div class="logs-page-subtitle" localized>form.configuration.blocking.card.subtitle</div>
+                                </div>
+                                <span class="apps-blocking-count">{{blockedPackages().length}}</span>
+                            </div>
+
+                            <div class="apps-blocking-chips" ng-if="blockedPackages().length > 0">
+                                <span class="apps-blocking-chip" ng-repeat="pkg in blockedPackages()" title="{{pkg}}">
+                                    {{blockedAppInfo(pkg).name}}
+                                    <button type="button" class="apps-blocking-chip-remove" ng-click="toggleAppBlocked(pkg)"
+                                            localized-title="form.configuration.blocking.unblock">&times;</button>
+                                </span>
+                            </div>
+                            <div class="apps-blocking-empty" ng-if="blockedPackages().length === 0" localized>form.configuration.blocking.none</div>
+
+                            <div class="apps-blocking-add">
+                                <input type="text" class="form-control" ng-model="blocking.manualPkg"
+                                       localized-placeholder="form.configuration.blocking.manual.placeholder"
+                                       ng-keydown="$event.keyCode === 13 && ($event.preventDefault() || addManualBlockedPackage())">
+                                <button type="button" class="btn btn-default" ng-click="addManualBlockedPackage()" localized>form.configuration.blocking.manual.add</button>
+                            </div>
+                            <div class="device-details-inline-error" ng-if="blocking.manualError"><span>{{blocking.manualError}}</span></div>
+
+                            <div class="apps-blocking-fields">
+                                <label class="design-field-label" localized>form.configuration.blocking.message</label>
+                                <textarea class="form-control" rows="2" ng-model="blockMessage" ng-model-options="{getterSetter: true}"
+                                          localized-placeholder="form.configuration.blocking.message.placeholder"></textarea>
+                                <label class="design-field-label" localized>form.configuration.blocking.contact</label>
+                                <input type="text" class="form-control" ng-model="blockContact" ng-model-options="{getterSetter: true}"
+                                       localized-placeholder="form.configuration.blocking.contact.placeholder">
+                            </div>
+                            <div class="apps-blocking-note" localized>form.configuration.blocking.card.note</div>
                         </div>
                     </div>
                 </div>
