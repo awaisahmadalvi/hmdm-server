@@ -40,6 +40,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
@@ -59,6 +60,7 @@ import com.hmdm.persistence.domain.ConfigurationFile;
 import com.hmdm.persistence.domain.Device;
 import com.hmdm.persistence.domain.DeviceReportRequest;
 import com.hmdm.persistence.domain.DeviceSearchRequest;
+import com.hmdm.persistence.domain.DeviceStatusSummary;
 import com.hmdm.persistence.domain.Group;
 import com.hmdm.persistence.domain.Settings;
 import com.hmdm.rest.json.DeviceGroupBulkRequest;
@@ -121,6 +123,23 @@ public class DeviceResource {
     }
 
     // =================================================================================================================
+    @ApiOperation(value = "Device counts by status", notes = "Counts of the devices the current user may see, by status " +
+            "(total / online / idle / offline / needs attention), for the Devices page summary tiles. Optional group and " +
+            "configuration filters as in the device search. Computed by one aggregate query.", response = DeviceStatusSummary.class)
+    @GET
+    @Path("/summary")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDeviceStatusSummary(@QueryParam("groupId") Integer groupId,
+                                           @QueryParam("configurationId") Integer configurationId) {
+        try {
+            return Response.OK(this.deviceDAO.getDeviceStatusSummary(groupId, configurationId));
+        } catch (Exception e) {
+            log.error("Unexpected error when counting devices by status", e);
+            return Response.INTERNAL_ERROR();
+        }
+    }
+
+    // =================================================================================================================
     @ApiOperation(value = "Search devices", notes = "Search devices meeting the specified filter value", response = DeviceListView.class)
     @POST
     @Path("/search")
@@ -159,6 +178,7 @@ public class DeviceResource {
                 configuration.setId(deviceConfigurationId);
                 configuration.setName(device.getConfigName());
                 configuration.setPermissive(dbConfig.getPermissive());
+                configuration.setMainActiveAppId(dbConfig.getMainActiveAppId()); // "Main app version" column
                 if (dbConfig.getMainAppId() != null && dbConfig.getMainAppId() > 0 &&
                         dbConfig.getEventReceivingComponent() != null
                         && dbConfig.getEventReceivingComponent().length() > 0) {

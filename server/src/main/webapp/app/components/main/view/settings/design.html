@@ -22,6 +22,8 @@
 <!-- Localization completed -->
 <div class="width-1200 modern-page design-page" ng-controller="SettingsTabController">
 
+    <!-- Shared sticky page header (app/shared/directives.js appStickyHeader, dashboard.css) -->
+    <div class="page-sticky-header" app-sticky-header>
     <div class="logs-page-header">
         <div>
             <h4 localized>form.settings.design.title</h4>
@@ -37,6 +39,7 @@
                 <span ng-if="savingDesign" localized>form.settings.design.saving</span>
             </button>
         </div>
+    </div>
     </div>
 
     <div ng-show='successMessage' class='device-details-inline-success'><span>{{successMessage}}</span></div>

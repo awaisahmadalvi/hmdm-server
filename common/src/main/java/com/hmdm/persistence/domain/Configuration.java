@@ -154,6 +154,17 @@ public class Configuration implements CustomerData, Serializable {
     private String qrParameters;
     @ApiModelProperty("Admin extras in QR code")
     private String adminExtras;
+    // Display-only marker (null = not set, TESTING, PRODUCTION). Not sent to devices (SyncResponse
+    // copies its fields explicitly), not written by updateConfiguration() and not copied by newCopy():
+    // changed only through PUT /private/configurations/{id}/environment.
+    @ApiModelProperty("Environment marker shown in the web panel: null, TESTING or PRODUCTION")
+    private String environment;
+    // Reporting-only "Main app" (applications.id; null = none) for the Devices table "Main app version"
+    // column and export. Same rules as environment: not sent to devices, not written by
+    // updateConfiguration(), not copied by newCopy(); changed only through
+    // PUT /private/configurations/{id}/main-active-app.
+    @ApiModelProperty("Main app used for reporting only (application ID), or null")
+    private Integer mainActiveAppId;
     @ApiModelProperty("Prefer mobile data for provisioning")
     private boolean mobileEnrollment;
     @ApiModelProperty("Flag enabling Home button in kiosk mode")
@@ -466,6 +477,22 @@ public class Configuration implements CustomerData, Serializable {
 
     public void setAdminExtras(String adminExtras) {
         this.adminExtras = adminExtras;
+    }
+
+    public String getEnvironment() {
+        return environment;
+    }
+
+    public void setEnvironment(String environment) {
+        this.environment = environment;
+    }
+
+    public Integer getMainActiveAppId() {
+        return mainActiveAppId;
+    }
+
+    public void setMainActiveAppId(Integer mainActiveAppId) {
+        this.mainActiveAppId = mainActiveAppId;
     }
 
     public boolean isMobileEnrollment() {

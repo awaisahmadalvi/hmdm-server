@@ -1,5 +1,413 @@
 // Localization completed
 angular.module('headwind-kiosk')
+    // Fits the single-row app header (header.html). The main nav is
+    // content.html's <tabset> pinned into the header band by CSS
+    // (dashboard.css .app-nav-tabset > .nav-tabs, right-aligned), so it
+    // can't flex against the brand panel; this measures the real positions
+    // instead and sets, on <html>:
+    //   --header-panel-w  brand gradient panel width: up to 38% of the
+    //                     header, always ending PANEL_GAP px before the first
+    //                     nav item (or the hamburger), never narrower than
+    //                     the logo + app name need
+    //   --header-right-w  width of the date/time + user menu cluster
+    //   .header-nav-collapsed  below COLLAPSE_BELOW px, or whenever the nav
+    //                     can't fit next to the smallest panel -> hamburger
+    //                     drawer
+    // Re-runs on resize/zoom, nav changes (plugins, permissions,
+    // localization) and user name changes. Also closes the drawer when one
+    // of its links is followed.
+    .directive('appHeaderFit', function ($window, $rootScope) {
+        var COLLAPSE_BELOW = 992;
+        var PANEL_MAX = 0.38;      // of the header width
+        var PANEL_GAP = 24;        // panel's right edge -> first nav item
+        var RIGHT_GAP = 24;        // nav row -> date/time + user cluster
+        var PANEL_SOLID = 0.6;     // solid part of the panel's gradient (dashboard.css)
+        var LOGO_PADDING = 12;     // solid color kept past the end of the app name
+
+        return {
+            restrict: 'A',
+            link: function (scope, element) {
+                var header = element[0];
+                var doc = $window.document;
+                var root = doc.documentElement;
+                var frame = null;
+                var navList = null;
+                var observers = [];
+
+                var findNav = function () {
+                    return doc.querySelector('.app-nav-tabset > .nav-tabs');
+                };
+
+                var fit = function () {
+                    frame = null;
+                    var width = root.clientWidth;
+                    var logo = header.querySelector('.logo-text');
+                    var cluster = header.querySelector('.navbar-right');
+                    var toggle = header.querySelector('.mobile-nav-toggle');
+                    if (!logo || !cluster || !toggle) {
+                        return;
+                    }
+                    var minPanel = Math.ceil((logo.getBoundingClientRect().right + LOGO_PADDING) / PANEL_SOLID);
+                    var collapsed = width < COLLAPSE_BELOW;
+                    var firstItem = null;
+                    var rightWidth = null;
+
+                    if (!collapsed) {
+                        // Lay the header out expanded to measure it (no
+                        // repaint happens before the class is set back)
+                        root.classList.remove('header-nav-collapsed');
+                        rightWidth = Math.ceil(width - cluster.getBoundingClientRect().left) + RIGHT_GAP;
+                        root.style.setProperty('--header-right-w', rightWidth + 'px');
+                        if (navList) {
+                            Array.prototype.forEach.call(navList.children, function (li) {
+                                if (li.offsetWidth > 0) {
+                                    var left = li.getBoundingClientRect().left;
+                                    firstItem = firstItem === null ? left : Math.min(firstItem, left);
+                                }
+                            });
+                        }
+                        collapsed = firstItem !== null && firstItem - PANEL_GAP < minPanel;
+                    }
+                    root.classList.toggle('header-nav-collapsed', collapsed);
+                    if (!collapsed && $rootScope.mobileNavOpen) {
+                        scope.$evalAsync(function () {
+                            $rootScope.mobileNavOpen = false;
+                        });
+                    }
+
+                    var limit = collapsed || firstItem === null ? toggle.getBoundingClientRect().left : firstItem;
+                    if (!collapsed && firstItem === null) {
+                        limit = width - rightWidth;
+                    }
+                    var panel = Math.max(minPanel, Math.min(width * PANEL_MAX, limit - PANEL_GAP));
+                    root.style.setProperty('--header-panel-w', Math.floor(panel) + 'px');
+                };
+
+                var schedule = function () {
+                    if (frame === null) {
+                        frame = $window.requestAnimationFrame(fit);
+                    }
+                };
+
+                // Following a link in the drawer closes it (Settings /
+                // Functions toggles only expand their group)
+                var onNavClick = function (event) {
+                    var link = event.target.closest && event.target.closest('a');
+                    if (link && !link.classList.contains('dropdown-toggle') && $rootScope.mobileNavOpen) {
+                        scope.$evalAsync(function () {
+                            $rootScope.mobileNavOpen = false;
+                        });
+                    }
+                };
+
+                // The nav list is rendered by content.html (inside ui-view)
+                // after this header, and again after a logout/login
+                var watchNav = function () {
+                    var list = findNav();
+                    if (list && list !== navList) {
+                        if (navList) {
+                            navList.removeEventListener('click', onNavClick);
+                        }
+                        navList = list;
+                        navList.addEventListener('click', onNavClick);
+                        var mutations = new $window.MutationObserver(schedule);
+                        mutations.observe(list, {childList: true, subtree: true, characterData: true});
+                        observers.push(mutations);
+                        schedule();
+                    }
+                };
+
+                if ($window.ResizeObserver) {
+                    var resize = new $window.ResizeObserver(schedule);
+                    resize.observe(header.querySelector('.navbar-right'));
+                    resize.observe(header.querySelector('.logo-text'));
+                    observers.push(resize);
+                }
+                var onKey = function (event) {
+                    if (event.key === 'Escape' && $rootScope.mobileNavOpen) {
+                        scope.$apply(function () {
+                            $rootScope.mobileNavOpen = false;
+                        });
+                    }
+                };
+                angular.element($window).on('resize', schedule);
+                doc.addEventListener('keydown', onKey);
+                var stopStateWatch = $rootScope.$on('$stateChangeSuccess', function () {
+                    $rootScope.mobileNavOpen = false;
+                    schedule();
+                });
+                var poll = setInterval(watchNav, 1000);
+                watchNav();
+                if (doc.fonts && doc.fonts.ready) {
+                    doc.fonts.ready.then(schedule);
+                }
+
+                scope.$on('$destroy', function () {
+                    clearInterval(poll);
+                    stopStateWatch();
+                    angular.element($window).off('resize', schedule);
+                    doc.removeEventListener('keydown', onKey);
+                    if (navList) {
+                        navList.removeEventListener('click', onNavClick);
+                    }
+                    observers.forEach(function (observer) {
+                        observer.disconnect();
+                    });
+                    if (frame !== null) {
+                        $window.cancelAnimationFrame(frame);
+                    }
+                });
+            }
+        };
+    })
+    // Shared sticky page header (dashboard.css "Shared sticky page header"):
+    // put on a .page-sticky-header container holding the page's
+    // .logs-page-header (title, subtitle, actions) and, if the page has
+    // them, its tabs. Measures the stacked heights into CSS variables on
+    // the enclosing .modern-page, so no page hard-codes an offset:
+    //   --app-header-h        the fixed app header above it
+    //   --page-sticky-hide-h  the .logs-page-header part, which on phones
+    //                         slides up under the app header (only tabs, if
+    //                         any, stay pinned there)
+    //   --page-sticky-h       the part of the block that stays visible
+    // Used by the section nav's sticky top, the section cards' scroll-
+    // margin-top, the design preview's sticky top and sectionScrollspy.
+    // Also toggles .is-stuck on the block (bottom shadow while content is
+    // under it) and .has-sticky-actions on the page (room for the actions'
+    // fixed bottom bar on phones/tablets).
+    .directive('appStickyHeader', function ($window) {
+        return {
+            restrict: 'A',
+            link: function (scope, element) {
+                var block = element[0];
+                var page = block.closest('.modern-page') || block.parentElement;
+                var frame = null;
+                var stuckFrame = null;
+                var written = {};
+
+                var setVar = function (name, value) {
+                    if (written[name] !== value) {
+                        written[name] = value;
+                        page.style.setProperty(name, value);
+                    }
+                };
+
+                var updateStuck = function () {
+                    stuckFrame = null;
+                    var top = parseFloat($window.getComputedStyle(block).top) || 0;
+                    var stuck = $window.scrollY > 0 && block.getBoundingClientRect().top <= top + 0.5;
+                    block.classList.toggle('is-stuck', stuck);
+                };
+
+                var measure = function () {
+                    frame = null;
+                    var appHeader = $window.document.querySelector('.app-header-merged');
+                    // (0 when the app header isn't displayed; offsetParent
+                    // can't tell - it's always null for a fixed element)
+                    var appH = appHeader ? appHeader.getBoundingClientRect().height : 0;
+                    var header = block.querySelector('.logs-page-header');
+                    var headerH = 0;
+                    if (header) {
+                        var hs = $window.getComputedStyle(header);
+                        headerH = header.offsetHeight + parseFloat(hs.marginTop) + parseFloat(hs.marginBottom);
+                    }
+                    setVar('--app-header-h', appH + 'px');
+                    setVar('--page-sticky-hide-h', headerH + 'px');
+                    // The block sticks at its CSS top (computed from the
+                    // values above); whatever is above the app header's
+                    // bottom edge is hidden under it
+                    var top = parseFloat($window.getComputedStyle(block).top) || 0;
+                    var visible = block.offsetHeight - Math.max(0, appH - top);
+                    setVar('--page-sticky-h', Math.max(0, visible) + 'px');
+                    page.classList.toggle('has-sticky-actions', !!block.querySelector('.design-header-actions'));
+                    updateStuck();
+                };
+
+                var schedule = function () {
+                    if (frame === null) {
+                        frame = $window.requestAnimationFrame(measure);
+                    }
+                };
+
+                var scheduleStuck = function () {
+                    if (stuckFrame === null) {
+                        stuckFrame = $window.requestAnimationFrame(updateStuck);
+                    }
+                };
+
+                var resize = $window.ResizeObserver ? new $window.ResizeObserver(schedule) : null;
+                if (resize) {
+                    resize.observe(block);
+                }
+                angular.element($window).on('resize', schedule);
+                angular.element($window).on('scroll', scheduleStuck);
+                schedule();
+
+                scope.$on('$destroy', function () {
+                    angular.element($window).off('resize', schedule);
+                    angular.element($window).off('scroll', scheduleStuck);
+                    if (resize) {
+                        resize.disconnect();
+                    }
+                    if (frame !== null) {
+                        $window.cancelAnimationFrame(frame);
+                    }
+                    if (stuckFrame !== null) {
+                        $window.cancelAnimationFrame(stuckFrame);
+                    }
+                });
+            }
+        };
+    })
+    // Section nav scrollspy shared by every page with a sticky .settings-nav
+    // (General settings, the Configuration editor's Common/MDM tabs).
+    // create(scope, {idPrefix, sectionIds, activeProp}) sets
+    // scope[activeProp] to the section currently under the sticky header
+    // and returns scrollTo(id) for the nav links. Clicking scrolls the card
+    // into view, landing below the sticky header via its scroll-margin-top
+    // (dashboard.css .settings-card); the IntersectionObserver's top margin
+    // is the same measured sticky height (appStickyHeader), re-read on
+    // resize. Sections in hidden tab panes simply never intersect.
+    .factory('sectionScrollspy', function ($window, $timeout) {
+        // Height covered by the app header + the page's sticky header block
+        var stickyOffset = function (el) {
+            var page = (el && el.closest('.modern-page')) || $window.document.querySelector('.modern-page');
+            if (!page) {
+                return 0;
+            }
+            var style = $window.getComputedStyle(page);
+            return (parseFloat(style.getPropertyValue('--app-header-h')) || 0) +
+                (parseFloat(style.getPropertyValue('--page-sticky-h')) || 0);
+        };
+
+        var create = function (scope, config) {
+            scope[config.activeProp] = config.sectionIds[0];
+            var section = function (id) {
+                return $window.document.getElementById(config.idPrefix + id);
+            };
+
+            // On a short page several sections' scroll targets clamp to the
+            // same max scroll position; keep the clicked one highlighted
+            // for a moment instead of letting detection "correct" it
+            var suppressAuto = false;
+            var suppressTimeout = null;
+            var scrollTo = function (id) {
+                scope[config.activeProp] = id;
+                suppressAuto = true;
+                if (suppressTimeout) {
+                    $timeout.cancel(suppressTimeout);
+                }
+                suppressTimeout = $timeout(function () {
+                    suppressAuto = false;
+                }, 1000);
+                var el = section(id);
+                if (el) {
+                    el.scrollIntoView({behavior: 'smooth', block: 'start'});
+                }
+            };
+
+            var visibility = {};
+            var observer = null;
+            var observedCount = 0;
+            var renderedCount = function () {
+                return config.sectionIds.filter(function (id) {
+                    return !!section(id);
+                }).length;
+            };
+            var setActive = function (id) {
+                if (id && scope[config.activeProp] !== id) {
+                    scope.$applyAsync(function () {
+                        scope[config.activeProp] = id;
+                    });
+                }
+            };
+            var observe = function () {
+                if (!$window.IntersectionObserver) {
+                    return;
+                }
+                if (observer) {
+                    observer.disconnect();
+                }
+                var first = section(config.sectionIds[0]);
+                // Only the band just below the sticky header counts
+                observer = new $window.IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        visibility[entry.target.id.replace(config.idPrefix, '')] = entry.isIntersecting;
+                    });
+                    if (suppressAuto) {
+                        return;
+                    }
+                    var current = null;
+                    config.sectionIds.forEach(function (id) {
+                        if (visibility[id]) {
+                            current = id;
+                        }
+                    });
+                    setActive(current);
+                }, {
+                    rootMargin: '-' + Math.round(stickyOffset(first) + 16) + 'px 0px -70% 0px',
+                    threshold: 0
+                });
+                observedCount = 0;
+                config.sectionIds.forEach(function (id) {
+                    var el = section(id);
+                    if (el) {
+                        observer.observe(el);
+                        observedCount++;
+                    }
+                });
+            };
+
+            // Scrolled to the very bottom: the last (rendered, visible)
+            // section can't reach the top band any more - make it current
+            var onScroll = function () {
+                // a section rendered later (ng-if on loaded data) joins in
+                if (observer && renderedCount() !== observedCount) {
+                    observe();
+                }
+                if (suppressAuto) {
+                    return;
+                }
+                var atBottom = $window.scrollY + $window.innerHeight >= $window.document.documentElement.scrollHeight - 2;
+                if (!atBottom) {
+                    return;
+                }
+                for (var i = config.sectionIds.length - 1; i >= 0; i--) {
+                    var el = section(config.sectionIds[i]);
+                    if (el && el.offsetParent !== null) {
+                        setActive(config.sectionIds[i]);
+                        return;
+                    }
+                }
+            };
+
+            var resizeTimer = null;
+            var onResize = function () {
+                $timeout.cancel(resizeTimer);
+                resizeTimer = $timeout(observe, 200, false);
+            };
+
+            // Deferred: the sections and the sticky header's measured
+            // height exist only once the page has rendered
+            $timeout(observe, 100, false);
+            angular.element($window).on('scroll', onScroll);
+            angular.element($window).on('resize', onResize);
+            scope.$on('$destroy', function () {
+                angular.element($window).off('scroll', onScroll);
+                angular.element($window).off('resize', onResize);
+                if (observer) {
+                    observer.disconnect();
+                }
+            });
+
+            return scrollTo;
+        };
+
+        return {
+            create: create,
+            stickyOffset: stickyOffset
+        };
+    })
     // Copies text to the clipboard, with a fallback for non-secure contexts
     // (plain http on an IP address, where navigator.clipboard doesn't
     // exist/isn't permitted) via a hidden textarea + document.execCommand
@@ -1063,6 +1471,361 @@ angular.module('headwind-kiosk')
 
                 scope.$on('$destroy', function () {
                     element.off('scroll', update);
+                });
+            }
+        };
+    });
+
+// Searchable select: a drop-in for a <select> whose option list can get long.
+// The closed control looks like .modern-select; opening it shows a panel with
+// a search box (case-insensitive, matches anywhere, highlighted) and the
+// filtered options, with an optional pinned option (e.g. "All groups",
+// always first) and an optional colored dot per option. Binds through
+// ng-model exactly like the <select> it replaces - the chosen option's
+// value-key is written with $setViewValue, so ng-change fires the same way.
+//
+//   <app-searchable-select ng-model="selection.groupId" ng-change="initSearch()"
+//       options="groups" value-key="id" label-key="name" pinned-value="-1"
+//       aria-label="{{'table.heading.device.group' | localize}}"
+//       search-placeholder="{{'devices.filter.search.groups' | localize}}"
+//       no-matches-text="{{'devices.filter.no.matches' | localize}}"
+//       clear-text="{{'devices.filter.search.clear' | localize}}"
+//       option-dot-class="someClassFor(option)"></app-searchable-select>
+//
+// The panel is a portal on <body> (position: fixed, the appActionsMenu
+// technique), so a card's overflow never clips it; it matches the trigger's
+// width, flips above the trigger when there's no room below, and becomes a
+// full-width panel on phones. One open at a time with any actions menu
+// (actionsMenuRegistry). Keyboard: Enter/Space/Down/Up open; in the panel
+// Up/Down move, Enter selects, Esc closes, Tab closes and moves on.
+// ARIA: combobox trigger + combobox search input, listbox/option,
+// aria-expanded, aria-activedescendant.
+angular.module('headwind-kiosk')
+    .directive('appSearchableSelect', function ($document, $window, $timeout, actionsMenuRegistry) {
+        var uid = 0;
+        var template =
+            '<div class="app-ss">' +
+                '<button type="button" class="form-control modern-select app-ss-trigger" role="combobox" aria-haspopup="listbox"' +
+                ' aria-expanded="{{state.open}}" aria-controls="{{listId}}" aria-label="{{ariaLabel}}{{selectedLabel ? \': \' + selectedLabel : \'\'}}"' +
+                ' ng-click="toggle()" ng-keydown="triggerKeydown($event)">' +
+                    '<span class="config-env-dot app-ss-dot" ng-if="selectedDot()" ng-class="selectedDot()" aria-hidden="true"></span>' +
+                    '<span class="app-ss-value">{{selectedLabel}}</span>' +
+                    '<span class="app-ss-chevron" aria-hidden="true"><app-lucide-icon name="chevron-down" size="16"></app-lucide-icon></span>' +
+                '</button>' +
+                '<div class="app-ss-panel" ng-show="state.open" ng-class="{\'app-ss-panel-above\': state.above}">' +
+                    '<div class="app-ss-search">' +
+                        '<span class="app-ss-search-icon" aria-hidden="true"><app-lucide-icon name="search" size="16"></app-lucide-icon></span>' +
+                        '<input type="text" class="app-ss-input" role="combobox" aria-autocomplete="list" aria-expanded="true"' +
+                        ' aria-controls="{{listId}}" aria-activedescendant="{{activeId()}}" aria-label="{{searchPlaceholder}}"' +
+                        ' placeholder="{{searchPlaceholder}}" autocomplete="off" spellcheck="false"' +
+                        ' ng-model="state.query" ng-change="rebuild(true)" ng-keydown="inputKeydown($event)">' +
+                        '<button type="button" class="app-ss-clear" ng-if="state.query" ng-click="clearQuery()"' +
+                        ' title="{{clearText}}" aria-label="{{clearText}}"><app-lucide-icon name="x" size="14"></app-lucide-icon></button>' +
+                    '</div>' +
+                    '<ul class="app-ss-list" role="listbox" id="{{listId}}" aria-label="{{ariaLabel}}">' +
+                        '<li ng-repeat="item in state.visible track by item.key" id="{{listId}}-o{{$index}}" role="option"' +
+                        ' aria-selected="{{item.selected}}" class="app-ss-option"' +
+                        ' ng-class="{\'app-ss-active\': $index === state.active, \'app-ss-selected\': item.selected, \'app-ss-pinned\': item.pinned}"' +
+                        ' ng-mousedown="$event.preventDefault()" ng-mousemove="state.active = $index" ng-click="choose(item)">' +
+                            '<span class="app-ss-check" aria-hidden="true"><app-lucide-icon name="check" size="14" ng-if="item.selected"></app-lucide-icon></span>' +
+                            '<span class="config-env-dot" ng-if="dotFor(item)" ng-class="dotFor(item)" aria-hidden="true"></span>' +
+                            '<span class="app-ss-label"><span ng-repeat="seg in item.segments track by $index" ng-class="{\'app-ss-hit\': seg.hit}">{{seg.text}}</span></span>' +
+                        '</li>' +
+                    '</ul>' +
+                    '<div class="app-ss-empty" ng-if="state.noMatches" role="status">{{noMatchesText}}</div>' +
+                '</div>' +
+            '</div>';
+
+        return {
+            restrict: 'E',
+            require: 'ngModel',
+            scope: {
+                options: '<',
+                valueKey: '@',
+                labelKey: '@',
+                pinnedValue: '<?',
+                ariaLabel: '@',
+                searchPlaceholder: '@',
+                noMatchesText: '@',
+                clearText: '@',
+                optionDotClass: '&?'
+            },
+            template: template,
+            link: function (scope, element, attrs, ngModel) {
+                var valueKey = scope.valueKey || 'id';
+                var labelKey = scope.labelKey || 'name';
+                scope.listId = 'app-ss-list-' + (++uid);
+                scope.state = {open: false, query: '', visible: [], active: -1, noMatches: false, above: false};
+
+                var trigger = element[0].querySelector('.app-ss-trigger');
+                var panel = element[0].querySelector('.app-ss-panel');
+                var input = element[0].querySelector('.app-ss-input');
+                var list = element[0].querySelector('.app-ss-list');
+                document.body.appendChild(panel); // portal: never clipped by a card
+
+                var valueOf = function (option) {
+                    return option ? option[valueKey] : undefined;
+                };
+                var labelOf = function (option) {
+                    var label = option ? option[labelKey] : '';
+                    return label === undefined || label === null ? '' : String(label);
+                };
+                var findOption = function (value) {
+                    return (scope.options || []).find(function (option) {
+                        return valueOf(option) === value;
+                    });
+                };
+
+                // Matching text split into highlighted / plain segments (no HTML binding needed)
+                var segmentsOf = function (label, query) {
+                    if (!query) {
+                        return [{text: label, hit: false}];
+                    }
+                    var lower = label.toLowerCase();
+                    var q = query.toLowerCase();
+                    var segments = [];
+                    var from = 0;
+                    var at = lower.indexOf(q);
+                    while (at > -1) {
+                        if (at > from) {
+                            segments.push({text: label.substring(from, at), hit: false});
+                        }
+                        segments.push({text: label.substring(at, at + q.length), hit: true});
+                        from = at + q.length;
+                        at = lower.indexOf(q, from);
+                    }
+                    if (from < label.length) {
+                        segments.push({text: label.substring(from), hit: false});
+                    }
+                    return segments;
+                };
+
+                scope.dotFor = function (item) {
+                    return scope.optionDotClass ? scope.optionDotClass({option: item.option}) : null;
+                };
+                scope.selectedDot = function () {
+                    var option = findOption(ngModel.$viewValue);
+                    return option && scope.optionDotClass ? scope.optionDotClass({option: option}) : null;
+                };
+
+                var updateSelected = function () {
+                    var option = findOption(ngModel.$viewValue);
+                    scope.selectedLabel = option ? labelOf(option) : '';
+                };
+                ngModel.$render = updateSelected;
+                scope.$watchCollection('options', function () {
+                    updateSelected();
+                    if (scope.state.open) {
+                        scope.rebuild(false);
+                    }
+                });
+
+                var scrollActiveIntoView = function () {
+                    var activeEl = list.querySelector('.app-ss-active');
+                    if (!activeEl) {
+                        return;
+                    }
+                    if (activeEl.offsetTop < list.scrollTop) {
+                        list.scrollTop = activeEl.offsetTop;
+                    } else if (activeEl.offsetTop + activeEl.offsetHeight > list.scrollTop + list.clientHeight) {
+                        list.scrollTop = activeEl.offsetTop + activeEl.offsetHeight - list.clientHeight;
+                    }
+                };
+
+                var MAX_LIST_HEIGHT = 320;
+                var position = function () {
+                    if (!scope.state.open) {
+                        return;
+                    }
+                    var rect = trigger.getBoundingClientRect();
+                    var viewportWidth = $window.innerWidth;
+                    var viewportHeight = $window.innerHeight;
+                    var phone = viewportWidth <= 600;
+                    var searchHeight = panel.querySelector('.app-ss-search').offsetHeight;
+                    var below = viewportHeight - rect.bottom - 12;
+                    var above = rect.top - 12;
+                    panel.style.left = (phone ? 12 : rect.left) + 'px';
+                    panel.style.width = (phone ? viewportWidth - 24 : rect.width) + 'px';
+                    // natural (capped) height first, then the side with room
+                    list.style.maxHeight = MAX_LIST_HEIGHT + 'px';
+                    var panelHeight = panel.offsetHeight;
+                    var placeAbove = panelHeight > below && above > below;
+                    var room = (placeAbove ? above : below) - searchHeight - 16;
+                    list.style.maxHeight = Math.max(120, Math.min(MAX_LIST_HEIGHT, room)) + 'px';
+                    if (placeAbove) {
+                        panel.style.top = 'auto';
+                        panel.style.bottom = (viewportHeight - rect.top + 4) + 'px';
+                    } else {
+                        panel.style.bottom = 'auto';
+                        panel.style.top = (rect.bottom + 4) + 'px';
+                    }
+                    if (scope.state.above !== placeAbove) {
+                        scope.state.above = placeAbove;
+                        scope.$evalAsync();
+                    }
+                };
+
+                scope.rebuild = function (resetActive) {
+                    var query = (scope.state.query || '').trim();
+                    var lowerQuery = query.toLowerCase();
+                    var pinned = [];
+                    var matches = [];
+                    (scope.options || []).forEach(function (option, index) {
+                        var value = valueOf(option);
+                        var label = labelOf(option);
+                        var isPinned = scope.pinnedValue !== undefined && value === scope.pinnedValue;
+                        if (!isPinned && lowerQuery && label.toLowerCase().indexOf(lowerQuery) < 0) {
+                            return;
+                        }
+                        var item = {
+                            key: 'k' + index + '_' + value,
+                            option: option,
+                            value: value,
+                            pinned: isPinned,
+                            selected: value === ngModel.$viewValue,
+                            segments: segmentsOf(label, lowerQuery ? query : '')
+                        };
+                        (isPinned ? pinned : matches).push(item);
+                    });
+                    scope.state.visible = pinned.concat(matches);
+                    scope.state.noMatches = !!lowerQuery && matches.length === 0;
+                    if (resetActive || scope.state.active >= scope.state.visible.length) {
+                        // while searching: the first match; otherwise the current choice
+                        var selectedIndex = scope.state.visible.findIndex(function (item) { return item.selected; });
+                        scope.state.active = lowerQuery
+                            ? (matches.length > 0 ? pinned.length : (pinned.length > 0 ? 0 : -1))
+                            : Math.max(selectedIndex, 0);
+                    }
+                    if (scope.state.open) {
+                        $timeout(function () {
+                            position();
+                            scrollActiveIntoView();
+                        }, 0, false);
+                    }
+                };
+
+                scope.activeId = function () {
+                    return scope.state.active > -1 ? scope.listId + '-o' + scope.state.active : '';
+                };
+
+                var onDocumentMousedown = function (event) {
+                    if (panel.contains(event.target) || trigger.contains(event.target)) {
+                        return;
+                    }
+                    scope.$apply(close);
+                };
+                var onScrollOrResize = function () {
+                    position();
+                };
+
+                function close() {
+                    if (!scope.state.open) {
+                        return;
+                    }
+                    scope.state.open = false;
+                    actionsMenuRegistry.close(close);
+                    $document.off('mousedown', onDocumentMousedown);
+                    $document.off('touchstart', onDocumentMousedown);
+                    document.removeEventListener('scroll', onScrollOrResize, true);
+                    angular.element($window).off('resize', onScrollOrResize);
+                }
+
+                var open = function () {
+                    if (scope.state.open) {
+                        return;
+                    }
+                    actionsMenuRegistry.open(close);
+                    scope.state.open = true;
+                    scope.state.query = '';
+                    scope.rebuild(true);
+                    $document.on('mousedown', onDocumentMousedown);
+                    $document.on('touchstart', onDocumentMousedown);
+                    // reposition rather than close: on phones the keyboard opening
+                    // scrolls/resizes the page right after the panel opens
+                    document.addEventListener('scroll', onScrollOrResize, true);
+                    angular.element($window).on('resize', onScrollOrResize);
+                    $timeout(function () {
+                        position();
+                        scrollActiveIntoView();
+                        input.focus();
+                    }, 0, false);
+                };
+
+                scope.toggle = function () {
+                    if (scope.state.open) {
+                        close();
+                    } else {
+                        open();
+                    }
+                };
+
+                scope.choose = function (item) {
+                    if (!item) {
+                        return;
+                    }
+                    if (item.value !== ngModel.$viewValue) {
+                        ngModel.$setViewValue(item.value);
+                    }
+                    updateSelected();
+                    close();
+                    trigger.focus();
+                };
+
+                scope.clearQuery = function () {
+                    scope.state.query = '';
+                    scope.rebuild(true);
+                    input.focus();
+                };
+
+                scope.triggerKeydown = function (event) {
+                    var key = event.key;
+                    if (key === 'Enter' || key === ' ' || key === 'ArrowDown' || key === 'ArrowUp') {
+                        event.preventDefault();
+                        open();
+                    }
+                };
+
+                scope.inputKeydown = function (event) {
+                    var count = scope.state.visible.length;
+                    switch (event.key) {
+                        case 'ArrowDown':
+                            event.preventDefault();
+                            if (count > 0) {
+                                scope.state.active = Math.min(count - 1, scope.state.active + 1);
+                                $timeout(scrollActiveIntoView, 0, false);
+                            }
+                            break;
+                        case 'ArrowUp':
+                            event.preventDefault();
+                            if (count > 0) {
+                                scope.state.active = Math.max(0, scope.state.active - 1);
+                                $timeout(scrollActiveIntoView, 0, false);
+                            }
+                            break;
+                        case 'Enter':
+                            event.preventDefault();
+                            scope.choose(scope.state.visible[scope.state.active]);
+                            break;
+                        case 'Escape':
+                            event.preventDefault();
+                            event.stopPropagation();
+                            close();
+                            trigger.focus();
+                            break;
+                        case 'Tab':
+                            // focus goes back to the trigger first, so the browser's own
+                            // Tab / Shift+Tab then moves on from there
+                            close();
+                            trigger.focus();
+                            break;
+                    }
+                };
+
+                scope.$on('$destroy', function () {
+                    close();
+                    if (panel.parentNode) {
+                        panel.parentNode.removeChild(panel);
+                    }
                 });
             }
         };

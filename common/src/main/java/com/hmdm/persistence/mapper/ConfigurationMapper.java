@@ -141,6 +141,19 @@ public interface ConfigurationMapper {
             "WHERE id=#{id}"})
     void updateConfiguration(Configuration configuration);
 
+    // Display-only environment marker: deliberately not part of updateConfiguration() above, so
+    // clients that don't know the field can't clear it when saving a configuration
+    @Update({"UPDATE configurations SET environment=#{environment} WHERE id=#{id} AND customerId=#{customerId}"})
+    void updateConfigurationEnvironment(@Param("id") int id,
+                                        @Param("customerId") int customerId,
+                                        @Param("environment") String environment);
+
+    // Reporting-only main app: likewise not part of updateConfiguration()
+    @Update({"UPDATE configurations SET mainActiveAppId=#{applicationId} WHERE id=#{id} AND customerId=#{customerId}"})
+    void updateConfigurationMainActiveApp(@Param("id") int id,
+                                          @Param("customerId") int customerId,
+                                          @Param("applicationId") Integer applicationId);
+
     @Delete({"DELETE FROM configurations WHERE id=#{id}"})
     void removeConfigurationById(@Param("id") Integer id);
 

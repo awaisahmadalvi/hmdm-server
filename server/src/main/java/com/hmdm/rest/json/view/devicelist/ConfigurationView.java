@@ -103,6 +103,11 @@ public class ConfigurationView implements Serializable {
         return configuration.getPermissive();
     }
 
+    @ApiModelProperty("Reporting-only main app (application ID) for the \"Main app version\" column, or null")
+    public Integer getMainActiveAppId() {
+        return configuration.getMainActiveAppId();
+    }
+
     @ApiModelProperty("A list of applications set and available for for configuration")
     public List<ApplicationView> getApplications() {
         return this.applications;

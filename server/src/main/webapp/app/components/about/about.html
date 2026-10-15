@@ -1,32 +1,61 @@
 <!-- Localization completed -->
-<div class='modal-body'>
-    <form class='form-horizontal'>
+<!-- Opened with windowClass 'app-modal-narrow app-modal-about app-modal-fullscreen-mobile'
+     (header.controller.js): the shared sticky-header/footer dialog shell -->
+<div class="modern-modal-header app-modal-header">
+    <div class="app-modal-header-top">
+        <span class="about-logo-tile" aria-hidden="true"><img src="rest/public/logo" class="header-brand-logo" alt=""></span>
+        <div class="app-modal-header-text">
+            <h4 class="modern-modal-title">{{line1Text}}</h4>
+            <div class="app-modal-header-sub" localized>about.subtitle</div>
+        </div>
+        <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="{{'button.close' | localize}}">&times;</button>
+    </div>
+    <div class="about-version-row">
+        <span class="device-details-badge users-role-neutral about-version-pill">{{line3Text}}</span>
+        <button class="btn btn-default about-copy-btn" app-copy-button="versionInfoText()"
+                app-copy-toast="{{'about.version.copied' | localize}}"
+                title="{{'about.version.copy' | localize}}" aria-label="{{'about.version.copy' | localize}}"></button>
+    </div>
+</div>
 
-        <div class="text-center">
-            <h4>{{line1Text}}</h4>
+<div class="modal-body modern-modal-body">
+
+    <div ng-if="plugins" class="about-section">
+        <div class="about-section-title">
+            <span localized>about.line.4</span>
+            <span class="about-count">{{pluginChips.length}}</span>
         </div>
 
-        <div class="text-center">
-            <h4 localized>about.line.2</h4>
+        <div class="about-chips">
+            <span class="about-chip" ng-repeat="chip in pluginChips" ng-class="{'about-chip-disabled': chip.disabled}"
+                  title="{{chip.disabled ? ('about.plugin.disabled' | localize) : ''}}">
+                <span class="glyphicon" ng-class="chip.icon" aria-hidden="true"></span>
+                <span>{{chip.name}}</span>
+            </span>
+            <span class="field-hint about-none" ng-if="pluginChips.length === 0" localized>about.plugins.none</span>
         </div>
 
-        <div class="text-center">
-            <h4>{{line3Text}}</h4>
+        <div class="about-links">
+            <a class="action-link" ng-if="browseMoreState" ui-state="browseMoreState" ng-click="closeModal()" localized>about.plugins.browse</a>
+            <a class="action-link" ng-if="canManagePlugins()" ui-sref="pluginSettings" ng-click="closeModal()" localized>about.plugins.manage</a>
         </div>
+    </div>
 
-        <div ng-if="plugins" class="text-center margin-top-40">
-            <div>
-                <div><h4 localized>about.line.4</h4></div>
-
-                <!--<div class="form-group" ng-repeat="plugin in plugins">{{plugin}}</div> -->
-                <div class="form-group" style="margin: 15px">{{pluginList}}</div>
-            </div>
+    <!-- Credits / license: the open-source attribution, restyled -->
+    <div class="about-credits">
+        <div localized>about.line.2</div>
+        <div>
+            <span localized>about.credits.based</span>
+            <a href="https://h-mdm.com" target="_blank" rel="noopener noreferrer">h-mdm.com</a>
+            &middot;
+            <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener noreferrer" localized>about.credits.license</a>
         </div>
+    </div>
+</div>
 
-        <div class='form-group margin-top-40'>
-            <div class="text-center">
-                <button type='button' class='btn btn-default' ng-click='closeModal()' localized >button.close</button>
-            </div>
-        </div>
-    </form>
+<div class="modern-modal-actions">
+    <span></span>
+    <div class="app-modal-actions-right">
+        <button type="button" class="btn btn-default btn-modern-primary" ng-click="closeModal()" localized>button.close</button>
+    </div>
 </div>

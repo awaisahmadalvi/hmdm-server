@@ -21,7 +21,17 @@
                        localized-placeholder="search.placeholder.configuration"
                        class="form-control logs-input">
             </div>
-            <div class="logs-results-count">{{configurations.length || 0}} {{'form.configurations.count.suffix' | localize}}</div>
+            <div class="logs-results-count">{{filteredConfigurations().length}} {{'form.configurations.count.suffix' | localize}}</div>
+        </div>
+        <!-- Environment filter (display only) -->
+        <div class="apps-filter-pills config-env-filters" ng-if="!loading && configurations.length > 0">
+            <button type="button" class="apps-filter-pill" ng-repeat="f in envFilterOptions"
+                    ng-class="['config-env-filter-' + f.toLowerCase(), {active: envFilter.value === f}]"
+                    ng-click="setEnvFilter(f)">
+                <span class="config-env-dot" ng-if="f === 'PRODUCTION' || f === 'TESTING'"
+                      ng-class="'config-env-dot-' + configEnvironment.key(f)" aria-hidden="true"></span>
+                {{envFilterLabel(f)}} <span class="config-env-filter-count">{{envFilterCount(f)}}</span>
+            </button>
         </div>
     </div>
 
@@ -31,8 +41,16 @@
     </div>
 
     <div class="configurations-grid" ng-if="!loading && configurations.length > 0">
-        <div class="device-details-card config-card" ng-repeat="configuration in configurations.slice(((paging.currentPage-1)*paging.pageSize), ((paging.currentPage)*paging.pageSize))"
+        <div class="device-details-card config-card" ng-repeat="configuration in filteredConfigurations().slice(((paging.currentPage-1)*paging.pageSize), ((paging.currentPage)*paging.pageSize))"
+             ng-class="configEnvironment.key(configuration.environment) ? 'config-card-env-' + configEnvironment.key(configuration.environment) : ''"
              ng-click="editConfiguration(configuration)">
+
+            <!-- Environment ribbon (left edge, full height); none when not set -->
+            <div class="config-env-ribbon" ng-if="configEnvironment.key(configuration.environment)"
+                 ng-class="'config-env-ribbon-' + configEnvironment.key(configuration.environment)"
+                 title="{{configEnvironment.tooltip(configuration.environment)}}">
+                <span>{{configEnvironment.label(configuration.environment)}}</span>
+            </div>
 
             <div class="config-card-header">
                 <span class="config-card-name">{{configuration.name}}</span>
@@ -57,6 +75,11 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right actions-menu-list">
                         <li><a ng-click="copyConfiguration(configuration)" localized>form.configurations.action.duplicate</a></li>
+                        <li class="divider"></li>
+                        <li ng-if="configuration.environment !== 'PRODUCTION'"><a ng-click="setEnvironment(configuration, 'PRODUCTION')" localized>config.env.action.production</a></li>
+                        <li ng-if="configuration.environment !== 'TESTING'"><a ng-click="setEnvironment(configuration, 'TESTING')" localized>config.env.action.testing</a></li>
+                        <li ng-if="configuration.environment"><a ng-click="setEnvironment(configuration, null)" localized>config.env.action.clear</a></li>
+                        <li class="divider"></li>
                         <li ng-if="configuration.id !== 1"><a class="action-danger" ng-click="removeConfiguration(configuration)" localized>button.delete</a></li>
                         <li ng-if="configuration.id === 1" class="disabled">
                             <a class="action-danger" title="{{'form.configurations.protected.default.tooltip' | localize}}" localized>button.delete</a>
@@ -65,6 +88,12 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="device-details-empty" ng-if="!loading && configurations.length > 0 && filteredConfigurations().length === 0">
+        <span class="glyphicon glyphicon-filter device-details-empty-icon"></span>
+        <div class="device-details-empty-title" localized>config.env.filter.empty</div>
+        <button type="button" class="btn btn-default margin-top" ng-click="setEnvFilter('all')" localized>config.env.filter.show.all</button>
     </div>
 
     <div class="device-details-empty" ng-if="!loading && configurations.length === 0 && !searchObj.searchValue">
@@ -80,12 +109,12 @@
         <button type="button" class="btn btn-default margin-top" ng-click="clearSearch()" localized>form.settings.users.empty.search.clear</button>
     </div>
 
-    <div class="text-center" ng-if="configurations.length > paging.pageSize">
+    <div class="text-center" ng-if="filteredConfigurations().length > paging.pageSize">
         <pagination
                 boundary-links='true' class='pagination-sm'
                 max-size='3'
                 ng-model='paging.currentPage'
-                total-items='configurations.length'
+                total-items='filteredConfigurations().length'
                 items-per-page='paging.pageSize'
                 previous-text='&lsaquo;' next-text='&rsaquo;' first-text='&laquo;'
                 last-text='&raquo;'></pagination>

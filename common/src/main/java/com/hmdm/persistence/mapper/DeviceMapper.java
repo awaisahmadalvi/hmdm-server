@@ -99,6 +99,12 @@ public interface DeviceMapper {
 
     Long countAllDevicesForSummary(DeviceSummaryRequest filter);
 
+    // Devices page summary tiles: one aggregate query (see DeviceMapper.xml)
+    DeviceStatusSummary getDeviceStatusSummary(@Param("customerId") int customerId,
+                                               @Param("userId") int userId,
+                                               @Param("groupId") Integer groupId,
+                                               @Param("configurationId") Integer configurationId);
+
     List<SummaryConfigItem> countDevicesByConfig(DeviceSummaryRequest filter);
 
     @Update({"UPDATE devices SET " +

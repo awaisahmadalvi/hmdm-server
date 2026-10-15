@@ -49,6 +49,8 @@
         <result property="configName" column="configName"/>
         <result property="launcherPkg" column="launcherPkg"/>
         <result property="launcherVersion" column="launcherVersion"/>
+        <result property="mainActiveAppPkg" column="mainActiveAppPkg"/>
+        <result property="mainActiveAppName" column="mainActiveAppName"/>
         <result property="mdmMode" column="mdmMode"/>
         <result property="kioskMode" column="kioskMode"/>
         <result property="androidVersion" column="androidVersion"/>
@@ -259,6 +261,8 @@
                configurations.name as configName,
                applications.pkg AS launcherPkg,
                applicationVersions.version AS launcherVersion,
+               mainActiveApp.pkg AS mainActiveAppPkg,
+               mainActiveApp.name AS mainActiveAppName,
                CASE
                    WHEN (EXTRACT(EPOCH FROM NOW()) * 1000 - devices.lastupdate) &lt; (2 * 3600 * 1000) THEN 'green'
                    WHEN (EXTRACT(EPOCH FROM NOW()) * 1000 - devices.lastupdate) &lt; (4 * 3600 * 1000) THEN 'yellow'
@@ -271,6 +275,7 @@
         LEFT JOIN groups ON deviceGroups.groupId = groups.id
         LEFT JOIN applicationVersions ON configurations.mainAppId = applicationVersions.id
         LEFT JOIN applications ON applications.id = applicationVersions.applicationid
+        LEFT JOIN applications mainActiveApp ON mainActiveApp.id = configurations.mainActiveAppId
         ORDER BY allowedDevices.sortingValue <if test="sortDir.equalsIgnoreCase(&quot;desc&quot;)">DESC</if>,
                  allowedDevices.searchPriority DESC, LOWER(devices.number), LOWER(groups.name);
     </select>
@@ -381,6 +386,114 @@
             deviceStatuses.applicationsStatus = #{installationStatus}
             )
         </if>
+    </select>
+
+    <!--
+        Devices page summary tiles (GET /rest/private/devices/summary): the counts the page used to
+        compute in the browser from the full device list (devices.controller.js loadStatusTiles), as
+        one aggregate query. Must stay in step with:
+        - which devices: the device list's own access/filter rules (allowedDevicesSelect: customer,
+          allDevicesAvailable or group access, group and configuration filters only - the tiles
+          never used the search text or the advanced filters), minus devices whose configuration
+          no longer exists (DeviceResource drops those from the list);
+        - status: the list's statusCode (online < 2h, idle < 4h, else offline - also never updated);
+        - needs attention: the browser's three status pills, in their order -
+          1. permissions (getDevicePermissionIndicatorImage): no device info at all; or, unless
+             kiosk mode / permissive configuration, the first three permissions sum to 0. Device
+             info without a permissions list made the old code throw and skip the device, so
+             such a device is not counted at all;
+          2. applications (getDeviceApplicationsStatus): a configuration app with a download URL,
+             not set to "remove", whose package the device doesn't report;
+          3. files (getDeviceFilesStatus): a configuration file not set to "remove" whose device
+             path the device doesn't report.
+          The configuration app list repeats getConfigurationApplications' rules for which apps
+          belong to the customer (own apps, or common ones without an own copy of that version).
+    -->
+    <select id="getDeviceStatusSummary" resultType="com.hmdm.persistence.domain.DeviceStatusSummary">
+        WITH visibleDevices AS (
+            SELECT DISTINCT devices.id AS deviceId
+            FROM devices
+            INNER JOIN users ON users.id = #{userId}
+            LEFT JOIN configurations ON devices.configurationId = configurations.id
+            LEFT JOIN deviceGroups ON devices.id = deviceGroups.deviceId
+            LEFT JOIN groups ON deviceGroups.groupId = groups.id
+            LEFT JOIN userDeviceGroupsAccess access ON groups.id = access.groupId AND access.userId = users.id
+            WHERE devices.customerId = #{customerId}
+            AND (users.allDevicesAvailable = TRUE OR NOT access.id IS NULL)
+            <if test="groupId != null &amp;&amp; groupId > 0">
+                AND groups.id = #{groupId}
+            </if>
+            <if test="configurationId != null &amp;&amp; configurationId > 0">
+                AND configurations.id = #{configurationId}
+            </if>
+        ),
+        checkedApps AS (
+            SELECT ca.configurationId, a.pkg
+            FROM configurationApplications ca
+            INNER JOIN applicationVersions av ON av.id = ca.applicationVersionId
+            INNER JOIN applications a ON a.id = av.applicationId
+            INNER JOIN applicationVersions lv ON lv.applicationId = a.id AND lv.id = a.latestVersion
+            INNER JOIN customers c ON c.id = a.customerId
+            WHERE (a.customerId = #{customerId}
+                   OR c.master AND NOT EXISTS (
+                       SELECT 1
+                       FROM applications a2
+                       INNER JOIN applicationVersions v2 ON v2.applicationId = a2.id
+                       WHERE a2.customerId = #{customerId} AND a2.pkg = a.pkg AND v2.version = av.version))
+              AND av.url IS NOT NULL AND av.url &lt;&gt; ''
+              AND COALESCE(ca.action, 0) &lt;&gt; 2
+        ),
+        deviceRows AS (
+            SELECT d.id, d.lastUpdate, d.configurationId, cfg.permissive,
+                   CASE WHEN d.info IS NULL OR TRIM(d.info) = '' THEN NULL ELSE d.infojson END AS info
+            FROM visibleDevices v
+            INNER JOIN devices d ON d.id = v.deviceId
+            INNER JOIN configurations cfg ON cfg.id = d.configurationId
+        ),
+        deviceChecks AS (
+            SELECT r.lastUpdate,
+                   r.info IS NULL AS noInfo,
+                   (COALESCE(r.info ->> 'kioskMode', '') = 'true' OR r.permissive IS TRUE) AS permissionsSkipped,
+                   COALESCE(jsonb_typeof(r.info -> 'permissions') = 'array', FALSE) AS hasPermissions,
+                   COALESCE(jsonb_typeof(r.info -> 'permissions') = 'array'
+                       AND jsonb_array_length(r.info -> 'permissions') &gt;= 3
+                       AND COALESCE((r.info -> 'permissions' ->> 0)::numeric, 0)
+                         + COALESCE((r.info -> 'permissions' ->> 1)::numeric, 0)
+                         + COALESCE((r.info -> 'permissions' ->> 2)::numeric, 0) = 0, FALSE) AS noPermissions,
+                   EXISTS (
+                       SELECT 1 FROM checkedApps ca
+                       WHERE ca.configurationId = r.configurationId
+                       AND NOT EXISTS (
+                           SELECT 1
+                           FROM jsonb_array_elements(CASE WHEN jsonb_typeof(r.info -> 'applications') = 'array'
+                                                          THEN r.info -> 'applications' ELSE '[]'::jsonb END) e
+                           WHERE e ->> 'pkg' = ca.pkg)
+                   ) AS appMissing,
+                   EXISTS (
+                       SELECT 1
+                       FROM configurationFiles cf
+                       LEFT JOIN uploadedFiles f ON f.id = cf.fileId
+                       WHERE cf.configurationId = r.configurationId
+                       AND cf.remove = FALSE
+                       AND NOT EXISTS (
+                           SELECT 1
+                           FROM jsonb_array_elements(CASE WHEN jsonb_typeof(r.info -> 'files') = 'array'
+                                                          THEN r.info -> 'files' ELSE '[]'::jsonb END) e
+                           WHERE e ->> 'path' = COALESCE(cf.devicePath, f.devicePath))
+                   ) AS fileMissing
+            FROM deviceRows r
+        )
+        SELECT COUNT(*) AS total,
+               COUNT(*) FILTER (WHERE (EXTRACT(EPOCH FROM NOW()) * 1000 - lastUpdate) &lt; (2 * 3600 * 1000)) AS online,
+               COUNT(*) FILTER (WHERE (EXTRACT(EPOCH FROM NOW()) * 1000 - lastUpdate) &gt;= (2 * 3600 * 1000)
+                                  AND (EXTRACT(EPOCH FROM NOW()) * 1000 - lastUpdate) &lt; (4 * 3600 * 1000)) AS idle,
+               COUNT(*) FILTER (WHERE lastUpdate IS NULL
+                                   OR (EXTRACT(EPOCH FROM NOW()) * 1000 - lastUpdate) &gt;= (4 * 3600 * 1000)) AS offline,
+               COUNT(*) FILTER (WHERE noInfo
+                                   OR (permissionsSkipped AND (appMissing OR fileMissing))
+                                   OR (NOT permissionsSkipped AND hasPermissions
+                                       AND (noPermissions OR appMissing OR fileMissing))) AS needsAttention
+        FROM deviceChecks
     </select>
 
     <select id="countAllDevicesForSummary" parameterType="DeviceSummaryRequest" resultType="long">

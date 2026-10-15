@@ -66,13 +66,11 @@ angular.module( 'headwind-kiosk' )
 
     $scope.getUserName = function() { return authService.getUserName(); };
 
-    // Presentational-only: a user name past ~10 characters no longer fits
-    // the header's fixed right-hand reservation (the nav tabs are pinned at
-    // `right: 300px`, dashboard.css .app-nav-tabset > .nav-tabs), so the
-    // label can grow to 200px only if something else makes room - see the
-    // .header-long-username / .long-username rules in dashboard.css. On
-    // $rootScope because the nav tabs live in content.html, outside this
-    // controller's scope.
+    // Presentational-only: a user name past ~10 characters drops the
+    // date/time below 1760px so the nav keeps its room (.header-long-
+    // username in dashboard.css; the nav/brand-panel fit itself is measured
+    // by the appHeaderFit directive). On $rootScope because the nav tabs
+    // live in content.html, outside this controller's scope.
     $scope.$watch(function () {
         return (authService.getUserName() || '').length > 10;
     }, function (isLong) {
@@ -146,7 +144,8 @@ angular.module( 'headwind-kiosk' )
     $scope.about = function () {
         $modal.open({
             templateUrl: 'app/components/about/about.html',
-            controller: 'AboutController'
-        });
+            controller: 'AboutController',
+            windowClass: 'app-modal-narrow app-modal-about app-modal-fullscreen-mobile'
+        }).result.catch(angular.noop); // closing (Close/Esc/backdrop) dismisses - not an error
     };
 } );

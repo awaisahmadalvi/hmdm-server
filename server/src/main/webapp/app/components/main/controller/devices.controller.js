@@ -152,7 +152,7 @@ angular.module('headwind-kiosk')
     .controller('DevicesTabController', function ($scope, $rootScope, $state, $modal, $interval, $cookies, $window, $filter, $timeout, $http,
         confirmModal, deviceService, groupService, settingsService, hintService,
         authService, pluginService, configurationService, alertService,
-        spinnerService, localization, utils) {
+        spinnerService, localization, utils, configEnvironment) {
 
         var saveDeviceSearchParams = function () {
             var expireDate = new Date();
@@ -412,69 +412,56 @@ angular.module('headwind-kiosk')
         };
 
         // ---------- Status summary tiles ----------
-        // Total/Online/Idle/Offline are computed client-side from the full
-        // (unpaginated) device list for the current group/configuration
-        // selection - the same verified-correct approach the redesigned
-        // Summary page uses (its own comments explain why: the server's
-        // /rest/private/summary/devices aggregate was found to disagree
-        // with the per-device statusCode the status dot itself renders).
-        // "Needs attention" is likewise computed from the same per-device
-        // permission/app/files indicator functions already used for the
-        // table's status pills - reusing them, not duplicating the logic.
+        // Counts come from GET rest/private/devices/summary (deviceService.
+        // getStatusSummary): one aggregate query on the server with the same
+        // definitions this page used to apply in the browser to the full,
+        // unpaginated device list (status = the list's 2h/4h statusCode;
+        // "needs attention" = the permissions/applications/files pills below
+        // showing a problem - see getDeviceStatusSummary in DeviceMapper.xml)
+        // and the same access rules as the device list. Like before, the
+        // tiles follow only the Group and Configuration selections (not the
+        // search text or the advanced filters) and refresh on every search -
+        // now in parallel with the table instead of after it (the global
+        // spinner interceptor problem only affected two requests to the same
+        // URL). The per-number skeleton only shows when the group/
+        // configuration changes; a refresh with the same selection updates
+        // the numbers in place.
         $scope.statusTiles = null;
         $scope.statusTilesLoading = false;
         $scope.activeStatusTile = null;
+        var statusTilesRequestSeq = 0;
+        var statusTilesKey = null;
 
         var loadStatusTiles = function () {
-            if ($scope.statusTilesLoading) {
-                return;
+            var params = {};
+            if ($scope.selection.groupId > 0) {
+                params.groupId = $scope.selection.groupId;
             }
-            $scope.statusTilesLoading = true;
-            deviceService.getAllDevices({
-                value: '',
-                groupId: $scope.selection.groupId,
-                configurationId: $scope.selection.configurationId,
-                pageNum: 1,
-                pageSize: 10000,
-                sortBy: null,
-                sortDir: 'ASC',
-                fastSearch: false
-            }, function (response) {
+            if ($scope.selection.configurationId > 0) {
+                params.configurationId = $scope.selection.configurationId;
+            }
+            var key = (params.groupId || '') + '|' + (params.configurationId || '');
+            var seq = ++statusTilesRequestSeq;
+            $scope.statusTilesLoading = key !== statusTilesKey;
+            deviceService.getStatusSummary(params, function (response) {
+                if (seq !== statusTilesRequestSeq) {
+                    return; // a newer request is on its way
+                }
                 $scope.statusTilesLoading = false;
-                if (response.data && response.data.devices && response.data.devices.items) {
-                    var items = response.data.devices.items;
-                    var configurations = response.data.configurations || {};
-                    var counts = { green: 0, yellow: 0, red: 0, attention: 0 };
-
-                    items.forEach(function (device) {
-                        if (counts.hasOwnProperty(device.statusCode)) {
-                            counts[device.statusCode]++;
-                        }
-                        device.configuration = configurations[device.configurationId];
-                        try {
-                            var needsAttention =
-                                $scope.getDevicePermissionIndicatorImage(device) === 'images/offline.png' ||
-                                $scope.getDeviceApplicationsIndicatorImage(device) === 'images/offline.png' ||
-                                $scope.getDeviceFilesIndicatorImage(device) === 'images/offline.png';
-                            if (needsAttention) {
-                                counts.attention++;
-                            }
-                        } catch (e) {
-                            // Device missing configuration/info data for one of the 3 checks - just
-                            // don't count it toward "needs attention" rather than fail the whole tile.
-                        }
-                    });
-
+                if (response.status === 'OK' && response.data) {
+                    statusTilesKey = key;
                     $scope.statusTiles = {
-                        total: items.length,
-                        online: counts.green,
-                        idle: counts.yellow,
-                        offline: counts.red,
-                        attention: counts.attention
+                        total: response.data.total,
+                        online: response.data.online,
+                        idle: response.data.idle,
+                        offline: response.data.offline,
+                        attention: response.data.needsAttention
                     };
                 }
             }, function () {
-                $scope.statusTilesLoading = false;
+                if (seq === statusTilesRequestSeq) {
+                    $scope.statusTilesLoading = false;
+                }
             });
         };
 
@@ -562,6 +549,9 @@ angular.module('headwind-kiosk')
         };
 
         $scope.sortData = function (sortBy) {
+            if (!sortBy) {
+                return; // a column that isn't sortable (e.g. Main app version)
+            }
             if ($scope.paging.sortBy !== sortBy) {
                 $scope.paging.sortBy = sortBy;
                 $scope.paging.sortAsc = true;
@@ -618,6 +608,18 @@ angular.module('headwind-kiosk')
             $scope.configurations.unshift({ id: -1, name: localization.localize('devices.configuration.options.all') });
             refreshFilterChips();
         });
+
+        // Environment marker dots on the configuration pills (display only)
+        $scope.configEnvironment = configEnvironment;
+        $scope.configEnvironments = {};
+        configurationService.getEnvironments(function (response) {
+            if (response.status === 'OK' && response.data) {
+                $scope.configEnvironments = response.data;
+            }
+        }, angular.noop);
+        $scope.configEnvironmentOf = function (configuration) {
+            return configuration ? $scope.configEnvironments[configuration.id] : null;
+        };
 
         var loadCommonSettings = function (completion) {
             settingsService.getSettings({}, function (response) {
@@ -797,6 +799,7 @@ angular.module('headwind-kiosk')
             }
 
             var request = buildSearchRequest();
+            loadStatusTiles(); // independent of the table request
 
             deviceService.getAllDevices(request, function (response) {
                 $scope.selection.all = false;
@@ -859,14 +862,6 @@ angular.module('headwind-kiosk')
 
                     $scope.paging.totalItems = response.data.devices.totalItemsCount;
 
-                    // Fired only after this search's own request/response cycle is fully
-                    // done (not in parallel with it) - both calls hit the same
-                    // rest/private/devices/search endpoint, and the app's global spinner
-                    // HTTP interceptor tracks in-flight requests keyed by URL only, so two
-                    // concurrent calls to that same URL corrupt each other's show/close
-                    // bookkeeping and leave the full-page spinner stuck open forever
-                    // (verified live). Sequencing after this response avoids that entirely.
-                    loadStatusTiles();
                     refreshFilterChips();
 
                     if (callback) {
@@ -913,7 +908,10 @@ angular.module('headwind-kiosk')
             {key: 'PublicIp', visible: function () { return $scope.settings.columnDisplayedPublicIp; }},
             {key: 'Custom1', visible: function () { return $scope.settings.columnDisplayedCustom1 && $scope.commonSettings.customPropertyName1; }},
             {key: 'Custom2', visible: function () { return $scope.settings.columnDisplayedCustom2 && $scope.commonSettings.customPropertyName2; }},
-            {key: 'Custom3', visible: function () { return $scope.settings.columnDisplayedCustom3 && $scope.commonSettings.customPropertyName3; }}
+            {key: 'Custom3', visible: function () { return $scope.settings.columnDisplayedCustom3 && $scope.commonSettings.customPropertyName3; }},
+            // Appended last so every existing export column keeps its position
+            {key: 'MainApp', visible: function () { return $scope.settings.columnDisplayedMainAppVersion; }},
+            {key: 'MainAppVersion', visible: function () { return $scope.settings.columnDisplayedMainAppVersion; }}
         ];
 
         var buildVisibleReportColumns = function () {
@@ -963,6 +961,8 @@ angular.module('headwind-kiosk')
             {key: 'description', icon: 'align-left', labelKey: 'table.heading.device.desc', sortKey: 'DESCRIPTION', visible: function () { return $scope.settings.columnDisplayedDeviceDesc; }},
             {key: 'group', icon: 'folder', labelKey: 'table.heading.device.group', sortKey: 'GROUP', visible: function () { return $scope.settings.columnDisplayedDeviceGroup; }},
             {key: 'launcher-version', icon: 'layout-grid', labelKey: 'table.heading.device.launcher.version', sortKey: 'LAUNCHER_VERSION', visible: function () { return $scope.settings.columnDisplayedLauncherVersion; }},
+            // No sortKey: computed in the browser from the page's data (not sortable server-side)
+            {key: 'main-app-version', icon: 'app-window', labelKey: 'table.heading.device.main.app.version', visible: function () { return $scope.settings.columnDisplayedMainAppVersion; }},
             {key: 'battery', icon: 'battery-medium', labelKey: 'table.heading.device.battery.level', sortKey: 'BATTERY_LEVEL', visible: function () { return $scope.settings.columnDisplayedBatteryLevel; }},
             {key: 'default-launcher', icon: 'layers', labelKey: 'table.heading.device.default.launcher', sortKey: 'DEFAULT_LAUNCHER', visible: function () { return $scope.settings.columnDisplayedDefaultLauncher; }},
             {key: 'mdm-mode', icon: 'shield', labelKey: 'table.heading.device.mdm.mode', sortKey: 'MDM_MODE', visible: function () { return $scope.settings.columnDisplayedMdmMode; }},
@@ -1025,27 +1025,26 @@ angular.module('headwind-kiosk')
             'check': 44,
             'status': 120,
             'date': 130,
-            'imei': 170,
-            'phone': 140,
             'permissions': 64,
             'installations': 64,
             'files': 64,
             'launcher-version': 110,
+            'main-app-version': 120,
             'battery': 90,
             'default-launcher': 72,
             'mdm-mode': 72,
             'kiosk-mode': 72,
             'android-version': 110,
             'enrollment-date': 130,
-            'serial': 150,
-            'mac': 160,
-            'public-ip': 140,
             'custom1': 140,
             'custom2': 140,
             'custom3': 140,
             'actions': 100
         };
-        var DEVICE_FLEX_COLUMNS = ['number', 'model', 'description', 'group'];
+        // Device number, IMEI, phone, serial, MAC and IP are identifiers: never
+        // truncated - each is sized to its longest value on the page
+        // (identifierColumnWidth below), not part of these flex columns.
+        var DEVICE_FLEX_COLUMNS = ['model', 'description', 'group'];
         var DEVICE_FLEX_COLUMN_MIN = 180;
 
         // Configuration is never truncated: its column is a fixed width
@@ -1105,8 +1104,69 @@ angular.module('headwind-kiosk')
             });
         }
 
+        // Identifier columns: never truncated. Each is a fixed width sized to
+        // its longest value on the current page (floor IDENTIFIER_COLUMN_MIN),
+        // measured the same way as the Configuration column above; when the
+        // table gets wider than the card, the card scrolls horizontally.
+        // Device number renders in the page font, bold (<strong>); the others
+        // in the monospace .devices-id-value font (dashboard.css) - both
+        // fonts here must match those rules.
+        var IDENTIFIER_COLUMN_MIN = 140;
+        var IDENTIFIER_CELL_PADDING = 24 + 6; // td padding (12px each side) + rounding slack
+        var IDENTIFIER_MONO_FONT = '14px "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
+        var IDENTIFIER_COLUMNS = {
+            'number': {mono: false, text: function (device) { return device.number; }},
+            'imei': {mono: true, text: function (device) { return device.displayedIMEI; }},
+            'phone': {mono: true, text: function (device) { return device.displayedPhone; }},
+            'serial': {mono: true, text: function (device) { return $scope.getSerial(device); }},
+            'mac': {mono: true, text: function (device) { return $scope.getMac(device); }},
+            'public-ip': {mono: true, text: function (device) { return $scope.formatIp(device.publicIp); }}
+        };
+        var identifierWidthCache = {devices: null, widths: {}};
+
+        var identifierColumnWidth = function (key) {
+            if (identifierWidthCache.devices !== $scope.devices) {
+                identifierWidthCache = {devices: $scope.devices, widths: {}};
+            }
+            if (identifierWidthCache.widths[key] === undefined) {
+                var column = IDENTIFIER_COLUMNS[key];
+                var font = column.mono ? IDENTIFIER_MONO_FONT
+                    : '700 14px ' + window.getComputedStyle(document.body).fontFamily;
+                var widest = 0;
+                angular.forEach($scope.devices || [], function (device) {
+                    var text = column.text(device);
+                    if (text) {
+                        widest = Math.max(widest, measureText(String(text), font));
+                    }
+                });
+                identifierWidthCache.widths[key] = Math.max(IDENTIFIER_COLUMN_MIN,
+                    Math.ceil(widest) + IDENTIFIER_CELL_PADDING);
+            }
+            return identifierWidthCache.widths[key];
+        };
+
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(function () {
+                identifierWidthCache = {devices: null, widths: {}};
+                $scope.$applyAsync();
+            });
+        }
+
         var columnWidth = function (key) {
-            return key === 'configuration' ? configColumnWidth() : DEVICE_COLUMN_WIDTHS[key];
+            if (key === 'configuration') {
+                return configColumnWidth();
+            }
+            if (IDENTIFIER_COLUMNS[key]) {
+                return identifierColumnWidth(key);
+            }
+            return DEVICE_COLUMN_WIDTHS[key];
+        };
+
+        // IPv6/IPv4 loopback shown as "localhost" (raw value in the tooltip),
+        // same as the Audit page - display only.
+        var LOCALHOST_IPS = {'0:0:0:0:0:0:0:1': true, '::1': true, '127.0.0.1': true};
+        $scope.formatIp = function (ip) {
+            return ip && LOCALHOST_IPS[ip] ? localization.localize('devices.ip.localhost') : ip;
         };
 
         $scope.deviceTableStyle = function () {
@@ -1518,6 +1578,59 @@ angular.module('headwind-kiosk')
             }
 
             return null;
+        };
+
+        // "Main app version" column: the device configuration's reporting-only main app
+        // (configuration.mainActiveAppId), compared like the launcher version - installed
+        // version from the apps the device reports, required version from the
+        // configuration's app list. All from data already loaded for the page.
+        // Returns null (shows "—") when there is no main app or the device never reported apps.
+        // Cached per device (watched by ng-if: a fresh object on every digest would never
+        // settle); recomputed only when the device's configuration, main app or info changes.
+        $scope.getDeviceMainApp = function (device) {
+            var configuration = device.configuration;
+            var cache = device.$$mainAppCell;
+            if (cache && cache.configuration === configuration && cache.info === device.info &&
+                cache.appId === (configuration && configuration.mainActiveAppId)) {
+                return cache.result;
+            }
+            var result = computeDeviceMainApp(device);
+            device.$$mainAppCell = {configuration: configuration, info: device.info,
+                appId: configuration && configuration.mainActiveAppId, result: result};
+            return result;
+        };
+
+        var computeDeviceMainApp = function (device) {
+            var configuration = device.configuration;
+            if (!configuration || !configuration.mainActiveAppId) {
+                return null;
+            }
+            var app = (configuration.applications || []).find(function (a) {
+                return a.id === configuration.mainActiveAppId && a.selected;
+            });
+            if (!app) {
+                return null;
+            }
+            var info = $scope.getDeviceInfo(device);
+            if (!info || !info.applications || info.applications.length === 0) {
+                return null;
+            }
+            var installed = info.applications.find(function (deviceApp) {
+                return deviceApp.pkg === app.pkg;
+            });
+            // Required only while the app is set to be installed (action 1)
+            var required = app.action == 1 && app.version && app.version !== '0' ? app.version : null;
+            var installedVersion = installed ? installed.version : null;
+            var tooltip = localization.localize('devices.main.app.tooltip')
+                .replace('${name}', app.name)
+                .replace('${pkg}', app.pkg)
+                .replace('${installed}', installedVersion || localization.localize('devices.main.app.not.installed'))
+                .replace('${required}', required || '—');
+            return {
+                text: installed ? installedVersion : localization.localize('devices.main.app.not.installed'),
+                mismatch: !installed || (required !== null && installedVersion !== required),
+                tooltip: tooltip
+            };
         };
 
         $scope.getDeviceBatteryLevel = function (device) {

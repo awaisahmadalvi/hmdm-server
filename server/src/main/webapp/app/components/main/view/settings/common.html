@@ -1,7 +1,9 @@
 <!-- Localization completed -->
 <div class="width-1200 modern-page columns-page" ng-controller="SettingsTabController" ng-init="initCommonSettings()">
 
-    <div class="logs-page-header columns-sticky-header">
+    <!-- Shared sticky page header (app/shared/directives.js appStickyHeader, dashboard.css) -->
+    <div class="page-sticky-header" app-sticky-header>
+    <div class="logs-page-header">
         <div>
             <h4 localized>form.settings.common.title</h4>
             <div class="logs-page-subtitle" localized>form.settings.common.page.subtitle</div>
@@ -16,6 +18,7 @@
                 <span ng-if="savingColumns" localized>form.settings.common.saving</span>
             </button>
         </div>
+    </div>
     </div>
 
     <div ng-show='successMessage' class='device-details-inline-success'><span>{{successMessage}}</span></div>

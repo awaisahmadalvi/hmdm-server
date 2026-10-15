@@ -79,6 +79,22 @@ angular.module('headwind-kiosk')
         // flag. See app.js's appVersionsEditor state for the full rationale.
         $scope.isVersionsEditor = ($state.current.name === 'appVersionsEditor');
 
+        // appShellPage() routes (app.js): the page template rendered in
+        // content.html's hidden PAGE tab
+        $scope.pageTemplate = ($state.current.data || {}).pageTemplate;
+        // The Settings / Functions dropdowns' active flags, set from this
+        // route's tab. Individual pages also set them when they load, but
+        // nothing cleared them on a route that isn't one of those pages, so
+        // e.g. the Configuration editor opened right after a Settings page
+        // showed both Configurations and Settings as active.
+        // appShellPage() routes name their menu, if any, via data.navSection.
+        var SETTINGS_TABS = ['DESIGN', 'COMMON', 'USERS', 'ROLES', 'GROUPS', 'ICONS', 'LANG', 'HINTS', 'PLUGINS'];
+        var navSection = ($state.current.data || {}).navSection;
+        $rootScope.settingsTabActive = SETTINGS_TABS.indexOf(openTab) !== -1 || openTab.indexOf('plugin-settings-') === 0 ||
+            navSection === 'settings';
+        $rootScope.pluginsTabActive = (openTab.indexOf('plugin-') === 0 && openTab.indexOf('plugin-settings-') !== 0) ||
+            navSection === 'functions';
+
         $scope.functionsPlugins = [];
         $scope.settingsPlugins = [];
 

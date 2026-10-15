@@ -7,13 +7,19 @@
         <span>{{configuration.name}}</span>
     </div>
 
-    <div class="logs-page-header columns-sticky-header config-editor-header">
+    <!-- Shared sticky page header (app/shared/directives.js appStickyHeader,
+         dashboard.css): header + tab bar in one block -->
+    <div class="page-sticky-header" app-sticky-header>
+    <div class="logs-page-header config-editor-header">
         <div>
             <div class="plugin-settings-title-row">
                 <h4>{{configuration.name}}</h4>
                 <span class="device-details-badge users-role-neutral" ng-if="configuration.id === 1" localized>form.configurations.badge.default</span>
+                <span class="device-details-badge config-env-pill" ng-if="configEnvironment.key(configuration.environment)"
+                      ng-class="'config-env-pill-' + configEnvironment.key(configuration.environment)"
+                      title="{{configEnvironment.tooltip(configuration.environment)}}">{{configEnvironment.label(configuration.environment)}}</span>
             </div>
-            <div class="logs-page-subtitle" ng-if="configuration.description">{{configuration.description}}</div>
+            <div class="logs-page-subtitle" ng-if="configuration.description" title="{{configuration.description}}">{{configuration.description}}</div>
         </div>
         <div class="logs-page-header-actions design-header-actions">
             <a class="btn btn-outline-primary" ng-if="qrCodeAvailable()" ng-click="showQrCode()">
@@ -32,8 +38,28 @@
         </div>
     </div>
 
+    <!-- Tab bar: drives the same activeConfigTab the <tabset> below uses for
+         its panes (whose own tab list is hidden), so it can live in the
+         sticky block with the header - uib-tabset renders its list and
+         panes as siblings of one element, which can't be split. Same
+         .modern-tabset look and mobile horizontal scroll. -->
+    <div class="modern-tabset config-editor-tabbar">
+        <ul class="nav nav-tabs" role="tablist">
+            <li ng-repeat="tab in configEditorTabs" ng-class="{active: activeConfigTab === $index}" role="presentation">
+                <a href="" role="tab" aria-selected="{{activeConfigTab === $index}}" ng-click="selectConfigTab($index)">{{tab | localize}}</a>
+            </li>
+        </ul>
+    </div>
+    </div>
+
     <div ng-show='errorMessage' class='device-details-inline-error'><span>{{errorMessage}}</span></div>
     <div ng-show='successMessage' class='device-details-inline-success'><span>{{successMessage}}</span></div>
+
+    <!-- Production configuration: a reminder only (display) -->
+    <div class="config-env-banner" ng-if="configuration.environment === 'PRODUCTION'" role="note">
+        <app-lucide-icon name="triangle-alert" size="16"></app-lucide-icon>
+        <span localized>config.env.banner.production</span>
+    </div>
 
     <form name="configurationForm" class="form-horizontal">
 
@@ -79,6 +105,46 @@
                                 <label class="design-field-label" localized>form.configuration.settings.common.desc</label>
                                 <textarea ng-model='configuration.description' name="n2" class='form-control logs-input settings-input no-resize'
                                           localized-placeholder='form.configuration.settings.common.desc.placeholder'></textarea>
+                            </div>
+
+                            <!-- Environment marker: display only, saved with Save (configurationService.setEnvironment) -->
+                            <div class="design-field">
+                                <label class="design-field-label" localized>config.env.field</label>
+                                <div class="modern-segmented config-env-segmented">
+                                    <button type="button" class="modern-segmented-option" ng-class="{active: !configEnvironment.key(configuration.environment)}"
+                                            ng-click="setEditorEnvironment(null)" localized>config.env.not.set</button>
+                                    <button type="button" class="modern-segmented-option config-env-option-testing" ng-class="{active: configuration.environment === 'TESTING'}"
+                                            ng-click="setEditorEnvironment('TESTING')" localized>config.env.testing.title</button>
+                                    <button type="button" class="modern-segmented-option config-env-option-production" ng-class="{active: configuration.environment === 'PRODUCTION'}"
+                                            ng-click="setEditorEnvironment('PRODUCTION')" localized>config.env.production.title</button>
+                                </div>
+                                <div class="field-hint" localized>config.env.field.hint</div>
+                            </div>
+
+                            <!-- Main app: reporting only (Devices "Main app version" column + export),
+                                 saved with Save (configurationService.setMainActiveApp) -->
+                            <div class="design-field">
+                                <label class="design-field-label" for="mainActiveApp" localized>config.main.app.field</label>
+                                <div class="config-main-app-wrap settings-input">
+                                    <input type="text" id="mainActiveApp" autocomplete="off"
+                                           ng-model="mainActiveAppPick.app"
+                                           localized-placeholder="config.main.app.none"
+                                           class="form-control logs-input"
+                                           typeahead="app as (app.name + (app.version && app.version !== '0' ? ' ' + app.version : '')) for app in getApps($viewValue)"
+                                           typeahead-template-url="app/components/main/view/modal/appTypeaheadSuggestion.html"
+                                           typeahead-input-formatter="mainActiveAppFormatter($model)"
+                                           typeahead-focus-first="false"
+                                           typeahead-min-length="0"
+                                           typeahead-on-select="onMainActiveAppSelected($item)"
+                                           ng-change="mainActiveAppTyped()"
+                                           ng-blur="restoreMainActiveApp()">
+                                    <button type="button" class="config-main-app-clear" ng-if="mainActiveAppPick.app && mainActiveAppPick.app.id"
+                                            ng-click="clearMainActiveApp()"
+                                            title="{{'config.main.app.clear' | localize}}" aria-label="{{'config.main.app.clear' | localize}}">
+                                        <app-lucide-icon name="x" size="14"></app-lucide-icon>
+                                    </button>
+                                </div>
+                                <div class="field-hint" localized>config.main.app.hint</div>
                             </div>
 
                             <div class="design-field">

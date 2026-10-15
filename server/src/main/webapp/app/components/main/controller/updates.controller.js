@@ -1,6 +1,6 @@
 // Localization completed
 angular.module('headwind-kiosk')
-    .controller('UpdatesController', function ($scope, updatesService, localization, utils, APP_VERSION) {
+    .controller('UpdatesController', function ($scope, $modal, updatesService, localization, utils, APP_VERSION) {
         $scope.errorMessage = '';
         $scope.completeMessage = localization.localize('updates.checking');
         $scope.isChecking = true;
@@ -60,7 +60,71 @@ angular.module('headwind-kiosk')
             });
         };
 
+        // Presentational-only: component names/icons for the versions table
+        // (the server's app.name is the Applications entry name)
+        $scope.componentName = function(app) {
+            if (app.pkg === 'web') {
+                return localization.localize('updates.component.web');
+            }
+            if (app.pkg === 'com.hmdm.launcher') {
+                return localization.localize('updates.component.agent').replace('${name}', app.name);
+            }
+            return app.name;
+        };
+
+        $scope.componentIcon = function(app) {
+            return app.pkg === 'web' ? 'monitor' : 'smartphone';
+        };
+
+        // "Get updates" asks first, then runs getUpdates() above unchanged.
+        // The list mirrors the server's rule (UpdateResource): outdated,
+        // not disabled and not yet downloaded.
+        $scope.confirmGetUpdates = function() {
+            var downloads = [];
+            var hasAgentDownload = false;
+            ($scope.updates || []).forEach(function(app) {
+                if (app.outdated && !app.updateDisabled && !app.downloaded) {
+                    var effect;
+                    if (app.pkg === 'web') {
+                        effect = localization.localize('updates.confirm.effect.web');
+                    } else {
+                        effect = localization.localize($scope.updateForm.update ?
+                            'updates.confirm.effect.app.auto' : 'updates.confirm.effect.app');
+                        if (app.pkg === 'com.hmdm.launcher') {
+                            hasAgentDownload = true;
+                        }
+                    }
+                    downloads.push({name: $scope.componentName(app), from: app.currentVersion, to: app.version, effect: effect});
+                }
+            });
+
+            $modal.open({
+                templateUrl: 'app/components/main/view/modal/updatesConfirm.html',
+                controller: 'UpdatesConfirmController',
+                windowClass: 'app-modal-narrow app-modal-updates-confirm app-modal-fullscreen-mobile',
+                resolve: {
+                    summary: function() {
+                        return {downloads: downloads, hasAgentDownload: hasAgentDownload, form: $scope.updateForm};
+                    }
+                }
+            }).result.then(function() {
+                $scope.getUpdates();
+            }, angular.noop); // Cancel/Esc/backdrop: nothing happens
+        };
+
         checkUpdates();
+    })
+    .controller('UpdatesConfirmController', function ($scope, $modalInstance, summary) {
+        $scope.downloads = summary.downloads;
+        $scope.hasAgentDownload = summary.hasAgentDownload;
+        $scope.form = summary.form;
+
+        $scope.OK = function() {
+            $modalInstance.close();
+        };
+        $scope.cancel = function() {
+            $modalInstance.dismiss();
+        };
     });
 
 

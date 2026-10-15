@@ -2,7 +2,7 @@
 angular.module('headwind-kiosk')
     .controller('ConfigurationsTabController', function ($scope, $rootScope, $state, $modal, confirmModal,
                                                          configurationService, authService, $window, localization,
-                                                         alertService, hintService, $timeout) {
+                                                         alertService, hintService, $timeout, configEnvironment) {
         $scope.isTypical = false;
 
         $scope.paging = {
@@ -163,6 +163,67 @@ angular.module('headwind-kiosk')
                     }
                 }, alertService.onRequestFailure);
             });
+        };
+
+        // ---------- Environment marker (display only, never sent to devices) ----------
+        $scope.configEnvironment = configEnvironment;
+        $scope.envFilter = {value: 'all'};
+        $scope.envFilterOptions = ['all', 'PRODUCTION', 'TESTING', 'none'];
+
+        var matchesEnvFilter = function (configuration, filter) {
+            if (filter === 'all') {
+                return true;
+            }
+            if (filter === 'none') {
+                return !configEnvironment.key(configuration.environment);
+            }
+            return configuration.environment === filter;
+        };
+
+        $scope.envFilterCount = function (filter) {
+            return ($scope.configurations || []).filter(function (c) {
+                return matchesEnvFilter(c, filter);
+            }).length;
+        };
+
+        $scope.envFilterLabel = function (filter) {
+            return localization.localize('config.env.filter.' + filter.toLowerCase());
+        };
+
+        $scope.setEnvFilter = function (filter) {
+            $scope.envFilter.value = filter;
+            $scope.paging.currentPage = 1;
+        };
+
+        // The cards, count and pagination use the filtered list; $scope.configurations
+        // stays the full search result
+        $scope.filteredConfigurations = function () {
+            return ($scope.configurations || []).filter(function (c) {
+                return matchesEnvFilter(c, $scope.envFilter.value);
+            });
+        };
+
+        $scope.setEnvironment = function (configuration, environment) {
+            var apply = function () {
+                configurationService.setEnvironment({id: configuration.id}, {environment: environment}, function (response) {
+                    if (response.status === 'OK') {
+                        configuration.environment = environment;
+                        showConfigurationsToast('success', environment ?
+                            localization.localize('config.env.marked').replace('${name}', configuration.name)
+                                .replace('${env}', configEnvironment.label(environment)) :
+                            localization.localize('config.env.cleared').replace('${name}', configuration.name));
+                    } else {
+                        showConfigurationsToast('error', localization.localizeServerResponse(response));
+                    }
+                }, alertService.onRequestFailure);
+            };
+            if (environment === 'PRODUCTION') {
+                confirmModal.getUserConfirmation(
+                    localization.localize('config.env.confirm.production').replace('${name}', configuration.name),
+                    apply, 'config.env.action.production');
+            } else {
+                apply();
+            }
         };
 
         $scope.init(false);
@@ -381,7 +442,8 @@ angular.module('headwind-kiosk')
     })
     .controller('ConfigurationEditorController',
         function ($scope, configurationService, settingsService, $stateParams, $state, $rootScope, $window, $timeout,
-                  $transitions, localization, confirmModal, alertService, $modal, appVersionComparisonService, settingsService) {
+                  $transitions, localization, confirmModal, alertService, $modal, appVersionComparisonService, settingsService,
+                  sectionScrollspy, configEnvironment) {
 
             $scope.successMessage = null;
 
@@ -411,6 +473,25 @@ angular.module('headwind-kiosk')
             var initialTab = parseInt($stateParams.tab, 10);
             $scope.activeConfigTab = (initialTab >= 0 && initialTab <= 5) ? initialTab : 0;
 
+            // The tab bar in the sticky header block (configuration.html) -
+            // same order/labels as the <tabset> panes it switches
+            $scope.configEditorTabs = ['tab.configeditor.common.settings', 'tab.configeditor.design.settings',
+                'tab.configeditor.applications', 'tab.configeditor.mdm.settings', 'tab.configeditor.app.settings',
+                'tab.configeditor.files'];
+
+            // Switching tabs while scrolled down starts the new tab at its
+            // top, right under the sticky block, instead of mid-page
+            $scope.selectConfigTab = function (index) {
+                $scope.activeConfigTab = index;
+                var form = document.querySelector('.config-editor-page form[name="configurationForm"]');
+                if (form) {
+                    var target = form.getBoundingClientRect().top + $window.scrollY - sectionScrollspy.stickyOffset(form);
+                    if ($window.scrollY > target) {
+                        $window.scrollTo(0, Math.max(0, target));
+                    }
+                }
+            };
+
             $scope.configEditorToast = null;
             var showConfigEditorToast = function (type, message) {
                 $scope.configEditorToast = { type: type, message: message };
@@ -436,117 +517,19 @@ angular.module('headwind-kiosk')
                 return url.indexOf('localhost') > -1 || url.indexOf('127.0.0.1') > -1;
             };
 
-            // Sticky section nav factory - identical IntersectionObserver-
-            // based approach as the General settings page (settings.
-            // controller.js), generalized so every editor tab with its own
-            // section nav (Common Settings, MDM Settings, ...) gets one
-            // without re-implementing the observer/scroll-suppression
-            // wiring each time. Returns the scrollTo(id) function to bind
-            // as that tab's $scope.scrollToXSection.
-            var makeSectionScrollspy = function (config) {
-                // config: {idPrefix, sectionIds, scrollOffset, tabIndex, activeProp}
-                $scope[config.activeProp] = config.sectionIds[0];
-
-                var suppressAuto = false;
-                var suppressTimeout = null;
-
-                var scrollTo = function (id) {
-                    $scope[config.activeProp] = id;
-                    suppressAuto = true;
-                    if (suppressTimeout) {
-                        $timeout.cancel(suppressTimeout);
-                    }
-                    suppressTimeout = $timeout(function () {
-                        suppressAuto = false;
-                    }, 1000);
-                    var el = document.getElementById(config.idPrefix + id);
-                    if (el) {
-                        $window.scrollTo({ top: el.offsetTop - config.scrollOffset, behavior: 'smooth' });
-                    }
-                };
-
-                var visibility = {};
-                var observer = null;
-
-                if ($window.IntersectionObserver) {
-                    observer = new IntersectionObserver(function (entries) {
-                        entries.forEach(function (entry) {
-                            var id = entry.target.id.replace(config.idPrefix, '');
-                            visibility[id] = entry.isIntersecting;
-                        });
-                        if (suppressAuto) {
-                            return;
-                        }
-                        var current = null;
-                        config.sectionIds.forEach(function (id) {
-                            if (visibility[id]) {
-                                current = id;
-                            }
-                        });
-                        if (current && $scope[config.activeProp] !== current) {
-                            $scope.$apply(function () {
-                                $scope[config.activeProp] = current;
-                            });
-                        }
-                    }, {
-                        rootMargin: '-' + config.scrollOffset + 'px 0px -70% 0px',
-                        threshold: 0
-                    });
-
-                    $timeout(function () {
-                        if ($scope.activeConfigTab !== config.tabIndex) {
-                            return;
-                        }
-                        config.sectionIds.forEach(function (id) {
-                            var el = document.getElementById(config.idPrefix + id);
-                            if (el) {
-                                observer.observe(el);
-                            }
-                        });
-                    });
-                }
-
-                var onScrollBottom = function () {
-                    if (suppressAuto || $scope.activeConfigTab !== config.tabIndex) {
-                        return;
-                    }
-                    var atBottom = $window.scrollY + $window.innerHeight >= document.documentElement.scrollHeight - 2;
-                    if (!atBottom) {
-                        return;
-                    }
-                    var last = config.sectionIds[config.sectionIds.length - 1];
-                    if (last && $scope[config.activeProp] !== last) {
-                        $scope.$apply(function () {
-                            $scope[config.activeProp] = last;
-                        });
-                    }
-                };
-                angular.element($window).on('scroll', onScrollBottom);
-                $scope.$on('$destroy', function () {
-                    angular.element($window).off('scroll', onScrollBottom);
-                    if (observer) {
-                        observer.disconnect();
-                    }
-                });
-
-                return scrollTo;
-            };
-
+            // Sticky section navs of the Common Settings and MDM Settings tabs:
+            // the shared scrollspy (app/shared/directives.js sectionScrollspy)
             var COMMON_SECTION_IDS = ['general', 'connectivity', 'hardware', 'display', 'updates', 'security', 'launcher'];
-            $scope.scrollToCommonSection = makeSectionScrollspy({
+            $scope.scrollToCommonSection = sectionScrollspy.create($scope, {
                 idPrefix: 'common-section-',
                 sectionIds: COMMON_SECTION_IDS,
-                scrollOffset: 140, // clears the sticky page header + tabs
-                tabIndex: 0,
                 activeProp: 'commonActiveSection'
             });
 
             var MDM_SECTION_IDS = ['kiosk', 'agent', 'enrollment', 'policy', 'migration'];
-            $scope.scrollToMdmSection = makeSectionScrollspy({
+            $scope.scrollToMdmSection = sectionScrollspy.create($scope, {
                 idPrefix: 'mdm-section-',
                 sectionIds: MDM_SECTION_IDS,
-                scrollOffset: 140,
-                tabIndex: 3,
                 activeProp: 'mdmActiveSection'
             });
 
@@ -1346,6 +1329,8 @@ angular.module('headwind-kiosk')
                                     contentAppSelected = true;
                                 }
                             }
+
+                            $scope.mainActiveAppPick.app = findMainActiveApp();
                         }, 600)
                     } else {
                         $scope.errorMessage = localization.localize(response.message);
@@ -1456,7 +1441,12 @@ angular.module('headwind-kiosk')
                     }
 
                     $scope.saving = true;
-                    configurationService.updateConfiguration(request, function (response) {
+                    // The environment marker and the reporting-only main app aren't part of
+                    // updateConfiguration (old clients can't clear them): they're set right
+                    // after a successful save, below
+                    var wantedEnvironment = $scope.configuration.environment || null;
+                    var wantedMainActiveApp = $scope.configuration.mainActiveAppId || null;
+                    var onSaved = function (response) {
                         $scope.saving = false;
                         if (response.status === 'OK') {
                             $scope.saved = true;
@@ -1491,11 +1481,112 @@ angular.module('headwind-kiosk')
                             $scope.errorMessage = localization.localize(response.message);
                             showConfigEditorToast('error', $scope.errorMessage);
                         }
+                    };
+                    configurationService.updateConfiguration(request, function (response) {
+                        if (response.status !== 'OK' || !response.data) {
+                            onSaved(response);
+                            return;
+                        }
+                        // Follow-up updates, one after the other; a failure doesn't undo the save
+                        var steps = [];
+                        if (wantedEnvironment !== (response.data.environment || null)) {
+                            steps.push({
+                                call: function (ok, fail) {
+                                    configurationService.setEnvironment({id: response.data.id}, {environment: wantedEnvironment}, ok, fail);
+                                },
+                                apply: function () { response.data.environment = wantedEnvironment; },
+                                errorKey: 'config.env.save.failed'
+                            });
+                        }
+                        if (wantedMainActiveApp !== (response.data.mainActiveAppId || null)) {
+                            steps.push({
+                                call: function (ok, fail) {
+                                    configurationService.setMainActiveApp({id: response.data.id}, {applicationId: wantedMainActiveApp}, ok, fail);
+                                },
+                                apply: function () { response.data.mainActiveAppId = wantedMainActiveApp; },
+                                errorKey: 'config.main.app.save.failed'
+                            });
+                        }
+                        var failedKeys = [];
+                        var next = function () {
+                            var step = steps.shift();
+                            if (!step) {
+                                onSaved(response);
+                                failedKeys.forEach(function (key) {
+                                    showConfigEditorToast('error', localization.localize(key));
+                                });
+                                return;
+                            }
+                            step.call(function (stepResponse) {
+                                if (stepResponse.status === 'OK') {
+                                    step.apply();
+                                } else {
+                                    failedKeys.push(step.errorKey);
+                                }
+                                next();
+                            }, function () {
+                                failedKeys.push(step.errorKey);
+                                next();
+                            });
+                        };
+                        next();
                     }, function () {
                         $scope.saving = false;
                         $scope.errorMessage = localization.localize('error.request.failure');
                         showConfigEditorToast('error', $scope.errorMessage);
                     });
+                }
+            };
+
+            // ---------- Environment marker (display only, never sent to devices) ----------
+            $scope.configEnvironment = configEnvironment;
+            $scope.setEditorEnvironment = function (environment) {
+                $scope.configuration.environment = environment;
+                $scope.configurationForm.$setDirty();
+            };
+
+            // ---------- Main app (reporting only, never sent to devices) ----------
+            // configuration.mainActiveAppId is an applications.id; the picker lists the
+            // configuration's installed native apps (same list as the agent/content app pickers)
+            var findMainActiveApp = function () {
+                var id = $scope.configuration && $scope.configuration.mainActiveAppId;
+                if (!id) {
+                    return null;
+                }
+                return (allApplications || []).find(function (app) {
+                    return app.id === id && app.selected;
+                }) || null;
+            };
+            $scope.mainActiveAppPick = {app: null}; // object holder: the field is inside a tab (child scope)
+            // Like appLookupFormatter, but "None" (null) and typed text are valid values here
+            $scope.mainActiveAppFormatter = function (val) {
+                if (!val) {
+                    return '';
+                }
+                if (typeof val === 'string') {
+                    return val;
+                }
+                return $scope.appLookupFormatter(val);
+            };
+            $scope.onMainActiveAppSelected = function ($item) {
+                $scope.mainActiveAppPick.app = $item;
+                $scope.configuration.mainActiveAppId = $item.id;
+                $scope.configurationForm.$setDirty();
+            };
+            $scope.clearMainActiveApp = function () {
+                $scope.mainActiveAppPick.app = null;
+                $scope.configuration.mainActiveAppId = null;
+                $scope.configurationForm.$setDirty();
+            };
+            $scope.mainActiveAppTyped = function () {
+                if (!$scope.mainActiveAppPick.app) {
+                    $scope.clearMainActiveApp();
+                }
+            };
+            // Leaving the field with unmatched text shows the current choice again
+            $scope.restoreMainActiveApp = function () {
+                if (typeof $scope.mainActiveAppPick.app === 'string') {
+                    $scope.mainActiveAppPick.app = findMainActiveApp();
                 }
             };
 

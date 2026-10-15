@@ -1,96 +1,122 @@
 <!-- Localization completed -->
-<div ng-show='errorMessage' class='modal-header'>
-    <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
+<div class="modern-modal-header app-modal-header">
+    <div class="app-modal-header-top">
+        <app-icon ng-if="application" application="application" size="40"></app-icon>
+        <div class="app-modal-header-text">
+            <h4 class="modern-modal-title">{{ ('form.application.version.configurations.title' | localize).replace('${name}', application ? application.name : (applicationVersion.name || '')).replace('${version}', applicationVersion.version || '') }}</h4>
+            <div class="app-modal-header-sub device-details-app-pkg" ng-if="application.pkg">{{application.pkg}}</div>
+        </div>
+        <button type="button" class="modern-modal-close" ng-click="closeModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="appver-cfg-summary" ng-if="configurations.length > 0">
+        <app-lucide-icon name="layers" size="14"></app-lucide-icon>
+        <span>{{ summaryText() }}</span>
+    </div>
 </div>
-<div class='modal-body'>
-    <form class='form-horizontal'>
 
-        <div class='form-group'>
-            <label class='col-sm-3 control-label' localized>form.application.configurations.app</label>
-            <div class='col-sm-9'>
-                <input type="text" disabled="disabled" class="form-control"
-                       value="{{application.name}} ({{applicationVersion.version}})"/>
+<div class='device-details-inline-error' ng-show='errorMessage'><span>{{errorMessage}}</span></div>
+
+<div class="appver-cfg-toolbar" ng-show="configurations.length > 0">
+    <div class="logs-input-icon-wrap">
+        <span class="glyphicon glyphicon-search logs-input-icon"></span>
+        <input type="text" class="form-control logs-input" ng-model="filter.text"
+               localized-placeholder="form.application.version.configurations.filter"/>
+    </div>
+
+    <!-- Bulk actions (replaces the old "(select)" row): same toggleSelectAll/
+         selectAllChanged/actionGroup/actionGroupChanged logic, only the
+         action is applied by "Apply" instead of on select change -->
+    <div class="appver-cfg-bulk">
+        <label class="appver-cfg-bulk-all">
+            <input type="checkbox" ng-model="toggleSelectAll" ng-change="selectAllChanged()">
+            <span localized>form.application.version.configurations.select.all</span>
+        </label>
+        <span class="appver-cfg-bulk-count" ng-if="selectedCount() > 0">{{ ('form.application.version.configurations.selected' | localize).replace('${count}', selectedCount()) }}</span>
+        <span class="appver-cfg-bulk-spacer"></span>
+        <span class="app-action-wrap" ng-class="actionGroup == -1 ? '' : 'app-action-wrap-' + actionGroupKey(actionGroup)">
+            <span class="app-action-dot" ng-if="actionGroup != -1"></span>
+            <select ng-model="actionGroup" name="actionGroup" ng-disabled="selectedCount() === 0"
+                    class="form-control app-action-select">
+                <option ng-value="-1" ng-selected="actionGroup == -1" localized>form.application.version.configurations.set.action</option>
+                <option ng-value="1" ng-selected="actionGroup == 1"
+                        ng-if="application !== null && !isInstallOptionAvailable(application)"
+                        localized>form.configuration.apps.action.permit</option>
+                <option ng-value="1" ng-selected="actionGroup == 1"
+                        ng-if="application !== null && isInstallOptionAvailable(application)"
+                        localized>form.configuration.apps.action.install</option>
+                <option ng-value="0" ng-selected="actionGroup == 0"
+                        ng-if="application !== null && !isInstallOptionAvailable(application)"
+                        localized>form.configuration.apps.action.prohibit</option>
+                <option ng-value="0" ng-selected="actionGroup == 0"
+                        ng-if="application !== null && isInstallOptionAvailable(application)"
+                        localized>form.configuration.apps.action.not.install</option>
+                <option ng-value="2" ng-selected="actionGroup == 2"
+                        ng-if="application !== null && isRemoveOptionAvailable(application)"
+                        localized>form.configuration.apps.action.delete</option>
+            </select>
+        </span>
+        <button type="button" class="btn btn-default" ng-click="applyActionGroup()"
+                ng-disabled="selectedCount() === 0 || actionGroup == -1" localized>button.apply</button>
+    </div>
+</div>
+
+<div class="modal-body modern-modal-body appver-cfg-body">
+
+    <div class="appver-cfg-list" ng-if="filteredConfigurations().length > 0">
+        <div class="appver-cfg-row" ng-repeat="configuration in filteredConfigurations() track by configuration.configurationId"
+             ng-class="{'appver-cfg-row-selected': configuration.selected, 'appver-cfg-row-changed': isChanged(configuration)}"
+             ng-click="rowClicked(configuration, $event)">
+            <input type="checkbox" ng-model="configuration.selected" ng-change="selectionChanged(configuration)"
+                   aria-label="{{configuration.configurationName}}">
+            <div class="appver-cfg-name">
+                <span>{{configuration.configurationName}}</span>
+                <span class="appver-cfg-changed-tag" ng-if="isChanged(configuration)" localized>form.application.version.configurations.changed</span>
             </div>
+            <span class="app-action-wrap" ng-class="'app-action-wrap-' + actionGroupKey(configuration.action)">
+                <span class="app-action-dot"></span>
+                <select id='action{{configuration.configurationId}}'
+                        ng-change="actionChanged(configuration)"
+                        ng-model="configuration.action" name="action{{configuration.configurationId}}"
+                        class="form-control app-action-select">
+                    <option ng-value="1" ng-selected="configuration.action == 1"
+                            ng-if="application !== null && !isInstallOptionAvailable(application)"
+                            localized>form.configuration.apps.action.permit</option>
+                    <option ng-value="0" ng-selected="configuration.action == 0"
+                            ng-if="application !== null && !isInstallOptionAvailable(application)"
+                            localized>form.configuration.apps.action.prohibit</option>
+                    <option ng-value="1" ng-selected="configuration.action == 1"
+                            ng-if="application !== null && isInstallOptionAvailable(application)"
+                            localized>form.configuration.apps.action.install</option>
+                    <option ng-value="0" ng-selected="configuration.action == 0"
+                            ng-if="application !== null && isInstallOptionAvailable(application)"
+                            localized>form.configuration.apps.action.not.install</option>
+                    <option ng-value="2" ng-selected="configuration.action == 2"
+                            ng-if="application !== null && isRemoveOptionAvailable(application)"
+                            localized>form.configuration.apps.action.delete</option>
+                </select>
+            </span>
         </div>
+    </div>
 
-        <div class='form-group'>
-            <label class='col-sm-3 control-label' localized>form.application.configurations.configs</label>
-            <div class='col-sm-9'>
-                <div class='configurations-videos panel panel-default'>
-                    <div class='panel-body'>
+    <div class="appver-cfg-empty" ng-if="configurations.length > 0 && filteredConfigurations().length === 0">
+        <span>{{ ('form.application.version.configurations.empty.filtered' | localize).replace('${text}', filter.text) }}</span>
+        <a class="action-link" ng-click="filter.text = ''" localized>form.configuration.apps.empty.reset</a>
+    </div>
+    <div class="appver-cfg-empty" ng-if="loaded && configurations.length === 0">
+        <app-lucide-icon name="layers" size="24"></app-lucide-icon>
+        <span localized>form.application.version.configurations.empty</span>
+    </div>
+</div>
 
-                        <div class="form-group">
-                            <div class="col-sm-1">
-                                <input type="checkbox" style="margin-top: 12px" ng-model="toggleSelectAll" ng-change="selectAllChanged()">
-                            </div>
-                            <div class="col-sm-5">
-                                <select id='actionGroup'
-                                        ng-change="actionGroupChanged()"
-                                        ng-model="actionGroup" name="actionGroup"
-                                        class="form-control col-sm-4">
-                                    <option ng-value="-1" ng-selected="actionGroup == -1" localized>form.configuration.apps.action.select</option>
-                                    <option ng-value="1" ng-selected="actionGroup == 1"
-                                            ng-if="application !== null && !isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.permit</option>
-                                    <option ng-value="1" ng-selected="actionGroup == 1"
-                                            ng-if="application !== null && isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.install</option>
-                                    <option ng-value="0" ng-selected="actionGroup == 0"
-                                            ng-if="application !== null && !isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.prohibit</option>
-                                    <option ng-value="0" ng-selected="actionGroup == 0"
-                                            ng-if="application !== null && isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.not.install</option>
-                                    <option ng-value="2" ng-selected="actionGroup == 2"
-                                            ng-if="application !== null && isRemoveOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.delete</option>
-                                </select>
-                            </div>
-                            <div class='col-sm-6'></div>
-                        </div>
-
-                        <hr style="margin-top: 0; margin-bottom: 15px">
-
-                        <div ng-repeat='configuration in configurations | orderBy: "name"' class="form-group">
-                            <div class="col-sm-1">
-                                <input type="checkbox" style="margin-top: 12px" ng-model="configuration.selected"
-                                       ng-change="selectionChanged(configuration)">
-                            </div>
-                            <div class="col-sm-5">
-                                <select id='action{{configuration.configurationId}}'
-                                        ng-change="actionChanged(configuration)"
-                                        ng-model="configuration.action" name="action{{configuration.configurationId}}"
-                                        class="form-control col-sm-4">
-                                    <option ng-value="1" ng-selected="configuration.action == 1"
-                                            ng-if="application !== null && !isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.permit</option>
-                                    <option ng-value="0" ng-selected="configuration.action == 0"
-                                            ng-if="application !== null && !isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.prohibit</option>
-                                    <option ng-value="1" ng-selected="configuration.action == 1"
-                                            ng-if="application !== null && isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.install</option>
-                                    <option ng-value="0" ng-selected="configuration.action == 0"
-                                            ng-if="application !== null && isInstallOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.not.install</option>
-                                    <option ng-value="2" ng-selected="configuration.action == 2"
-                                            ng-if="application !== null && isRemoveOptionAvailable(application)"
-                                            localized>form.configuration.apps.action.delete</option>
-                                </select>
-                            </div>
-                            <label class='col-sm-6' for='action{{configuration.configurationId}}'>{{configuration.configurationName}}</label>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class='form-group'>
-            <div class='col-sm-offset-3 col-sm-8'>
-                <button type='submit' class='btn btn-default' ng-click='save()' ng-disabled="loading" localized>button.save</button>
-                <button type='button' class='btn btn-default' ng-click='closeModal()' localized>button.cancel</button>
-            </div>
-        </div>
-    </form>
+<div class="modern-modal-actions">
+    <span class="app-modal-footer-left appver-cfg-changes">
+        <span ng-if="changedCount() > 0">{{ ('form.application.version.configurations.changes' | localize).replace('${count}', changedCount()).replace('${plural}', changedCount() === 1 ? '' : 's') }}</span>
+    </span>
+    <div class="app-modal-actions-right">
+        <button type='button' class='btn btn-link appver-cfg-cancel' ng-click='closeModal()' ng-disabled="loading" localized>button.cancel</button>
+        <button type='submit' class='btn btn-default btn-modern-primary' ng-click='save()' ng-disabled="loading">
+            <span ng-if="!loading" localized>button.save</span>
+            <span ng-if="loading" localized>form.application.saving</span>
+        </button>
+    </div>
 </div>

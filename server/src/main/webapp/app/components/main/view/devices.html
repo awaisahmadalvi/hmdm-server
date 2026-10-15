@@ -60,7 +60,8 @@
                 <span class="glyphicon glyphicon-phone"></span>
             </div>
             <div>
-                <div class="summary-kpi-value">{{statusTiles.total}}</div>
+                <div class="summary-kpi-value" ng-if="!statusTilesLoading">{{statusTiles.total}}</div>
+                <div class="devices-kpi-skeleton" ng-if="statusTilesLoading" aria-hidden="true"></div>
                 <div class="summary-kpi-label" localized>devices.tile.total</div>
             </div>
         </div>
@@ -69,7 +70,8 @@
                 <span class="glyphicon glyphicon-ok-circle"></span>
             </div>
             <div>
-                <div class="summary-kpi-value">{{statusTiles.online}}</div>
+                <div class="summary-kpi-value" ng-if="!statusTilesLoading">{{statusTiles.online}}</div>
+                <div class="devices-kpi-skeleton" ng-if="statusTilesLoading" aria-hidden="true"></div>
                 <div class="summary-kpi-label" localized>devices.tile.online</div>
             </div>
         </div>
@@ -78,7 +80,8 @@
                 <span class="glyphicon glyphicon-time"></span>
             </div>
             <div>
-                <div class="summary-kpi-value">{{statusTiles.idle}}</div>
+                <div class="summary-kpi-value" ng-if="!statusTilesLoading">{{statusTiles.idle}}</div>
+                <div class="devices-kpi-skeleton" ng-if="statusTilesLoading" aria-hidden="true"></div>
                 <div class="summary-kpi-label" localized>devices.tile.idle</div>
             </div>
         </div>
@@ -87,7 +90,8 @@
                 <span class="glyphicon glyphicon-off"></span>
             </div>
             <div>
-                <div class="summary-kpi-value">{{statusTiles.offline}}</div>
+                <div class="summary-kpi-value" ng-if="!statusTilesLoading">{{statusTiles.offline}}</div>
+                <div class="devices-kpi-skeleton" ng-if="statusTilesLoading" aria-hidden="true"></div>
                 <div class="summary-kpi-label" localized>devices.tile.offline</div>
             </div>
         </div>
@@ -96,7 +100,8 @@
                 <span class="glyphicon glyphicon-exclamation-sign"></span>
             </div>
             <div>
-                <div class="summary-kpi-value">{{statusTiles.attention}}</div>
+                <div class="summary-kpi-value" ng-if="!statusTilesLoading">{{statusTiles.attention}}</div>
+                <div class="devices-kpi-skeleton" ng-if="statusTilesLoading" aria-hidden="true"></div>
                 <div class="summary-kpi-label" localized>devices.tile.attention</div>
             </div>
         </div>
@@ -137,19 +142,24 @@
         <div class="logs-filter-row devices-filter-field-row">
             <div class="devices-filter-field">
                 <label class="design-field-label" localized>table.heading.device.group</label>
-                <select class='form-control modern-select'
-                        ng-model='selection.groupId'
-                        ng-change='initSearch()'
-                        ng-options="group.id as group.name for group in groups">
-                </select>
+                <!-- Searchable select (app/shared/directives.js appSearchableSelect): same
+                     ng-model / ng-change / options as the <select> it replaced -->
+                <app-searchable-select ng-model="selection.groupId" ng-change="initSearch()"
+                                       options="groups" value-key="id" label-key="name" pinned-value="-1"
+                                       aria-label="{{'table.heading.device.group' | localize}}"
+                                       search-placeholder="{{'devices.filter.search.groups' | localize}}"
+                                       no-matches-text="{{'devices.filter.no.matches' | localize}}"
+                                       clear-text="{{'devices.filter.search.clear' | localize}}"></app-searchable-select>
             </div>
             <div class="devices-filter-field">
                 <label class="design-field-label" localized>table.heading.device.configuration</label>
-                <select class='form-control modern-select'
-                        ng-model='selection.configurationId'
-                        ng-change='initSearch()'
-                        ng-options="config.id as config.name for config in configurations">
-                </select>
+                <app-searchable-select ng-model="selection.configurationId" ng-change="initSearch()"
+                                       options="configurations" value-key="id" label-key="name" pinned-value="-1"
+                                       aria-label="{{'table.heading.device.configuration' | localize}}"
+                                       search-placeholder="{{'devices.filter.search.configurations' | localize}}"
+                                       no-matches-text="{{'devices.filter.no.matches' | localize}}"
+                                       clear-text="{{'devices.filter.search.clear' | localize}}"
+                                       option-dot-class="configEnvironmentOf(option) ? 'config-env-dot-' + configEnvironment.key(configEnvironmentOf(option)) : ''"></app-searchable-select>
             </div>
         </div>
 
@@ -446,10 +456,10 @@
                     <span ng-if="device.lastUpdateDate <= 0 || !device.lastUpdateDate" class="devices-cell-empty" localized>devices.date.never</span>
                 </td>
                 <td ng-if="settings.columnDisplayedDeviceImei" class="devices-col-secondary devices-col-imei" data-label="{{'table.heading.device.imei' | localize}}">
-                    <span title="{{device.imeiTooltip}}" class="{{device.imeiTooltipClass}}" ng-class="{'devices-cell-empty': !device.displayedIMEI}">{{device.displayedIMEI || '—'}}</span>
+                    <span title="{{device.imeiTooltip}}" class="{{device.imeiTooltipClass}}" ng-class="{'devices-cell-empty': !device.displayedIMEI, 'devices-id-value': device.displayedIMEI}">{{device.displayedIMEI || '—'}}</span>
                 </td>
                 <td ng-if="settings.columnDisplayedDevicePhone" class="devices-col-secondary devices-col-phone" data-label="{{'table.heading.device.phone.number' | localize}}">
-                    <span title="{{device.phoneTooltip}}" class="{{device.phoneTooltipClass}}" ng-class="{'devices-cell-empty': !device.displayedPhone}">{{device.displayedPhone || '—'}}</span>
+                    <span title="{{device.phoneTooltip}}" class="{{device.phoneTooltipClass}}" ng-class="{'devices-cell-empty': !device.displayedPhone, 'devices-id-value': device.displayedPhone}">{{device.displayedPhone || '—'}}</span>
                 </td>
                 <td ng-if="settings.columnDisplayedDeviceModel" class="devices-col-secondary devices-col-model" data-label="{{'table.heading.device.phone.model' | localize}}"><span title="{{getDeviceModel(device)}}">{{getDeviceModel(device)}}</span></td>
                 <td ng-if="settings.columnDisplayedDevicePermissionsStatus" class="devices-col-permissions" data-label="{{'table.heading.device.status.permissions' | localize}}">
@@ -478,8 +488,11 @@
                 </td>
                 <td ng-if="settings.columnDisplayedDeviceConfiguration" class="devices-col-configuration" data-label="{{'table.heading.device.configuration' | localize}}">
                     <a ng-if="device.configuration && hasPermission('configurations') && configAvailable(device.configuration)"
-                       class="devices-config-pill" title="{{device.configuration.name}}" ng-click="editConfiguration(device.configuration)">
+                       class="devices-config-pill" ng-click="editConfiguration(device.configuration)"
+                       title="{{device.configuration.name}}{{configEnvironmentOf(device.configuration) ? ' · ' + configEnvironment.tooltip(configEnvironmentOf(device.configuration)) : ''}}">
                         <app-lucide-icon name="sliders-horizontal" size="14" class="devices-pill-icon"></app-lucide-icon>
+                        <span class="config-env-dot" ng-if="configEnvironmentOf(device.configuration)"
+                              ng-class="'config-env-dot-' + configEnvironment.key(configEnvironmentOf(device.configuration))" aria-hidden="true"></span>
                         <span class="devices-config-pill-text">{{device.configuration.name}}</span>
                     </a>
                     <span ng-if="device.configuration && (!hasPermission('configurations') || !configAvailable(device.configuration))" title="{{device.configuration.name}}">{{device.configuration.name}}</span>
@@ -495,6 +508,11 @@
                 </td>
                 <td ng-if="settings.columnDisplayedLauncherVersion" class="devices-col-secondary devices-col-launcher-version" data-label="{{'table.heading.device.launcher.version' | localize}}">
                     <span ng-style="{color: getDeviceLauncherVersionColor(device)}" ng-class="{'devices-cell-empty': !getDeviceLauncherVersion(device)}">{{getDeviceLauncherVersion(device) || '—'}}</span>
+                </td>
+                <td ng-if="settings.columnDisplayedMainAppVersion" class="devices-col-secondary devices-col-main-app-version" data-label="{{'table.heading.device.main.app.version' | localize}}">
+                    <span ng-if="getDeviceMainApp(device)" title="{{getDeviceMainApp(device).tooltip}}"
+                          ng-style="{color: getDeviceMainApp(device).mismatch ? 'red' : 'inherit'}">{{getDeviceMainApp(device).text}}</span>
+                    <span ng-if="!getDeviceMainApp(device)" class="devices-cell-empty">—</span>
                 </td>
                 <td ng-if="settings.columnDisplayedBatteryLevel" class="devices-col-secondary devices-col-battery" data-label="{{'table.heading.device.battery.level' | localize}}">
                     <span ng-class="{'devices-cell-empty': !getDeviceBatteryLevel(device)}">{{getDeviceBatteryLevel(device) || '—'}}</span>
@@ -516,13 +534,13 @@
                     <span ng-if="device.enrollTime <= 0 || !device.enrollTime" class="devices-cell-empty" localized>devices.date.never</span>
                 </td>
                 <td ng-if="settings.columnDisplayedSerial" class="devices-col-secondary devices-col-serial" data-label="{{'table.heading.device.serial' | localize}}">
-                    <span ng-class="{'devices-cell-empty': !getSerial(device)}">{{getSerial(device) || '—'}}</span>
+                    <span ng-class="{'devices-cell-empty': !getSerial(device), 'devices-id-value': getSerial(device)}">{{getSerial(device) || '—'}}</span>
                 </td>
                 <td ng-if="settings.columnDisplayedSerial" class="devices-col-secondary devices-col-mac" data-label="{{'table.heading.device.mac' | localize}}">
-                    <span ng-class="{'devices-cell-empty': !getMac(device)}">{{getMac(device) || '—'}}</span>
+                    <span ng-class="{'devices-cell-empty': !getMac(device), 'devices-id-value': getMac(device)}">{{getMac(device) || '—'}}</span>
                 </td>
                 <td ng-if="settings.columnDisplayedPublicIp" class="devices-col-secondary devices-col-public-ip" data-label="{{'table.heading.device.publicip' | localize}}">
-                    <span ng-class="{'devices-cell-empty': !device.publicIp}">{{device.publicIp || '—'}}</span>
+                    <span ng-class="{'devices-cell-empty': !device.publicIp, 'devices-id-value': device.publicIp}" title="{{formatIp(device.publicIp) !== device.publicIp ? device.publicIp : ''}}">{{formatIp(device.publicIp) || '—'}}</span>
                 </td>
                 <td ng-if="settings.columnDisplayedCustom1 && commonSettings.customPropertyName1" class="devices-col-secondary devices-col-custom1" data-label="{{commonSettings.customPropertyName1}}">
                     <span ng-class="{'devices-cell-empty': !device.custom1}">{{device.custom1 || '—'}}</span>

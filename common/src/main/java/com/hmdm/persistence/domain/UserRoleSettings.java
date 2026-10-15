@@ -92,6 +92,8 @@ public class UserRoleSettings implements CustomerData, Serializable {
     private Boolean columnDisplayedCustom2;
     @ApiModelProperty("A flag indicating if custom property #3 column must be displayed in the Devices table")
     private Boolean columnDisplayedCustom3;
+    @ApiModelProperty("A flag indicating if the main app version column must be displayed in the Devices table")
+    private Boolean columnDisplayedMainAppVersion;
 
     /**
      * <p>Constructs new <code>UserRoleSettings</code> instance. This implementation does nothing.</p>
@@ -305,6 +307,14 @@ public class UserRoleSettings implements CustomerData, Serializable {
 
     public void setColumnDisplayedCustom3(Boolean columnDisplayedCustom3) {
         this.columnDisplayedCustom3 = columnDisplayedCustom3;
+    }
+
+    public Boolean getColumnDisplayedMainAppVersion() {
+        return columnDisplayedMainAppVersion;
+    }
+
+    public void setColumnDisplayedMainAppVersion(Boolean columnDisplayedMainAppVersion) {
+        this.columnDisplayedMainAppVersion = columnDisplayedMainAppVersion;
     }
 
     @Override

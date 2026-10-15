@@ -2619,4 +2619,36 @@
         </rollback>
     </changeSet>
 
+    <changeSet id="15.10.26-12:00" author="claude" context="common">
+        <comment>Column,new: configurations#environment (display-only marker: NULL = not set, never sent to devices)</comment>
+        <sql>
+            ALTER TABLE configurations ADD COLUMN environment VARCHAR(16)
+                CHECK (environment IN ('TESTING', 'PRODUCTION'));
+        </sql>
+        <rollback>
+            ALTER TABLE configurations DROP COLUMN environment;
+        </rollback>
+    </changeSet>
+
+    <changeSet id="15.10.26-16:00" author="claude" context="common">
+        <comment>Column,new: configurations#mainActiveAppId (reporting-only "Main app": NULL = none, never sent to devices)</comment>
+        <sql>
+            ALTER TABLE configurations ADD COLUMN mainActiveAppId INT REFERENCES applications( id ) ON DELETE SET NULL;
+        </sql>
+        <rollback>
+            ALTER TABLE configurations DROP COLUMN mainActiveAppId;
+        </rollback>
+    </changeSet>
+
+    <changeSet id="15.10.26-16:01" author="claude" context="common">
+        <comment>Column,new: userRoleSettings#columnDisplayedMainAppVersion (visible by default for the Admin role)</comment>
+        <sql>
+            ALTER TABLE userRoleSettings ADD COLUMN columnDisplayedMainAppVersion BOOLEAN;
+            UPDATE userRoleSettings SET columnDisplayedMainAppVersion = TRUE WHERE roleId = 2;
+        </sql>
+        <rollback>
+            ALTER TABLE userRoleSettings DROP COLUMN columnDisplayedMainAppVersion;
+        </rollback>
+    </changeSet>
+
 </databaseChangeLog>

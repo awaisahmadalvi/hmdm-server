@@ -1,0 +1,60 @@
+<!-- Localization completed -->
+<!-- "Get updates" confirmation (updates.controller.js confirmGetUpdates), windowClass
+     'app-modal-narrow app-modal-updates-confirm app-modal-fullscreen-mobile' -->
+<div class="modern-modal-header app-modal-header">
+    <div class="app-modal-header-top">
+        <div class="app-modal-header-text">
+            <h4 class="modern-modal-title" localized>updates.confirm.title</h4>
+            <div class="app-modal-header-sub" localized>updates.confirm.subtitle</div>
+        </div>
+        <button type="button" class="modern-modal-close" ng-click="cancel()" aria-label="{{'button.close' | localize}}">&times;</button>
+    </div>
+</div>
+
+<div class="modal-body modern-modal-body">
+
+    <div class="updates-confirm-section">
+        <div class="updates-confirm-label" localized>updates.confirm.downloads</div>
+        <ul class="updates-confirm-list" ng-if="downloads.length > 0">
+            <li ng-repeat="item in downloads">
+                <app-lucide-icon name="download" size="14"></app-lucide-icon>
+                <span><strong>{{item.name}}</strong> {{item.from}} &rarr; {{item.to}}</span>
+                <span class="field-hint">{{item.effect}}</span>
+            </li>
+        </ul>
+        <div class="field-hint" ng-if="downloads.length === 0" localized>updates.confirm.nothing</div>
+    </div>
+
+    <div class="updates-confirm-section">
+        <div class="updates-confirm-label" localized>updates.settings.title</div>
+        <ul class="updates-confirm-list updates-confirm-options">
+            <li>
+                <span class="device-details-badge" ng-class="form.update ? 'updates-badge-available' : 'users-role-neutral'">{{(form.update ? 'updates.confirm.on' : 'updates.confirm.off') | localize}}</span>
+                <span>{{'updates.auto.update.label' | localize}}</span>
+            </li>
+            <li>
+                <span class="device-details-badge" ng-class="form.sendStats ? 'device-details-badge-ok' : 'users-role-neutral'">{{(form.sendStats ? 'updates.confirm.on' : 'updates.confirm.off') | localize}}</span>
+                <span>{{'updates.enable.stats.label' | localize}}</span>
+            </li>
+        </ul>
+        <div class="settings-caution" ng-if="form.update && hasAgentDownload" localized>updates.confirm.auto.caution</div>
+    </div>
+
+    <div class="updates-warning updates-warning-compact" role="note">
+        <span class="updates-warning-icon" aria-hidden="true">
+            <app-lucide-icon name="triangle-alert" size="18"></app-lucide-icon>
+        </span>
+        <div class="updates-warning-body">
+            <div class="updates-warning-title" localized>updates.custom.title</div>
+            <p localized>updates.custom.text</p>
+        </div>
+    </div>
+</div>
+
+<div class="modern-modal-actions">
+    <span></span>
+    <div class="app-modal-actions-right">
+        <button type="button" class="btn btn-default" ng-click="cancel()" localized>button.cancel</button>
+        <button type="button" class="btn btn-outline-primary updates-confirm-ok" ng-click="OK()" localized>updates.get</button>
+    </div>
+</div>

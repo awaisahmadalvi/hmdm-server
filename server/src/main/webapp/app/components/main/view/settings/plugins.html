@@ -22,7 +22,9 @@
 <!-- Localization completed -->
 <div class="width-1200 modern-page plugins-page" ng-controller="PluginsTabController">
 
-    <div class="logs-page-header columns-sticky-header">
+    <!-- Shared sticky page header (app/shared/directives.js appStickyHeader, dashboard.css) -->
+    <div class="page-sticky-header" app-sticky-header>
+    <div class="logs-page-header">
         <div>
             <h4 localized>form.settings.plugins.title</h4>
             <div class="logs-page-subtitle" localized>form.settings.plugins.subtitle</div>
@@ -37,6 +39,7 @@
                 <span ng-if="savingPlugins" localized>form.settings.design.saving</span>
             </button>
         </div>
+    </div>
     </div>
 
     <div class="logs-results-count plugins-summary" ng-if="plugins && pluginSelection">

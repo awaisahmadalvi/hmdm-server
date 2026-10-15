@@ -3,7 +3,7 @@ angular.module('headwind-kiosk')
     .controller('SettingsTabController', function ($scope, $rootScope, $timeout, $modal, hintService, settingsService,
                                                    localization, authService, userService, confirmModal, Idle,
                                                    groupService, configurationService, twoFactorAuthService,
-                                                   $transitions, $q, $state, $window) {
+                                                   $transitions, $q, $state, $window, sectionScrollspy) {
         $scope.settings = {};
         // Alias so the Colors/Background image/Layout/preview markup shared
         // with the Configuration editor's Design Settings tab (designForm.html/
@@ -40,6 +40,7 @@ angular.module('headwind-kiosk')
             {key: 'columnDisplayedDeviceDesc', labelKey: 'form.settings.common.desc', group: 'identity'},
             {key: 'columnDisplayedDeviceGroup', labelKey: 'form.settings.common.group', group: 'identity'},
             {key: 'columnDisplayedLauncherVersion', labelKey: 'form.settings.common.launcher.version', group: 'launcher'},
+            {key: 'columnDisplayedMainAppVersion', labelKey: 'form.settings.common.main.app.version', group: 'launcher'},
             {key: 'columnDisplayedBatteryLevel', labelKey: 'form.settings.common.battery.level', group: 'hardware'},
             {key: 'columnDisplayedMdmMode', labelKey: 'form.settings.common.mdm.mode', group: 'launcher'},
             {key: 'columnDisplayedKioskMode', labelKey: 'form.settings.common.kiosk.mode', group: 'launcher'},
@@ -618,123 +619,14 @@ angular.module('headwind-kiosk')
             }, 3000);
         };
 
-        // Sticky section nav for the General settings page: highlights
-        // whichever section's card is currently crossing a thin band near
-        // the top of the viewport. Uses IntersectionObserver rather than
-        // manual offsetTop/scrollY math - this page's content is short
-        // enough that several cards can be on screen at once (especially
-        // at 1920x1080), which broke a naive "last section whose top has
-        // scrolled past a fixed offset" calculation: once scrolled to the
-        // bottom, the remaining cards' tops never actually crossed the
-        // threshold, so the nav kept the earlier section highlighted.
-        // IntersectionObserver doesn't have that failure mode.
-        $scope.settingsActiveSection = 'language';
-        var SETTINGS_SECTION_IDS = ['language', 'devicedata', 'security', 'enrollment'];
-        var SETTINGS_SCROLL_OFFSET = 90; // clears the sticky page header
-
-        // On a short page, two different sections' scroll targets can both
-        // clamp to the same max scroll position - once the smooth scroll
-        // from a click settles there, scroll-based detection alone would
-        // "correct" a valid click on an earlier section back to whichever
-        // section is actually last. Suppress auto-detection for a moment
-        // after a click so the clicked section wins.
-        var suppressAutoSection = false;
-        var suppressAutoSectionTimeout = null;
-
-        $scope.scrollToSettingsSection = function (id) {
-            $scope.settingsActiveSection = id;
-            suppressAutoSection = true;
-            if (suppressAutoSectionTimeout) {
-                $timeout.cancel(suppressAutoSectionTimeout);
-            }
-            suppressAutoSectionTimeout = $timeout(function () {
-                suppressAutoSection = false;
-            }, 1000);
-            var el = document.getElementById('settings-section-' + id);
-            if (el) {
-                $window.scrollTo({top: el.offsetTop - SETTINGS_SCROLL_OFFSET, behavior: 'smooth'});
-            }
-        };
-
-        var settingsSectionVisibility = {};
-        var settingsSectionObserver = null;
-
-        if (window.IntersectionObserver) {
-            settingsSectionObserver = new IntersectionObserver(function (entries) {
-                entries.forEach(function (entry) {
-                    var id = entry.target.id.replace('settings-section-', '');
-                    settingsSectionVisibility[id] = entry.isIntersecting;
-                });
-                if (suppressAutoSection) {
-                    return;
-                }
-                var current = null;
-                SETTINGS_SECTION_IDS.forEach(function (id) {
-                    if (settingsSectionVisibility[id]) {
-                        current = id;
-                    }
-                });
-                if (current && $scope.settingsActiveSection !== current) {
-                    $scope.$apply(function () {
-                        $scope.settingsActiveSection = current;
-                    });
-                }
-            }, {
-                // Only count a section as "current" while its top is within
-                // the upper ~30% of the viewport, just below the sticky header.
-                rootMargin: '-' + SETTINGS_SCROLL_OFFSET + 'px 0px -70% 0px',
-                threshold: 0
-            });
-
-            $timeout(function () {
-                SETTINGS_SECTION_IDS.forEach(function (id) {
-                    var el = document.getElementById('settings-section-' + id);
-                    if (el) {
-                        settingsSectionObserver.observe(el);
-                    }
-                });
-            });
-        }
-
-        // This page's content is short enough (relative to a tall 1920x1080
-        // viewport) that the last section's top may never cross into the
-        // observer's top band at all - the page simply runs out of room to
-        // scroll before that happens. Standard scrollspy fix: once scrolled
-        // (almost) to the very bottom, force the last section active
-        // regardless of what the observer thinks.
-        var onSettingsScrollBottom = function () {
-            if (suppressAutoSection) {
-                return;
-            }
-            var atBottom = $window.scrollY + $window.innerHeight >= document.documentElement.scrollHeight - 2;
-            if (!atBottom) {
-                return;
-            }
-            // The enrollment card only renders for singleCustomer - find
-            // whichever section is actually last in the DOM, not just the
-            // last entry in the id list.
-            var last = null;
-            for (var i = SETTINGS_SECTION_IDS.length - 1; i >= 0; i--) {
-                if (document.getElementById('settings-section-' + SETTINGS_SECTION_IDS[i])) {
-                    last = SETTINGS_SECTION_IDS[i];
-                    break;
-                }
-            }
-            if (last && $scope.settingsActiveSection !== last) {
-                $scope.$apply(function () {
-                    $scope.settingsActiveSection = last;
-                });
-            }
-        };
-        angular.element($window).on('scroll', onSettingsScrollBottom);
-        $scope.$on('$destroy', function () {
-            angular.element($window).off('scroll', onSettingsScrollBottom);
-        });
-
-        $scope.$on('$destroy', function () {
-            if (settingsSectionObserver) {
-                settingsSectionObserver.disconnect();
-            }
+        // Sticky section nav for the General settings page - the shared
+        // scrollspy (app/shared/directives.js sectionScrollspy): highlights
+        // the section under the sticky page header and scrolls a clicked
+        // section's card to just below it.
+        $scope.scrollToSettingsSection = sectionScrollspy.create($scope, {
+            idPrefix: 'settings-section-',
+            sectionIds: ['language', 'devicedata', 'security', 'enrollment'],
+            activeProp: 'settingsActiveSection'
         });
 
         if ($state.current.name === 'langSettings') {

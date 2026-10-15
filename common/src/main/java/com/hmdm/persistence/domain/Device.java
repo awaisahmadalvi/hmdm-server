@@ -89,6 +89,11 @@ public class Device implements CustomerData, Serializable {
     private String launcherVersion;
     @ApiModelProperty(hidden = true)
     private String launcherPkg;
+    // Configuration's reporting-only main app (configurations.mainActiveAppId), for the devices export
+    @ApiModelProperty(hidden = true)
+    private String mainActiveAppPkg;
+    @ApiModelProperty(hidden = true)
+    private String mainActiveAppName;
     @ApiModelProperty(hidden = true)
     private String statusCode;
     @ApiModelProperty("Old device number, used when the number is changed")
@@ -297,6 +302,22 @@ public class Device implements CustomerData, Serializable {
 
     public void setLauncherPkg(String launcherPkg) {
         this.launcherPkg = launcherPkg;
+    }
+
+    public String getMainActiveAppPkg() {
+        return mainActiveAppPkg;
+    }
+
+    public void setMainActiveAppPkg(String mainActiveAppPkg) {
+        this.mainActiveAppPkg = mainActiveAppPkg;
+    }
+
+    public String getMainActiveAppName() {
+        return mainActiveAppName;
+    }
+
+    public void setMainActiveAppName(String mainActiveAppName) {
+        this.mainActiveAppName = mainActiveAppName;
     }
 
     public String getStatusCode() {

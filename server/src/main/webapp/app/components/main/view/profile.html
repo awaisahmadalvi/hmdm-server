@@ -1,97 +1,172 @@
 <!-- Localization completed -->
-<div class='profile'>
-    <form class='form-horizontal'>
-        <div ng-show='errorMessage' class='error'><span>{{errorMessage}}</span></div>
-        <div ng-show='completeMessage' class='success'><span>{{completeMessage}}</span></div>
+<div class="width-800 modern-page profile-page" ng-controller="ProfileController">
 
-        <div class='form-group change-title'>
-            <label class='col-sm-3 control-label' localized>&nbsp;</label>
-            <div class='col-sm-9'><h3 localized>menu.profile</h3></div>
+    <!-- Shared sticky page header (app/shared/directives.js appStickyHeader, dashboard.css) -->
+    <div class="page-sticky-header" app-sticky-header>
+        <div class="logs-page-header">
+            <div class="profile-identity">
+                <span class="audit-avatar profile-avatar" aria-hidden="true">{{initials()}}</span>
+                <div class="profile-identity-text">
+                    <h4>{{savedUser.name || savedUser.login}}</h4>
+                    <div class="profile-identity-meta">
+                        <span>{{savedUser.login}}</span>
+                        <span class="device-details-badge users-role-pill" ng-class="roleBadgeClass()"
+                              ng-if="savedUser.userRole">{{savedUser.userRole.name}}</span>
+                    </div>
+                    <div class="logs-page-subtitle" localized>form.profile.subtitle</div>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div class='form-group'>
-            <label for='login' class='col-sm-3 control-label' style="font-weight: normal" localized>form.user.login</label>
-            <div class='col-sm-9'>
-                <input ng-model='user.login' type='text' class='form-control' id='login' disabled>
+    <!-- Both forms: onsubmit="return false" so the browser can never submit them
+         natively (a GET would put the fields - passwords included - in the URL),
+         even if an error interrupts Angular's own preventDefault; ng-submit
+         still runs. -->
+
+    <!-- PROFILE -->
+    <form name="profileForm" class="device-details-card profile-card" novalidate ng-submit="saveDetails()" onsubmit="return false;">
+        <div class="device-details-card-header" localized>menu.profile</div>
+
+        <div class="design-field">
+            <label class="design-field-label" localized>form.user.login</label>
+            <div class="profile-readonly" title="{{'form.profile.login.readonly' | localize}}">
+                <app-lucide-icon name="lock" size="14"></app-lucide-icon>
+                <span>{{user.login}}</span>
             </div>
         </div>
 
-        <div class='form-group' ng-if="settings.accountType != 3 && !settings.singleCustomer">
-            <div class="col-sm-3 align-right" localized>form.customer.type</div>
-            <div class="col-sm-9 bold">{{accountType(settings.accountType)}}</div>
+        <div class="design-field" ng-if="settings.accountType != 3 && !settings.singleCustomer">
+            <label class="design-field-label" localized>form.customer.type</label>
+            <div class="profile-readonly-value">{{accountType(settings.accountType)}}</div>
         </div>
 
-        <div class='form-group' ng-if="settings.expiryTime > 0">
-            <div class="col-sm-3 align-right" localized>form.customer.expiry.time</div>
-            <div class="col-sm-9 bold"><span ng-class="{'warning-font': settings.expiryTime && settings.expiryTime < now + 86400000*3}">{{settings.expiryTime | date:'dd/MM/yyyy'}}</span></div>
+        <div class="design-field" ng-if="settings.expiryTime > 0">
+            <label class="design-field-label" localized>form.customer.expiry.time</label>
+            <div class="profile-readonly-value" ng-class="{'warning-font': settings.expiryTime && settings.expiryTime < now + 86400000*3}">{{settings.expiryTime | date:'dd/MM/yyyy'}}</div>
         </div>
 
-        <div class='form-group' ng-if="settings.deviceLimit > 0">
-            <div class="col-sm-3 align-right" localized>form.customer.device.limit</div>
-            <div class="col-sm-9 bold"><span ng-class="{'warning-font': settings.deviceCount > settings.deviceLimit}">{{settings.deviceCount}} / {{settings.deviceLimit}}</span></div>
+        <div class="design-field" ng-if="settings.deviceLimit > 0">
+            <label class="design-field-label" localized>form.customer.device.limit</label>
+            <div class="profile-readonly-value" ng-class="{'warning-font': settings.deviceCount > settings.deviceLimit}">{{settings.deviceCount}} / {{settings.deviceLimit}}</div>
         </div>
 
-        <div class='form-group' ng-if="settings.sizeLimit > 0">
-            <div class="col-sm-3 align-right" localized>form.customer.size.limit</div>
-            <div class="col-sm-9 bold"><span>{{sizeLimit}} Mb</span></div>
+        <div class="design-field" ng-if="settings.sizeLimit > 0">
+            <label class="design-field-label" localized>form.customer.size.limit</label>
+            <div class="profile-readonly-value">{{sizeLimit}} Mb</div>
         </div>
 
-        <div class='form-group'>
-            <label for='username' class='col-sm-3 control-label' style="font-weight: normal" localized>form.user.name</label>
-            <div class='col-sm-9'>
-                <input ng-model='user.name' type='text' class='form-control' id='username'
-                       localized-placeholder='form.user.name.placeholder'>
+        <div class="design-field">
+            <label class="design-field-label" for="username" localized>form.user.name</label>
+            <input ng-model="user.name" name="name" type="text" id="username" required autocomplete="name"
+                   class="form-control logs-input settings-input"
+                   ng-class="{'modern-input-invalid': profileForm.name.$touched && profileForm.name.$invalid}"
+                   localized-placeholder="form.user.name.placeholder">
+            <div class="profile-field-error" ng-if="profileForm.name.$touched && profileForm.name.$error.required" localized>form.profile.error.required</div>
+        </div>
+
+        <div class="design-field">
+            <label class="design-field-label" for="email" localized>form.user.email</label>
+            <input ng-model="user.email" name="email" type="email" id="email" autocomplete="email"
+                   class="form-control logs-input settings-input"
+                   ng-class="{'modern-input-invalid': profileForm.email.$touched && profileForm.email.$invalid}"
+                   localized-placeholder="form.user.email.placeholder">
+            <div class="profile-field-error" ng-if="profileForm.email.$touched && profileForm.email.$error.email" localized>form.profile.error.email</div>
+        </div>
+
+        <div class="profile-field-error profile-card-error" ng-if="errorMessage && errorSource === 'details'">{{errorMessage}}</div>
+
+        <div class="profile-card-footer">
+            <button type="submit" class="btn btn-modern-primary"
+                    ng-disabled="!saveEnabled || savingDetails || !detailsChanged() || profileForm.$invalid">
+                <span ng-if="!savingDetails" localized>form.profile.save</span>
+                <span ng-if="savingDetails" localized>form.settings.design.saving</span>
+            </button>
+        </div>
+    </form>
+
+    <!-- CHANGE PASSWORD -->
+    <form name="passwordForm" class="device-details-card profile-card" novalidate ng-submit="saveProfile()" onsubmit="return false;">
+        <div class="device-details-card-header" localized>form.profile.title</div>
+
+        <!-- Lets password managers pair the new password with this account -->
+        <input type="text" class="sr-only" name="username" autocomplete="username" value="{{user.login}}" tabindex="-1" readonly aria-hidden="true">
+
+        <div class="design-field">
+            <label class="design-field-label" for="oldPassword" localized>form.profile.password.current</label>
+            <div class="config-password-wrap settings-input">
+                <input ng-model="user.oldPassword" name="oldPassword" id="oldPassword" required autocomplete="current-password"
+                       ng-attr-type="{{showPassword.old ? 'text' : 'password'}}"
+                       class="form-control logs-input"
+                       ng-class="{'modern-input-invalid': passwordForm.oldPassword.$touched && passwordForm.oldPassword.$error.required}"
+                       localized-placeholder="form.profile.password.old.placeholder">
+                <button type="button" class="config-password-toggle" ng-click="showPassword.old = !showPassword.old"
+                        title="{{(showPassword.old ? 'button.hide.password' : 'button.show.password') | localize}}"
+                        aria-label="{{(showPassword.old ? 'button.hide.password' : 'button.show.password') | localize}}">
+                    <app-lucide-icon name="{{showPassword.old ? 'eye-off' : 'eye'}}" size="16"></app-lucide-icon>
+                </button>
             </div>
+            <div class="profile-field-error" ng-if="passwordForm.oldPassword.$touched && passwordForm.oldPassword.$error.required" localized>form.profile.error.required</div>
         </div>
 
-        <div class='form-group'>
-            <label for='email' class='col-sm-3 control-label' style="font-weight: normal" localized>form.user.email</label>
-            <div class='col-sm-9'>
-                <input ng-model='user.email' type='text' class='form-control' id='email'
-                       localized-placeholder='form.user.email.placeholder'>
+        <div class="design-field">
+            <label class="design-field-label" for="newPassword" localized>form.profile.password.new.label</label>
+            <div class="config-password-wrap settings-input">
+                <input ng-model="user.newPassword" name="newPassword" id="newPassword" required autocomplete="new-password"
+                       ng-attr-type="{{showPassword.new ? 'text' : 'password'}}"
+                       class="form-control logs-input"
+                       ng-class="{'modern-input-invalid': passwordForm.newPassword.$touched && passwordForm.newPassword.$error.required}"
+                       localized-placeholder="form.profile.password.new.placeholder">
+                <button type="button" class="config-password-toggle" ng-click="showPassword.new = !showPassword.new"
+                        title="{{(showPassword.new ? 'button.hide.password' : 'button.show.password') | localize}}"
+                        aria-label="{{(showPassword.new ? 'button.hide.password' : 'button.show.password') | localize}}">
+                    <app-lucide-icon name="{{showPassword.new ? 'eye-off' : 'eye'}}" size="16"></app-lucide-icon>
+                </button>
             </div>
-        </div>
+            <div class="profile-field-error" ng-if="passwordForm.newPassword.$touched && passwordForm.newPassword.$error.required" localized>form.profile.error.required</div>
 
-        <div class='form-group'>
-            <div class='col-sm-offset-2 col-sm-10'>
-                <button type='submit' class='btn btn-default' ng-disabled="!saveEnabled" ng-click='saveDetails()' localized>button.save</button>
+            <!-- Strength meter + the configured rules (Settings -> General settings -> Security), display only -->
+            <div class="profile-strength settings-input" ng-class="'profile-strength-' + passwordStrength()">
+                <div class="profile-strength-bar">
+                    <span ng-repeat="i in [1, 2, 3, 4]" ng-class="{on: passwordStrength() >= i}"></span>
+                </div>
+                <span class="profile-strength-label" ng-if="user.newPassword">{{('form.profile.strength.' + passwordStrength()) | localize}}</span>
             </div>
+            <ul class="profile-rules" ng-if="passwordRules().length > 0">
+                <li ng-repeat="rule in passwordRules() track by rule.key" ng-class="{met: rule.met}">
+                    <app-lucide-icon name="{{rule.met ? 'check' : 'circle'}}" size="14"></app-lucide-icon>
+                    <span>{{rule.label}}</span>
+                </li>
+            </ul>
+            <div class="field-hint" ng-if="settings && passwordRules().length === 0" localized>form.profile.rule.hint</div>
         </div>
 
-        <div class='form-group change-title'>
-            <label class='col-sm-3 control-label' localized>&nbsp;</label>
-            <div class='col-sm-9'><h3 localized>form.profile.title</h3></div>
-        </div>
-
-        <div class='form-group'>
-            <label for='oldPassword' class='col-sm-3 control-label' style="font-weight: normal" localized>form.profile.password.old</label>
-            <div class='col-sm-9'>
-                <input ng-model='user.oldPassword' type='password' class='form-control' id='oldPassword'
-                       localized-placeholder='form.profile.password.old.placeholder'>
+        <div class="design-field">
+            <label class="design-field-label" for="confirm" localized>form.profile.password.confirm.label</label>
+            <div class="config-password-wrap settings-input">
+                <input ng-model="user.confirm" name="confirm" id="confirm" required autocomplete="new-password"
+                       ng-attr-type="{{showPassword.confirm ? 'text' : 'password'}}"
+                       class="form-control logs-input"
+                       ng-class="{'modern-input-invalid': (passwordForm.confirm.$touched && passwordForm.confirm.$error.required) || (user.confirm && !passwordsMatch())}"
+                       localized-placeholder="form.profile.password.confirm.placeholder">
+                <button type="button" class="config-password-toggle" ng-click="showPassword.confirm = !showPassword.confirm"
+                        title="{{(showPassword.confirm ? 'button.hide.password' : 'button.show.password') | localize}}"
+                        aria-label="{{(showPassword.confirm ? 'button.hide.password' : 'button.show.password') | localize}}">
+                    <app-lucide-icon name="{{showPassword.confirm ? 'eye-off' : 'eye'}}" size="16"></app-lucide-icon>
+                </button>
             </div>
+            <div class="profile-field-error" ng-if="passwordForm.confirm.$touched && passwordForm.confirm.$error.required" localized>form.profile.error.required</div>
+            <div class="profile-field-error" ng-if="user.confirm && !passwordsMatch()" localized>form.profile.error.mismatch</div>
         </div>
 
-        <div class='form-group'>
-            <label for='newPassword' class='col-sm-3 control-label' style="font-weight: normal" localized>form.profile.password.new</label>
-            <div class='col-sm-9'>
-                <input ng-model='user.newPassword' type='password' class='form-control' id='newPassword'
-                       localized-placeholder='form.profile.password.new.placeholder'>
-            </div>
-        </div>
+        <div class="profile-field-error profile-card-error" ng-if="errorMessage && errorSource === 'password'">{{errorMessage}}</div>
 
-        <div class='form-group'>
-            <label for='confirm' class='col-sm-3 control-label' style="font-weight: normal" localized>form.profile.password.confirm</label>
-            <div class='col-sm-9'>
-                <input ng-model='user.confirm' type='password' class='form-control' id='confirm'
-                       localized-placeholder='form.profile.password.confirm.placeholder'>
-                <div class="field-hint">{{qualityMessage}}</div>
-            </div>
-        </div>
-
-        <div class='form-group'>
-            <div class='col-sm-offset-2 col-sm-10'>
-                <button type='submit' class='btn btn-default' ng-disabled="!saveEnabled" ng-click='saveProfile()' localized>button.save</button>
-            </div>
+        <div class="profile-card-footer">
+            <button type="submit" class="btn btn-modern-primary"
+                    ng-disabled="!saveEnabled || savingPassword || !passwordFilled() || !passwordsMatch()">
+                <span ng-if="!savingPassword" localized>form.profile.title</span>
+                <span ng-if="savingPassword" localized>form.profile.password.changing</span>
+            </button>
         </div>
     </form>
 </div>

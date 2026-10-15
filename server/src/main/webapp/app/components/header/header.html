@@ -1,9 +1,9 @@
 <!-- Localization completed -->
-<nav class='navbar navbar-default navbar-fixed-top header app-header-merged' ng-class="{'brand-intro-play': playBrandIntro, 'header-long-username': $root.headerLongUserName}">
+<nav app-header-fit class='navbar navbar-default navbar-fixed-top header app-header-merged' ng-class="{'brand-intro-play': playBrandIntro, 'header-long-username': $root.headerLongUserName, 'mobile-nav-open': $root.mobileNavOpen}">
     <div class='header-brand-badge' aria-hidden='true'></div>
     <div class='nav navbar-nav navbar-left logo-text'><a ng-click='mainPanel()'><img src='rest/public/logo' class='header-brand-logo' alt=''>{{appName}}</a></div>
-    <button type='button' class='mobile-nav-toggle' ng-click='$root.mobileNavOpen = !$root.mobileNavOpen' ng-class="{open: $root.mobileNavOpen}" aria-label="Toggle navigation">
-        <span class='glyphicon glyphicon-menu-hamburger'></span>
+    <button type='button' class='mobile-nav-toggle' ng-click='$root.mobileNavOpen = !$root.mobileNavOpen' ng-class="{open: $root.mobileNavOpen}" aria-label="Toggle navigation" aria-expanded="{{!!$root.mobileNavOpen}}">
+        <app-lucide-icon name="{{$root.mobileNavOpen ? 'x' : 'menu'}}" size="22"></app-lucide-icon>
     </button>
     <ul class='nav navbar-nav navbar-right'>
         <li ng-if="expiryWarning"><a id='headerExpiryWarning' class="expiry-warning" localized-change-tracking>account.expired.short</a></li>

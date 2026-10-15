@@ -1,65 +1,129 @@
 <!-- Localization completed -->
-<div class='profile'>
-    <form class='form-horizontal'>
+<div class="modern-page updates-page" ng-controller="UpdatesController">
 
-        <div class='form-group change-title'>
-            <label class='col-sm-3 control-label'>&nbsp;</label>
-            <div class='col-sm-9'><h3 localized>updates.title</h3></div>
+    <!-- Shared sticky page header (app/shared/directives.js appStickyHeader, dashboard.css) -->
+    <div class="page-sticky-header" app-sticky-header>
+        <div class="logs-page-header">
+            <div>
+                <h4 localized>updates.title</h4>
+                <div class="logs-page-subtitle" localized>updates.subtitle</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status line: checking / getting / done (spinner while busy) and server errors -->
+    <div class="device-details-inline-error updates-message" ng-show="errorMessage">{{errorMessage}}</div>
+    <div class="updates-message updates-progress" ng-show="completeMessage">
+        <span class="updates-spinner" ng-if="isUpdating || isChecking" aria-hidden="true"></span>
+        <app-lucide-icon name="check" size="16" ng-if="!isUpdating && !isChecking"></app-lucide-icon>
+        <span>{{completeMessage}}</span>
+    </div>
+
+    <div ng-if="!isChecking">
+
+        <!-- VERSIONS -->
+        <div class="device-details-card updates-card">
+            <div class="device-details-card-header" localized>updates.versions.title</div>
+
+            <div class="updates-table-wrap">
+                <table class="table updates-table">
+                    <thead>
+                    <tr>
+                        <th localized>updates.component</th>
+                        <th localized>updates.current.version</th>
+                        <th localized>updates.available.version</th>
+                        <th localized>updates.status</th>
+                        <th class="updates-col-downloaded" localized>updates.downloaded</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="app in updates">
+                        <td class="updates-component">
+                            <div class="updates-component-cell">
+                                <span class="updates-component-icon" aria-hidden="true">
+                                    <app-lucide-icon name="{{componentIcon(app)}}" size="16"></app-lucide-icon>
+                                </span>
+                                <span class="updates-component-name">{{componentName(app)}}</span>
+                            </div>
+                        </td>
+                        <td class="updates-version" data-label="{{'updates.current.version' | localize}}">{{app.currentVersion}}</td>
+                        <td class="updates-version" data-label="{{'updates.available.version' | localize}}">{{app.version}}</td>
+                        <td data-label="{{'updates.status' | localize}}">
+                            <span class="device-details-badge device-details-badge-ok" ng-if="!app.updateDisabled && !app.outdated" localized>updates.status.ok</span>
+                            <span class="device-details-badge updates-badge-available" ng-if="!app.updateDisabled && app.outdated" localized>updates.status.available</span>
+                            <span class="device-details-badge users-role-neutral updates-badge-disabled" ng-if="app.updateDisabled"
+                                  title="{{app.updateDisableReasonLocalized}}">{{app.updateDisableReasonLocalized}}</span>
+                        </td>
+                        <td class="updates-col-downloaded" data-label="{{'updates.downloaded' | localize}}">
+                            <span class="updates-downloaded" ng-if="!app.updateDisabled && app.downloaded"
+                                  title="{{'updates.downloaded' | localize}}">
+                                <app-lucide-icon name="check" size="16"></app-lucide-icon>
+                            </span>
+                            <span class="updates-none" ng-if="app.updateDisabled || !app.downloaded">&mdash;</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="field-hint updates-table-hint" localized>updates.versions.hint</div>
         </div>
 
-        <div class='form-group'>
-            <label class='col-sm-3 control-label'>&nbsp;</label>
-            <div ng-show='errorMessage' class='col-sm-9 error' style="text-align: left"><span>{{errorMessage}}</span></div>
-            <div ng-show='completeMessage' class='col-sm-9 success' style="text-align: left"><span>{{completeMessage}}</span>
-                <img ng-if="isUpdating || isChecking" style="margin-left: 15px" src='images/loading.gif'/></div>
+        <!-- CUSTOMIZED BUILD WARNING (display only) -->
+        <div class="updates-warning" role="note">
+            <span class="updates-warning-icon" aria-hidden="true">
+                <app-lucide-icon name="triangle-alert" size="20"></app-lucide-icon>
+            </span>
+            <div class="updates-warning-body">
+                <div class="updates-warning-title" localized>updates.custom.title</div>
+                <p localized>updates.custom.text</p>
+
+                <div class="updates-script">
+                    <div class="updates-script-label">
+                        <app-lucide-icon name="terminal" size="14"></app-lucide-icon>
+                        <span localized>updates.web.hint.label</span>
+                    </div>
+                    <pre class="updates-code">/opt/hmdm/update-web-app.sh</pre>
+                    <p class="updates-script-warning" localized>updates.script.warning</p>
+                </div>
+            </div>
         </div>
 
-        <div ng-if="!isChecking">
+        <!-- SETTINGS: same ng-models as before (updateForm.update / updateForm.sendStats),
+             sent with "Get updates" exactly as before -->
+        <div class="device-details-card updates-card">
+            <div class="device-details-card-header" localized>updates.settings.title</div>
 
-            <div class='form-group bold'>
-                <div class="col-sm-3" localized>updates.application</div>
-                <div class="col-sm-3" localized>updates.current.version</div>
-                <div class="col-sm-3" localized>updates.available.version</div>
-                <div class="col-sm-3" localized>updates.downloaded</div>
+            <label class="updates-toggle-row" for="c1">
+                <span class="updates-toggle-text">
+                    <span class="design-field-label" localized>updates.auto.update.label</span>
+                    <span class="field-hint" localized>updates.auto.update.help</span>
+                </span>
+                <span class="modern-toggle">
+                    <input id="c1" ng-model="updateForm.update" type="checkbox" class="modern-toggle-input">
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
+            </label>
+            <div class="settings-caution updates-caution" localized>updates.auto.update.caution</div>
+
+            <label class="updates-toggle-row" for="c2">
+                <span class="updates-toggle-text">
+                    <span class="design-field-label" localized>updates.enable.stats.label</span>
+                    <span class="field-hint" localized>updates.enable.stats.help</span>
+                </span>
+                <span class="modern-toggle">
+                    <input id="c2" ng-model="updateForm.sendStats" type="checkbox" class="modern-toggle-input">
+                    <span class="modern-toggle-track"><span class="modern-toggle-knob"></span></span>
+                </span>
+            </label>
+
+            <div class="profile-card-footer updates-actions">
+                <button type="button" class="btn btn-outline-primary updates-get-btn"
+                        ng-disabled="isUpdating || isError" ng-click="confirmGetUpdates()">
+                    <app-lucide-icon name="download" size="16"></app-lucide-icon>
+                    <span localized>updates.get</span>
+                </button>
             </div>
-
-            <div class='form-group' ng-repeat="app in updates">
-                <div class="col-sm-3">{{app.name}}</div>
-                <div class="col-sm-3" ng-if="!app.updateDisabled && !app.outdated">{{app.currentVersion}}</div>
-                <div class="col-sm-3 warning-font" ng-if="!app.updateDisabled && app.outdated">{{app.currentVersion}}</div>
-                <div class="col-sm-3" ng-if="!app.updateDisabled">{{app.version}}</div>
-                <div class="col-sm-3" ng-if="!app.updateDisabled"><span class="glyphicon glyphicon-ok" ng-if="app.downloaded"></span></div>
-                <div class="col-sm-9 warning-font" ng-if="app.updateDisabled">{{app.updateDisableReasonLocalized}}</div>
-            </div>
-
-            <p>&nbsp;</p>
-
-            <div class='form-group'>
-                <div class='col-sm-1'>
-                    <input id="c1" ng-model='updateForm.update' type='checkbox' class='form-control'/>
-                </div>
-                <div class='col-sm-11' style="padding-top: 10px" localized>updates.auto.update</div>
-            </div>
-
-            <div class='form-group'>
-                <div class='col-sm-1'>
-                    <input id="c2" ng-model='updateForm.sendStats' type='checkbox' class='form-control'/>
-                </div>
-                <div class='col-sm-11' style="padding-top: 10px" localized>updates.enable.stats</div>
-            </div>
-
-            <div class='form-group'>
-                <span class="field-hint" localized>updates.web.hint</span>
-            </div>
-
-            <p>&nbsp;</p>
-
-            <div class='form-group'>
-                <div class='col-sm-offset-2 col-sm-10'>
-                    <button type='submit' class='btn btn-default' ng-disabled="isUpdating || isError" ng-click='getUpdates()' localized>updates.get</button>
-                </div>
-            </div>
-
         </div>
-    </form>
+
+    </div>
 </div>

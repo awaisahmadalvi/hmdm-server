@@ -194,6 +194,9 @@ public class DeviceReportService {
                 device -> nullToEmpty(device.getCustom2())));
         columns.put("Custom3", new ReportColumn(labelOrDefault(custom3Label, "Custom 3"),
                 device -> nullToEmpty(device.getCustom3())));
+        // Appended after every existing column: the configuration's reporting-only main app
+        columns.put("MainApp", new ReportColumn("Main App", this::mainAppLabel));
+        columns.put("MainAppVersion", new ReportColumn("Main App Version", this::mainAppInstalledVersion));
 
         return columns;
     }
@@ -391,6 +394,32 @@ public class DeviceReportService {
         table.addCell(cell);
     }
 
+    private String mainAppLabel(Device device) {
+        if (device.getMainActiveAppPkg() == null) {
+            return "";
+        }
+        return nullToEmpty(device.getMainActiveAppName()) + " (" + device.getMainActiveAppPkg() + ")";
+    }
+
+    // Installed version from the apps the device reports (same source as the web table): empty when
+    // there is no main app or the device has never reported its apps, "Not installed" when it's missing
+    private String mainAppInstalledVersion(Device device) {
+        String pkg = device.getMainActiveAppPkg();
+        if (pkg == null) {
+            return "";
+        }
+        List<com.hmdm.persistence.domain.Application> apps = infoOf(device)
+                .map(DeviceInfo::getApplications).orElse(null);
+        if (apps == null || apps.isEmpty()) {
+            return "";
+        }
+        return apps.stream()
+                .filter(app -> pkg.equals(app.getPkg()))
+                .map(app -> nullToEmpty(app.getVersion()))
+                .findFirst()
+                .orElse("Not installed");
+    }
+
     private java.util.Optional<DeviceInfo> infoOf(Device device) {
         String rawInfo = device.getInfo();
         if (rawInfo == null || rawInfo.trim().isEmpty()) {
@@ -545,6 +574,10 @@ public class DeviceReportService {
         style.setBorderBottom(BorderStyle.THIN);
         style.setTopBorderColor(new XSSFColor(BORDER_COLOR, null));
         style.setBottomBorderColor(new XSSFColor(BORDER_COLOR, null));
+        // Every value is written as a string; the Text ("@") format keeps Excel from ever
+        // reinterpreting long numeric identifiers (IMEI, serial, phone) as numbers, e.g. in
+        // scientific notation, even after a cell is edited
+        style.setDataFormat(workbook.createDataFormat().getFormat("@"));
         if (striped) {
             style.setFillForegroundColor(new XSSFColor(ROW_STRIPE_COLOR, null));
             style.setFillPattern(FillPatternType.SOLID_FOREGROUND);

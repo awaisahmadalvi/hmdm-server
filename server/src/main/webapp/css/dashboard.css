@@ -58,19 +58,14 @@
    overflow-x:hidden below is now just a defensive belt-and-braces
    measure, not the actual fix.
 
-   Curve: a single S-shaped path (top edge extends to x=330, bottom
-   edge to x=460 - the right boundary leans further right as it goes
-   down, one direction, not a symmetric bulge), via clip-path: path()
-   in the element's own pixel coordinate space (vector, crisp at any
-   DPI). Authored for the header's fixed 50px height (main.css
-   .header) - if that height ever changes this path needs
-   re-authoring to match. Gradient stops are the brand color at
+   Curve: a single S-shaped right edge (the boundary leans further right
+   as it goes down, one direction, not a symmetric bulge), drawn as an
+   SVG mask stretched to the panel's responsive width (see
+   .header-brand-badge::before). Gradient stops are the brand color at
    varying alpha only (rgba(var(--brand-dark-rgb), N)) - no grey/white
-   hex anywhere - richer and longer than before so real color still
-   reaches the curve: ~38% opacity at the curve's top (x=330) fading
-   to fully transparent by the curve's bottom-right tip (x=480), so
-   the curve itself stays visible as a shape while the very end of the
-   fade still lands on transparent pixels (no abrupt cut). */
+   hex anywhere - and reach full transparency before the curve's
+   bottom-right tip, so the curve stays visible as a shape while the
+   very end of the fade lands on transparent pixels (no abrupt cut). */
 .header {
   /* Explicit, not just inherited from Bootstrap's .navbar-fixed-top class -
      verified live (Playwright, computed style) that position/z-index were
@@ -99,11 +94,21 @@
      was even added. */
 }
 
+/* Responsive brand panel width. The clamp() is only the first-paint
+   default: the appHeaderFit directive (app/shared/directives.js) sets the
+   real value on <html> from the measured header - up to 38% of the
+   header, always ending 24px before the first nav item (or the
+   hamburger), never narrower than the logo + app name need. */
+:root {
+  --header-panel-w: clamp(260px, 30vw, 520px);
+  --header-right-w: 300px; /* date/time + user menu cluster, measured by the same directive */
+}
+
 .header-brand-badge {
   position: absolute;
   top: 0;
   left: 0;
-  width: 700px;
+  width: var(--header-panel-w);
   height: 50px; /* matches .header's fixed height exactly - see note above */
   overflow: hidden;
   pointer-events: none;
@@ -116,25 +121,30 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 700px;
-  height: 50px;
+  width: 100%;
+  height: 100%;
   /* Fading a dark, low-saturation navy (#0f172a) to transparent over
      white inherently passes through desaturated grey-blue midtones -
      a longer fade spends more pixels there, a shorter one less, but
-     none of them can fully avoid it. Widened to ~200px (from ~120px)
-     for a visibly smoother "melt" per instruction, while staying far
-     short of the original ~336px fade that read as a muddy band.
-     Badge pushed further right again: 600px->700px, curve
-     420-580 -> 500-660. */
+     none of them can fully avoid it. Stops are percentages of the
+     panel, so the fade scales with its responsive width and is fully
+     transparent at 88% - inside the panel. */
   background: linear-gradient(
     90deg,
     rgba(var(--brand-dark-rgb), 1) 0%,
     rgba(var(--brand-dark-rgb), 1) 60%,
     rgba(var(--brand-dark-rgb), 0) 88%
   );
-  clip-path: path(
-    "M0,0 H500 C570,0 570,50 660,50 H0 Z"
-  );
+  /* The S-curve right edge (top edge to ~71%, bottom edge to ~94% of the
+     panel - the shape the old fixed 700px clip-path drew at 500/660px) as
+     an SVG mask in a 0-100 x 0-50 box stretched with
+     preserveAspectRatio="none", so it keeps its proportions at any width */
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50' preserveAspectRatio='none'%3E%3Cpath d='M0,0 H71.4 C81.4,0 81.4,50 94.3,50 H0 Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50' preserveAspectRatio='none'%3E%3Cpath d='M0,0 H71.4 C81.4,0 81.4,50 94.3,50 H0 Z'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
   transform: translateX(0);
 }
 
@@ -818,6 +828,7 @@
 
 .app-header-merged .navbar-left.logo-text {
   flex: 0 0 auto;
+  margin: 0; /* Bootstrap's < 768px .navbar-nav { margin: 7.5px -15px } pushed the logo off the left edge and above center */
 }
 
 /* float:right (Bootstrap's own mechanism) has no effect once the
@@ -852,13 +863,26 @@
 
 .app-header-merged .mobile-nav-toggle {
   display: none;
+  position: relative;
+  z-index: 1; /* above .header-brand-badge */
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   border: none;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 18px;
-  padding: 8px;
+  padding: 0;
   margin-left: auto;
+  margin-right: 8px;
   cursor: pointer;
+}
+
+.app-header-merged .mobile-nav-toggle:hover,
+.app-header-merged .mobile-nav-toggle.open {
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
 }
 
 .app-shell {
@@ -898,8 +922,14 @@
 .app-nav-tabset > .nav-tabs {
   position: fixed;
   top: 0;
-  left: 720px; /* clears the 700px-wide .header-brand-badge */
-  right: 300px; /* reserves the date/time + admin-dropdown cluster's width */
+  /* Spans from the left edge, items right-aligned against the date/time +
+     user cluster (--header-right-w, measured by appHeaderFit). The row
+     itself ignores the pointer (it overlays the logo), only its items take
+     clicks. The brand panel is sized from where the first item lands, not
+     the other way round. */
+  left: 0;
+  right: var(--header-right-w);
+  pointer-events: none;
   height: 50px;
   /* Must be ABOVE .navbar-fixed-top's z-index (1030, Bootstrap default) -
      both occupy the exact same fixed rectangle (top:0, height:50px), and
@@ -921,30 +951,48 @@
 
 .app-nav-tabset > .nav-tabs > li {
   float: none;
+  flex: 0 0 auto; /* never squeezed - appHeaderFit collapses to the hamburger instead */
+  pointer-events: auto;
   margin: 0 14px; /* ~28px gap between items */
 }
 
 /* Long user names (> ~10 chars, flagged by HeaderController) get up to
-   200px (.username-label, main.css) instead of fitting the 300px right
-   reservation above. From 1760px there's room to simply reserve 120px
-   more for the nav tabs; between the 1200px hamburger breakpoint and
-   that, widening the reservation would push the tabs into the dark brand
-   badge, so the date/time drops out instead and the name takes its
-   place. Short names keep the original layout at every width. */
-@media (min-width: 1201px) and (max-width: 1759px) {
+   200px (.username-label, main.css); the right reservation is measured,
+   so they never overlap the nav, but below 1760px the date/time drops out
+   for them so the nav keeps its room. */
+@media (max-width: 1759px) {
   .app-header-merged.header-long-username .navbar-right > li.header-datetime-item {
     display: none;
   }
 }
 
-@media (min-width: 1760px) {
-  .app-nav-tabset.long-username > .nav-tabs {
-    right: 420px;
+/* 992-1199px: tighter item spacing and no date/time, so the full nav
+   still fits on one line (below 992px it's the hamburger drawer) */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .app-nav-tabset > .nav-tabs > li {
+    margin: 0 8px;
+  }
+
+  .app-header-merged .navbar-right > li.header-datetime-item {
+    display: none;
   }
 }
 
 .app-nav-tabset > .nav-tabs > li:last-child {
   margin-right: 0;
+}
+
+/* appShellPage() routes' tab (content.html PAGE tab - Profile, Updates, ...):
+   renders the page, never shown as a nav item */
+.app-nav-tabset > .nav-tabs > li.app-nav-page-tab {
+  display: none;
+}
+
+/* Legacy .profile pages (Updates) clear the app header with their own
+   50px top padding (main.css); inside the app shell (.app-shell) that
+   offset already exists */
+.app-shell .profile {
+  padding-top: 20px;
 }
 
 .app-nav-tabset > .nav-tabs > li > a {
@@ -963,16 +1011,55 @@
   color: var(--color-text-tertiary);
   font-weight: 500;
   font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
   padding: 0;
-  border-bottom: 2px solid transparent;
-  outline: none; /* replaced by the border-bottom color change below on :focus, so focus is still visibly indicated */
-  transition: color 0.15s ease, border-color 0.15s ease;
+  /* Underline as an inset shadow at the bottom edge rather than a
+     border, so the content box (and so the text/icon's center line)
+     is identical for every item, active or not */
+  box-shadow: inset 0 -2px 0 transparent;
+  outline: none; /* replaced by the underline color change below on :focus, so focus is still visibly indicated */
+  transition: color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Summary (first item) is an icon, not text - same box as the text
+   links (the <a> above), the icon block-level so no baseline/line-height
+   offset pushes it off the center line */
+.app-nav-summary-icon {
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+}
+
+.app-nav-summary-icon .app-lucide-icon {
+  display: block;
+}
+
+/* Settings / Functions chevrons, on the same center line */
+.app-nav-chevron {
+  display: flex;
+  margin-left: 4px;
+  color: var(--color-text-tertiary);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.app-nav-chevron .app-lucide-icon {
+  display: block;
+}
+
+.app-nav-tabset > .nav-tabs > li.dropdown.open .app-nav-chevron {
+  transform: rotate(180deg);
+}
+
+.app-nav-tabset > .nav-tabs > li.dropdown.active .app-nav-chevron,
+.app-nav-tabset > .nav-tabs > li.dropdown > a:hover .app-nav-chevron {
+  color: var(--brand-dark);
 }
 
 .app-nav-tabset > .nav-tabs > li > a:hover,
 .app-nav-tabset > .nav-tabs > li > a:focus {
   color: var(--color-text-primary);
-  border-bottom-color: var(--color-border);
+  box-shadow: inset 0 -2px 0 var(--color-border);
 }
 
 /* Active-tab underline uses the login page's indigo (var(--brand-dark)) instead
@@ -985,21 +1072,12 @@
   color: var(--color-text-primary);
   background: transparent;
   border: none;
-  border-bottom: 2px solid var(--brand-dark);
+  box-shadow: inset 0 -2px 0 var(--brand-dark);
   outline: none;
 }
 
 .app-nav-tabset > .nav-tabs > li.dropdown.active > a {
   color: var(--brand-dark);
-}
-
-.app-nav-tabset > .nav-tabs .caret {
-  border-top-color: var(--color-text-tertiary);
-}
-
-.app-nav-tabset > .nav-tabs > li.dropdown.active .caret,
-.app-nav-tabset > .nav-tabs > li.dropdown > a:hover .caret {
-  border-top-color: var(--brand-dark);
 }
 
 .app-nav-tabset > .nav-tabs .dropdown-menu {
@@ -1031,79 +1109,186 @@
   color: var(--color-surface);
 }
 
-/* ---------- Responsive: hamburger collapse below 1200px ----------
-   Was 991px, raised to 1200px: the desktop nav layout reserves
-   left:500px (clears the widened 480px brand badge) + right:300px
-   (date/time + admin cluster) = 800px fixed overhead, which doesn't
-   leave enough room for the nav links at 1024px - confirmed via live
-   measurement (Playwright), the nav-tabs row overflowed the viewport
-   by ~86px at that width with the old 991px threshold. 1200px keeps
-   both 1024px and 1366px correctly on the right side of the
-   breakpoint (mobile/hamburger and desktop respectively).
+/* ---------- Collapsed nav: hamburger + slide-down drawer ----------
+   .header-nav-collapsed is set on <html> by appHeaderFit (app/shared/
+   directives.js) below 992px - and also above it if the nav still can't
+   fit (very long user name, many plugins, a long-word UI language) - so
+   the header never wraps or overlaps. The drawer is three fixed layers:
+     - .navbar-right (header.html: date/time + user menu) becomes the
+       drawer's top row, 52px, right under the header bar
+     - the nav list (content.html's tabset) below it, scrolling on its own;
+       Settings / Functions open in place as expandable groups
+     - .header-drawer-backdrop (content.html) dimming the page
+   The header is raised above the nav list (1032 vs 1031) while the drawer
+   is open, so the user menu's dropdown opens over the list, not under it.
 
-   ul.nav-tabs is generated by the tabset directive itself (not
-   markup this project authors), so it can't carry its own ng-class -
-   the "mobile-nav-open" class is toggled on <tabset> instead (which
-   IS authored markup) and this selector reaches the generated nav
-   list as a descendant. */
-@media (max-width: 1200px) {
-  .app-header-merged .mobile-nav-toggle {
-    display: block;
-  }
+   ul.nav-tabs is generated by the tabset directive (replace:true makes it
+   a DIRECT child of .app-nav-tabset), so the open state is the
+   "mobile-nav-open" class on <tabset>, which is authored markup. */
+.header-nav-collapsed .app-header-merged .mobile-nav-toggle {
+  display: flex;
+}
 
-  .app-nav-tabset > .nav-tabs {
-    display: none;
-    position: fixed;
-    top: 50px;
-    left: 0;
-    right: 0;
-    height: auto;
-    max-height: calc(100vh - 50px);
-    overflow-y: auto;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    background: var(--color-surface);
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-    padding: 8px 0;
-  }
+.header-nav-collapsed .app-header-merged .navbar-right {
+  display: none;
+}
 
-  .app-nav-tabset.mobile-nav-open > div > .nav-tabs {
-    display: flex;
-  }
+.header-nav-collapsed .header.mobile-nav-open {
+  z-index: 1032;
+}
 
-  .app-nav-tabset > .nav-tabs > li {
-    margin: 0;
-    width: 100%;
-  }
+.header-nav-collapsed .app-header-merged.mobile-nav-open .navbar-right {
+  display: flex;
+  position: fixed;
+  top: 50px;
+  left: 0;
+  right: 0;
+  height: 52px;
+  margin: 0;
+  padding: 0 12px 0 20px;
+  justify-content: space-between;
+  background: var(--color-surface);
+  border-left: none;
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+  animation: header-drawer-in 0.18s ease both;
+}
 
-  .app-nav-tabset > .nav-tabs > li > a {
-    height: auto;
-    padding: 12px 20px;
-    border-bottom: none;
-    border-left: 3px solid transparent;
-  }
+/* Bootstrap's .nav clearfix pseudo-elements would be flex items here,
+   pulling both ends of space-between toward the middle */
+.header-nav-collapsed .app-header-merged.mobile-nav-open .navbar-right::before,
+.header-nav-collapsed .app-header-merged.mobile-nav-open .navbar-right::after {
+  display: none;
+}
 
-  .app-nav-tabset > .nav-tabs > li > a:hover,
-  .app-nav-tabset > .nav-tabs > li > a:focus {
-    border-bottom-color: transparent;
-  }
+.header-nav-collapsed .app-header-merged.mobile-nav-open .navbar-right > li.header-datetime-item {
+  display: flex;
+}
 
-  .app-nav-tabset > .nav-tabs > li.active > a,
-  .app-nav-tabset > .nav-tabs > li.active > a:hover,
-  .app-nav-tabset > .nav-tabs > li.active > a:focus {
-    border-bottom: none;
-    border-left-color: var(--brand-dark);
-    background: var(--color-surface-hover) !important;
-  }
+.header-nav-collapsed .app-header-merged.mobile-nav-open .navbar-right > li > a {
+  white-space: nowrap;
+}
 
-  .app-nav-tabset > .nav-tabs .dropdown-menu {
-    position: static;
-    box-shadow: none;
-    border-radius: 0;
-    margin-top: 0;
-    padding-left: 12px;
+/* User menu: a normal dropdown under the row, right-aligned. Below 768px
+   Bootstrap makes an open navbar dropdown position:static (an inline
+   list), which inside this flex row turned it into a row item, vertically
+   centered over the header. */
+.header-nav-collapsed .app-header-merged.mobile-nav-open .navbar-right .open .dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: auto;
+  float: none;
+  min-width: 180px;
+  margin-top: 4px;
+  background: var(--color-surface);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+}
+
+.header-nav-collapsed .app-header-merged.mobile-nav-open .navbar-right > li > a {
+  padding-left: 0;
+}
+
+.header-nav-collapsed .app-header-merged.mobile-nav-open .navbar-right > li:last-child > a {
+  padding-right: 8px;
+}
+
+.header-nav-collapsed .app-nav-tabset > .nav-tabs {
+  display: none;
+  position: fixed;
+  top: 102px;
+  left: 0;
+  right: 0;
+  height: auto;
+  max-height: calc(100vh - 102px);
+  overflow-y: auto;
+  pointer-events: auto;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  background: var(--color-surface);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+  padding: 8px 0;
+}
+
+.header-nav-collapsed .app-nav-tabset.mobile-nav-open > .nav-tabs {
+  display: flex;
+  animation: header-drawer-in 0.18s ease both;
+}
+
+@keyframes header-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-nav-collapsed .app-nav-tabset > .nav-tabs > li {
+  margin: 0;
+  width: 100%;
+}
+
+.header-nav-collapsed .app-nav-tabset > .nav-tabs > li > a {
+  height: 44px;
+  padding: 0 20px;
+}
+
+.header-nav-collapsed .app-nav-tabset > .nav-tabs > li > a:hover,
+.header-nav-collapsed .app-nav-tabset > .nav-tabs > li > a:focus {
+  background: var(--color-surface-hover);
+  box-shadow: none;
+}
+
+.header-nav-collapsed .app-nav-tabset > .nav-tabs > li.active > a,
+.header-nav-collapsed .app-nav-tabset > .nav-tabs > li.active > a:hover,
+.header-nav-collapsed .app-nav-tabset > .nav-tabs > li.active > a:focus {
+  box-shadow: inset 3px 0 0 var(--brand-dark);
+  background: var(--color-surface-hover) !important;
+}
+
+/* Summary shows its name next to the icon in the drawer */
+.header-nav-collapsed .app-nav-summary-icon::after {
+  content: attr(aria-label);
+  margin-left: 10px;
+}
+
+/* Expandable groups: chevron at the far right, items inline below */
+.header-nav-collapsed .app-nav-chevron {
+  margin-left: auto;
+}
+
+.header-nav-collapsed .app-nav-tabset > .nav-tabs .dropdown-menu {
+  position: static;
+  float: none;
+  width: 100%;
+  box-shadow: none;
+  border-radius: 0;
+  margin: 0;
+  padding: 0 0 6px 20px;
+  background: transparent;
+}
+
+.header-nav-collapsed .app-nav-tabset > .nav-tabs .dropdown-menu > li > a {
+  padding: 10px 20px;
+}
+
+.header-drawer-backdrop {
+  display: none;
+}
+
+.header-nav-collapsed .header-drawer-backdrop {
+  display: block;
+  position: fixed;
+  top: 50px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1029; /* under the header (1030) and the drawer list (1031) */
+  background: rgba(var(--brand-dark-rgb), 0.32);
 }
 
 /* Plugin-internal tab switchers - e.g. push.html's own <tabset
@@ -1974,7 +2159,12 @@
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
   padding: 20px 24px;
-  animation: summary-card-in 0.4s ease both;
+  /* backwards, not both: "both" kept the last keyframe's transform
+     (translateY(0)) applied forever, which made every card its own
+     stacking context - a dropdown inside a card could then never rise
+     above a sticky header (e.g. the Configuration editor's). Once the
+     entry animation ends a card now has no transform and no layer. */
+  animation: summary-card-in 0.4s ease backwards;
 }
 
 .device-details-card-full {
@@ -2662,6 +2852,7 @@
 
   .logs-page-header-actions {
     width: 100%;
+    flex-wrap: wrap; /* e.g. the Configuration editor's QR / Cancel / Save / Save and close - no longer fit one phone-width row */
   }
 
   .logs-page-header-actions .btn {
@@ -3198,16 +3389,93 @@
    new .modern-toggle above instead of duplicating any of them.
    ========================================================= */
 
-/* Generic sticky page-header (not scoped to one page - now used by
-   Columns and General settings too): sticks right under .app-shell's
-   fixed 50px-tall top nav rather than under/behind it. */
-.columns-sticky-header {
+/* =========================================================
+   Shared sticky page header - THE one implementation for every page with
+   a sticky title/actions header and/or a sticky section nav: General
+   settings, Default Design, Devices table columns, Plugins, the plugin
+   settings pages (<plugin-settings-header>) and the Configuration editor
+   (header + tab bar). Markup:
+     <div class="page-sticky-header" app-sticky-header>
+         <div class="logs-page-header">title / subtitle / actions</div>
+         [tabs]
+     </div>
+   inside a .modern-page. It replaces the per-page versions this was
+   copied into before (.columns-sticky-header at a fixed top:50px with a
+   fixed-offset .settings-nav at top:70px that slid under it, the
+   Configuration editor's own sticky block), whose hard-coded offsets kept
+   breaking page by page.
+
+   appStickyHeader (app/shared/directives.js) measures the heights into
+   the variables below on the .modern-page (these values are only the
+   first-paint defaults):
+     --app-header-h        the fixed app header
+     --page-sticky-h       the visible sticky block
+     --page-sticky-hide-h  its title/actions part (slides under the app
+                           header on phones; tabs, if any, stay pinned)
+   z-index 40: above everything in the page content (cards make no layers
+   of their own - see .device-details-card), below the app header (1030),
+   dropdown menus (1000+ in the root stacking context), tooltips and
+   dialogs.
+   ========================================================= */
+.modern-page {
+  --app-header-h: 50px;
+  --page-sticky-h: 0px;
+  --page-sticky-hide-h: 0px;
+}
+
+.page-sticky-header {
   position: sticky;
-  top: 50px;
-  z-index: 20;
-  background: var(--color-surface);
-  padding: 10px 0;
+  top: var(--app-header-h);
+  z-index: 40;
+  background: var(--color-canvas);
   margin: 0 0 16px;
+  transition: box-shadow 0.15s ease;
+}
+
+/* Bottom shadow only while content is scrolled underneath - also gives
+   the block a visible edge, so content passing below it never reads as
+   part of the header */
+.page-sticky-header.is-stuck {
+  box-shadow: 0 8px 12px -10px rgba(15, 23, 42, 0.25);
+}
+
+.page-sticky-header > .logs-page-header {
+  padding: 10px 0;
+  margin-bottom: 0;
+}
+
+/* Title/subtitle take the remaining width and shrink first; the actions
+   stay on one line */
+.page-sticky-header > .logs-page-header > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Section nav and design preview stick right below the block; section
+   cards scrolled to from the nav land with their title just below it */
+.modern-page .settings-nav,
+.modern-page .design-preview-card {
+  top: calc(var(--app-header-h) + var(--page-sticky-h) + 16px);
+}
+
+.modern-page .settings-card {
+  scroll-margin-top: calc(var(--app-header-h) + var(--page-sticky-h) + 16px);
+}
+
+/* Phones: the title/actions part slides up under the app header - only
+   tabs (if the page has them) stay pinned; the actions are the fixed
+   bottom bar (.design-header-actions, <= 900px) */
+@media (max-width: 600px) {
+  .page-sticky-header {
+    top: calc(var(--app-header-h) - var(--page-sticky-hide-h));
+  }
+}
+
+/* Room under the content for the actions' fixed bottom bar */
+@media (max-width: 900px) {
+  .modern-page.has-sticky-actions {
+    padding-bottom: 80px;
+  }
 }
 
 .columns-role-card {
@@ -3339,10 +3607,6 @@
 }
 
 @media (max-width: 600px) {
-  .columns-sticky-header {
-    position: static;
-  }
-
   .columns-page .logs-page-header {
     flex-direction: column;
   }
@@ -3467,6 +3731,20 @@
 .modern-segmented-option.active {
   background: var(--brand-dark);
   color: var(--color-surface);
+}
+
+/* Phones: never wider than its container - options share the width and
+   wrap their label instead of pushing the page sideways */
+@media (max-width: 600px) {
+  .modern-segmented {
+    max-width: 100%;
+  }
+
+  .modern-segmented-option {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 9px 12px;
+  }
 }
 
 .modern-toast {
@@ -3695,8 +3973,7 @@
 /* ---------- Live preview ---------- */
 
 .design-preview-card {
-  position: sticky;
-  top: 20px;
+  position: sticky; /* top: shared sticky page header (.modern-page .design-preview-card) */
 }
 
 .design-phone-frame {
@@ -3796,6 +4073,7 @@
    don't affect box size/flow. */
 .design-phone-frame.design-phone-landscape {
   width: 340px;
+  max-width: 100%; /* narrower than its card on small phones (360px) */
 }
 
 .design-phone-frame.design-phone-landscape .design-phone-screen {
@@ -3808,7 +4086,7 @@
 
 @media (max-width: 1024px) {
   .design-body {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr); /* plain 1fr can't shrink below its content - it overflowed phones by 2px */
   }
 
   .design-preview-card {
@@ -3820,12 +4098,15 @@
   .design-page .logs-page-header {
     flex-direction: column;
   }
+}
 
-  /* position: sticky only sticks within its own (short) parent's box, so
-     it would scroll away almost immediately on a tall page - this needs
-     to stay pinned across the whole page's scroll range, i.e. a real
-     fixed bottom bar. The page needs matching bottom padding (below) so
-     the bar doesn't cover the last card's content. */
+/* Mobile/tablet (<= 900px, where the section nav is hidden too): the save
+   actions become a fixed bottom bar - position: sticky only sticks within
+   its own (short) parent's box, so it would scroll away almost
+   immediately on a tall page. Pages using the shared sticky header get
+   matching bottom padding (.modern-page.has-sticky-actions) so the bar
+   doesn't cover the last card's content. */
+@media (max-width: 900px) {
   .design-header-actions {
     position: fixed;
     left: 0;
@@ -3851,11 +4132,170 @@
     text-align: center;
     margin-bottom: 4px;
   }
+}
 
-  .design-page,
-  .columns-page,
-  .settings-page {
-    padding-bottom: 70px;
+/* =========================================================
+   Profile page (admin menu -> Profile; profile.html). Single column,
+   .width-800. Reuses the shared sticky page header (.page-sticky-header),
+   .audit-avatar, .device-details-badge + .users-role-* (role pill, same
+   colors as the Users page), .device-details-card(-header), .design-field
+   (-label), .logs-input, .settings-input, .modern-input-invalid, .field-
+   hint, .config-password-wrap/-toggle (eye toggle inside the input) and
+   .btn-modern-primary instead of duplicating any of them - only the
+   identity header, read-only field, inline errors, card footer, strength
+   meter and rules checklist are new here.
+   ========================================================= */
+
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.profile-avatar {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  margin: 0;
+  font-size: 18px;
+}
+
+.profile-identity-text {
+  min-width: 0;
+}
+
+.profile-identity-text h4 {
+  margin: 0 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-identity-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+}
+
+.profile-card + .profile-card {
+  margin-top: 20px;
+}
+
+/* Read-only login: plain text with a lock, not a grey disabled input */
+.profile-readonly {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.profile-readonly .app-lucide-icon {
+  color: var(--color-text-tertiary);
+}
+
+.profile-readonly-value {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.profile-field-error {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+.profile-card-error {
+  margin-top: 16px;
+}
+
+.profile-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+/* The eye toggle's icon, centered in its button */
+.profile-page .config-password-toggle {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ---------- Strength meter + rules checklist ---------- */
+
+.profile-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.profile-strength-bar {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.profile-strength-bar span {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border-subtle);
+  transition: background 0.15s ease;
+}
+
+.profile-strength-1 .profile-strength-bar span.on { background: var(--color-danger); }
+.profile-strength-2 .profile-strength-bar span.on { background: var(--color-warning); }
+.profile-strength-3 .profile-strength-bar span.on,
+.profile-strength-4 .profile-strength-bar span.on { background: var(--color-success); }
+
+.profile-strength-label {
+  flex: 0 0 auto;
+  min-width: 64px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.profile-rules {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-rules li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+}
+
+.profile-rules li.met {
+  color: var(--color-success-text);
+}
+
+/* Phones: cards edge to edge with 12px side padding, full-width buttons */
+@media (max-width: 600px) {
+  .profile-page .profile-card {
+    padding: 16px 12px;
+    border-radius: 10px;
+  }
+
+  .profile-card-footer .btn {
+    width: 100%;
   }
 }
 
@@ -4614,7 +5054,7 @@
 /* =========================================================
    General settings page (Settings -> Language/Misc/Security, one shared
    form). Scoped under .settings-page. Reuses .logs-page-header,
-   .columns-sticky-header, .design-header-actions/.design-unsaved-
+   .page-sticky-header, .design-header-actions/.design-unsaved-
    indicator/.logs-btn-reset (Default Design page's save UX), .device-
    details-card(-header), .design-field(-label), .modern-toggle,
    .modern-select, .field-hint, .device-details-inline-error/-success,
@@ -4633,8 +5073,7 @@
 }
 
 .settings-nav {
-  position: sticky;
-  top: 70px;
+  position: sticky; /* top: shared sticky page header (.modern-page .settings-nav) */
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -4856,7 +5295,7 @@
 
 /* =========================================================
    Plugins page (Settings -> Plugins). Scoped under .plugins-page. Reuses
-   .logs-page-header, .columns-sticky-header, .design-header-actions/
+   .logs-page-header, .page-sticky-header, .design-header-actions/
    .design-unsaved-indicator/.logs-btn-reset (save UX), .logs-results-count,
    .columns-grid (3/2/1 card grid), .device-details-card, .device-details-
    skeleton(-card), .device-details-badge(-ok), .users-role-neutral (grey
@@ -4981,7 +5420,7 @@
    plugin's own settings page: breadcrumb back to the Plugins list, icon +
    name + subtitle, an optional "Open plugin" link, and the same Reset/
    Save/unsaved-changes behavior as the other redesigned Settings pages.
-   Reuses .logs-page-header, .columns-sticky-header, .design-header-
+   Reuses .logs-page-header, .page-sticky-header, .design-header-
    actions/.design-unsaved-indicator/.logs-btn-reset and .action-link
    instead of duplicating them.
    ========================================================= */
@@ -5067,10 +5506,6 @@
 
   .deviceinfo-settings-page .logs-page-header-actions {
     width: 100%;
-  }
-
-  .deviceinfo-settings-page {
-    padding-bottom: 70px;
   }
 }
 
@@ -5638,7 +6073,7 @@
    Configuration editor shell (Configurations -> Edit) and its Common
    Settings tab. Scoped under .config-editor-page. Reuses <plugin-
    settings-breadcrumb>-style markup (.plugin-settings-breadcrumb(-sep)),
-   .logs-page-header/.columns-sticky-header, .design-header-actions/
+   .logs-page-header/.page-sticky-header, .design-header-actions/
    .design-unsaved-indicator/.logs-btn-reset (save UX incl. its mobile
    fixed-bottom-bar), .device-details-badge, .device-details-inline-*,
    .modern-tabset (underline tabs, same as the Push messages page),
@@ -5653,6 +6088,24 @@
    row layouts are new here.
    ========================================================= */
 
+/* ---------- Sticky header block ----------
+   The shared sticky page header (.page-sticky-header, see "Shared sticky
+   page header") holding this page's header AND its tab bar; only what is
+   specific to the editor is below. */
+.config-editor-page .page-sticky-header {
+  margin-bottom: 0; /* .config-editor-body has the gap */
+}
+
+/* Actions centered on the title row */
+.config-editor-header .plugin-settings-title-row {
+  min-height: 36px;
+}
+
+.config-editor-header .logs-page-header-actions {
+  align-items: center;
+  min-height: 36px;
+}
+
 .config-editor-header .logs-page-subtitle {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -5660,25 +6113,33 @@
   overflow: hidden;
 }
 
-/* The underline tabs stick directly below the sticky header, so together
-   they read as one fixed block while the tab content scrolls underneath -
-   two adjacent position:sticky elements rather than one, since ui-
-   bootstrap's tabset renders .nav-tabs and .tab-content as siblings of
-   the same element (wrapping just the header in a sticky container would
-   make the tab content sticky too). */
-.config-editor-page .modern-tabset > .nav-tabs {
-  position: sticky;
-  top: 132px;
-  z-index: 15;
-  background: var(--color-surface);
+/* The tab bar inside the block - .modern-tabset styles as-is, minus the
+   gap under it (the tab content gets it instead, .config-editor-body) */
+.config-editor-tabbar > .nav-tabs {
+  margin-bottom: 0;
+  /* never wraps a label onto two lines (it did at tablet widths) - scrolls
+     sideways when the six tabs don't fit */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
 }
 
-/* .settings-nav (General settings page) defaults to sticking at 70px,
-   right under that page's own shorter header. Here it would stick behind/
-   under the sticky tabs bar instead (which ends at 176px), so it needs its
-   own offset to clear both the sticky header and the sticky tabs. */
-.config-editor-page .settings-nav {
-  top: 196px;
+.config-editor-tabbar > .nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.config-editor-tabbar > .nav-tabs > li {
+  flex: 0 0 auto;
+}
+
+.config-editor-tabbar > .nav-tabs > li > a {
+  white-space: nowrap;
+}
+
+/* The <tabset>'s own tab list - replaced by .config-editor-tabbar */
+.config-editor-page .config-editor-tabs > .nav-tabs {
+  display: none;
 }
 
 .config-editor-body {
@@ -5785,16 +6246,20 @@
     width: 100%;
   }
 
-  .config-editor-page .modern-tabset > .nav-tabs {
-    /* .modern-tabset's own <=600px rule already handles overflow-x/
-       flex-wrap for horizontal scrolling - just undo the sticky
-       positioning here so it doesn't fight the fixed bottom action bar. */
-    position: static;
+  /* The fixed bottom action bar (.design-header-actions) holds QR /
+     Cancel / Save / Save and close here - two per row on a phone instead
+     of one row wider than the screen */
+  .config-editor-page .design-header-actions > .btn,
+  .config-editor-page .design-header-actions > .logs-btn-reset {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
   }
 
-  .config-editor-page {
-    padding-bottom: 70px;
+  .config-editor-page .design-header-actions > .design-unsaved-indicator {
+    flex: 1 1 100%;
+    text-align: center;
   }
+
 }
 
 /* =========================================================
@@ -6647,6 +7112,309 @@
 .app-version-file-size {
   margin: 0;
   white-space: nowrap;
+}
+
+/* Opt-in modifier for either dialog shell (windowClass "... app-modal-
+   fullscreen-mobile"): a full-screen sheet on phones instead of a card
+   with margins - the version Configurations and About dialogs */
+@media (max-width: 600px) {
+  .app-modal-fullscreen-mobile .modal-dialog {
+    margin: 0;
+  }
+
+  .app-modal-fullscreen-mobile .modal-content {
+    height: 100vh;
+    border-radius: 0;
+  }
+}
+
+/* =========================================================
+   About dialog (admin menu -> About; about/about.html, windowClass
+   'app-modal-narrow app-modal-about app-modal-fullscreen-mobile'). Reuses
+   the narrow dialog shell (sticky header/footer, .app-modal-header-*,
+   .modern-modal-close), .header-brand-logo (the app header's white logo),
+   .device-details-badge + .users-role-neutral (version pill), the shared
+   .app-copy-btn (appCopyButton), .action-link, .field-hint and
+   .btn-modern-primary - only the logo tile, the plugin chips and the
+   credits line are new here.
+   ========================================================= */
+
+.app-modal-about .modal-dialog {
+  width: 520px;
+}
+
+/* Same brand gradient as the app header's panel */
+.about-logo-tile {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-chrome-start), var(--brand-dark));
+}
+
+.about-logo-tile .header-brand-logo {
+  margin: 0;
+  height: 24px;
+}
+
+.about-version-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.about-version-pill {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+}
+
+.about-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.about-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.about-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.about-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.about-chip .glyphicon {
+  top: 0;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.about-chip-disabled {
+  background: var(--color-surface-muted);
+  color: var(--color-text-tertiary);
+  border-style: dashed;
+}
+
+.about-none {
+  margin: 0;
+}
+
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+.about-credits {
+  margin-top: 24px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--color-text-tertiary);
+}
+
+.about-credits a {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  white-space: nowrap; /* "h-mdm.com" otherwise breaks at its hyphen on phones */
+}
+
+/* =========================================================
+   Application version -> Configurations dialog (modal/
+   applicationVersionConfigurations.html, windowClass 'app-modal-narrow
+   app-modal-version-configs'). Shell (sticky header/footer, scrolling
+   body), .app-modal-header-*, <app-icon>, .device-details-app-pkg,
+   .logs-input-icon-wrap, the .app-action-wrap/-dot/-select pill-select and
+   .btn-modern-primary are all reused as-is; only the width, the toolbar/
+   bulk bar and the list rows are new here.
+   ========================================================= */
+
+.app-modal-version-configs .modal-dialog {
+  width: 720px;
+}
+
+.app-modal-version-configs .modern-modal-header,
+.app-modal-about .modern-modal-header {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.appver-cfg-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.appver-cfg-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.appver-cfg-bulk {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.appver-cfg-bulk-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.appver-cfg-bulk-all input,
+.appver-cfg-row input[type="checkbox"] {
+  margin: 0;
+}
+
+.appver-cfg-bulk-count {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.appver-cfg-bulk-spacer {
+  flex: 1 1 auto;
+}
+
+.app-modal-version-configs .appver-cfg-body {
+  padding: 8px 12px;
+  overflow-x: hidden;
+}
+
+.appver-cfg-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.appver-cfg-row + .appver-cfg-row {
+  margin-top: 2px;
+}
+
+.appver-cfg-row:hover {
+  background: var(--color-surface-hover);
+}
+
+.appver-cfg-row-selected {
+  background: var(--color-surface-muted);
+}
+
+.appver-cfg-row-changed {
+  background: var(--color-warning-bg);
+  box-shadow: inset 3px 0 0 var(--color-warning);
+}
+
+/* Full name, wrapping (never overflowing sideways); min-width: 0 is what
+   lets a flex child shrink below its content width */
+.appver-cfg-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.appver-cfg-changed-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: 1px;
+  background: var(--color-surface);
+  color: var(--color-warning-text);
+  border: 1px solid var(--color-warning);
+}
+
+.appver-cfg-row .app-action-wrap {
+  flex: 0 0 auto;
+}
+
+.appver-cfg-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--color-text-tertiary);
+}
+
+.appver-cfg-changes {
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+}
+
+.appver-cfg-cancel {
+  color: var(--color-text-secondary);
+}
+
+/* Phones (full-screen sheet: .app-modal-fullscreen-mobile): the action
+   select drops under the name so neither ever has to scroll sideways */
+@media (max-width: 600px) {
+  .appver-cfg-toolbar {
+    padding: 12px 16px;
+  }
+
+  .appver-cfg-row {
+    flex-wrap: wrap;
+  }
+
+  .appver-cfg-name {
+    flex-basis: calc(100% - 40px);
+  }
+
+  .appver-cfg-row .app-action-wrap {
+    margin-left: 28px;
+  }
 }
 
 /* ---------- Launcher preview tile ---------- */
@@ -7649,4 +8417,883 @@
     justify-content: center;
   }
 
+}
+
+/* =========================================================
+   Updates page (admin menu -> Updates; updates.html) and its "Get
+   updates" confirmation dialog (modal/updatesConfirm.html, the narrow
+   dialog shell). Single column, max 900px. Reuses the shared sticky page
+   header (.page-sticky-header), .device-details-card(-header), .device-
+   details-badge(-ok) + .users-role-neutral (status pills), .modern-toggle,
+   .design-field-label, .field-hint, .settings-caution, .profile-card-
+   footer, .device-details-inline-error and .btn-outline-primary - only
+   the versions table, the amber customized-build warning, the script code
+   block and the toggle rows are new here.
+   ========================================================= */
+
+.updates-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.updates-card + .updates-card,
+.updates-card + .updates-warning,
+.updates-warning + .updates-card {
+  margin-top: 20px;
+}
+
+.updates-message {
+  margin: 0 0 16px;
+}
+
+.updates-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--color-surface);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.updates-progress .app-lucide-icon {
+  color: var(--color-success);
+}
+
+.updates-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border-subtle);
+  border-top-color: var(--brand-dark);
+  animation: updates-spin 0.8s linear infinite;
+}
+
+@keyframes updates-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Versions table ---------- */
+
+.updates-table-wrap {
+  overflow-x: auto;
+  margin: 0 -24px;
+}
+
+.updates-table {
+  margin-bottom: 0;
+}
+
+.updates-table > thead > tr > th {
+  padding: 10px 12px;
+  background: var(--color-surface-hover);
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+  white-space: nowrap;
+}
+
+.updates-table > tbody > tr > td {
+  padding: 12px;
+  border-top: 1px solid var(--color-border-subtle);
+  vertical-align: middle;
+}
+
+.updates-table > thead > tr > th:first-child,
+.updates-table > tbody > tr > td:first-child {
+  padding-left: 24px;
+}
+
+.updates-table > thead > tr > th:last-child,
+.updates-table > tbody > tr > td:last-child {
+  padding-right: 24px;
+}
+
+.updates-table > tbody > tr:first-child > td {
+  border-top: none;
+}
+
+.updates-component-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.updates-component-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(var(--brand-dark-rgb), 0.08);
+  color: var(--brand-dark);
+}
+
+.updates-version {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.updates-col-downloaded {
+  text-align: center;
+}
+
+.updates-downloaded {
+  display: inline-flex;
+  color: var(--color-success);
+}
+
+.updates-none {
+  color: var(--color-text-tertiary);
+}
+
+.updates-badge-available {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+/* The "update disabled" reason is a sentence, not a status word */
+.updates-badge-disabled {
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: normal;
+}
+
+.updates-table-hint {
+  margin-top: 12px;
+}
+
+/* ---------- Customized-build warning (amber) ---------- */
+
+.updates-warning {
+  display: flex;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--color-warning);
+  border-left-width: 4px;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.updates-warning-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  padding-top: 1px;
+}
+
+.updates-warning-body {
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.updates-warning-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.updates-warning-body p {
+  margin: 0;
+}
+
+.updates-script {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.updates-script-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.updates-code {
+  margin: 8px 0;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.updates-script-warning {
+  font-weight: 600;
+}
+
+/* ---------- Update options (toggles) ---------- */
+
+.updates-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.updates-caution + .updates-toggle-row,
+.updates-toggle-row + .updates-toggle-row {
+  margin-top: 18px;
+}
+
+.updates-toggle-row + .updates-caution {
+  margin-top: 10px;
+}
+
+.updates-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.updates-toggle-text .design-field-label {
+  margin-bottom: 0;
+}
+
+.updates-toggle-text .field-hint {
+  display: block;
+  line-height: 1.5;
+}
+
+.updates-toggle-row .modern-toggle {
+  margin-top: 2px;
+}
+
+.updates-get-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ---------- Confirmation dialog ---------- */
+
+/* The narrow shell's header is a row: let the title block fill it so the
+   close button sits at the right edge */
+.app-modal-updates-confirm .modern-modal-header > .app-modal-header-top {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-modal-updates-confirm .app-modal-header-sub {
+  white-space: normal;
+}
+
+.updates-confirm-section + .updates-confirm-section,
+.updates-confirm-section + .updates-warning {
+  margin-top: 18px;
+}
+
+.updates-confirm-label {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-tertiary);
+}
+
+.updates-confirm-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.updates-confirm-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+}
+
+.updates-confirm-list li .field-hint {
+  grid-column: 2;
+}
+
+.updates-confirm-options li .device-details-badge {
+  min-width: 44px;
+  text-align: center;
+}
+
+.updates-warning-compact {
+  padding: 14px 16px;
+}
+
+/* Phones: stacked table rows (label: value), full-width button */
+@media (max-width: 600px) {
+  .updates-page .updates-card {
+    padding: 16px 12px;
+    border-radius: 10px;
+  }
+
+  .updates-table-wrap {
+    margin: 0 -12px;
+    overflow-x: visible;
+  }
+
+  .updates-table > thead {
+    display: none;
+  }
+
+  .updates-table,
+  .updates-table > tbody,
+  .updates-table > tbody > tr,
+  .updates-table > tbody > tr > td {
+    display: block;
+    width: 100%;
+  }
+
+  .updates-table > tbody > tr {
+    padding: 12px;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .updates-table > tbody > tr:first-child {
+    border-top: none;
+  }
+
+  .updates-table > tbody > tr > td,
+  .updates-table > tbody > tr > td:first-child,
+  .updates-table > tbody > tr > td:last-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+    border-top: none;
+    text-align: right;
+  }
+
+  .updates-table > tbody > tr > td.updates-component {
+    display: block;
+    padding-bottom: 8px;
+    text-align: left;
+  }
+
+  .updates-table > tbody > tr > td[data-label]::before {
+    content: attr(data-label);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    text-align: left;
+  }
+
+  .updates-warning {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .updates-get-btn {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Configuration environment marker (display only, never sent to
+   devices): the left-edge ribbon on the Configurations page cards, the
+   environment filter pills, the editor's header pill + production banner
+   + segmented control, and the dot on the Devices table configuration
+   pill. Colors are the two variables below - change them here. Reuses
+   .apps-filter-pill(s), .device-details-badge, .modern-segmented and
+   .devices-config-pill.
+   ========================================================= */
+
+:root {
+  --env-production: #16a34a;
+  --env-production-text: #ffffff;
+  --env-testing: #d97706;
+  --env-testing-text: #ffffff;
+  --env-ribbon-w: 28px;
+}
+
+/* Every card reserves the ribbon's width, set or not, so card content
+   lines up the same way with and without a ribbon */
+.configurations-page .config-card {
+  position: relative;
+  padding-left: calc(var(--env-ribbon-w) + 20px);
+}
+
+.config-env-ribbon {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--env-ribbon-w);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px 0 0 12px;
+  overflow: hidden;
+  cursor: help;
+}
+
+.config-env-ribbon span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.config-env-ribbon-production {
+  background: var(--env-production);
+  color: var(--env-production-text);
+}
+
+.config-env-ribbon-testing {
+  background: var(--env-testing);
+  color: var(--env-testing-text);
+}
+
+/* ---------- Filter pills ---------- */
+
+.config-env-filters {
+  margin-top: 12px;
+}
+
+.config-env-filters .apps-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.config-env-filter-count {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+}
+
+.apps-filter-pill.active .config-env-filter-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+}
+
+/* ---------- Dot (filters, Devices table configuration pill) ---------- */
+
+.config-env-dot {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.config-env-dot-production {
+  background: var(--env-production);
+}
+
+.config-env-dot-testing {
+  background: var(--env-testing);
+}
+
+.apps-filter-pill.active .config-env-dot {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+}
+
+/* ---------- Configuration editor ---------- */
+
+.config-env-pill-production {
+  background: var(--env-production);
+  color: var(--env-production-text);
+}
+
+.config-env-pill-testing {
+  background: var(--env-testing);
+  color: var(--env-testing-text);
+}
+
+.config-env-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-left: 4px solid var(--env-production);
+  background: rgba(22, 163, 74, 0.08);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.config-env-banner .app-lucide-icon {
+  flex: 0 0 auto;
+  color: var(--env-production);
+}
+
+.config-env-segmented .config-env-option-production.active {
+  background: var(--env-production);
+  color: var(--env-production-text);
+}
+
+.config-env-segmented .config-env-option-testing.active {
+  background: var(--env-testing);
+  color: var(--env-testing-text);
+}
+
+/* Phones: a slightly narrower ribbon, same reserved width on every card */
+@media (max-width: 600px) {
+  :root {
+    --env-ribbon-w: 24px;
+  }
+
+  .configurations-page .config-card {
+    padding-left: calc(var(--env-ribbon-w) + 14px);
+  }
+}
+
+/* Filtering: a card filtered out leaves at once instead of waiting out
+   ngAnimate's leave (the card's entry animation counts as one) */
+.configurations-page .config-card.ng-leave {
+  display: none;
+}
+
+/* =========================================================
+   Configuration "Main app" (reporting only; configuration editor ->
+   Common settings -> General). The shared app typeahead with a clear
+   button inside the field, like .config-password-wrap/-toggle. The
+   Devices "Main app version" column reuses .devices-col-secondary and
+   the Launcher version column's red mismatch color.
+   ========================================================= */
+
+.config-main-app-wrap {
+  position: relative;
+}
+
+.config-main-app-wrap .form-control {
+  padding-right: 36px !important;
+}
+
+.config-main-app-clear {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.config-main-app-clear:hover {
+  color: var(--color-text-secondary);
+}
+
+/* The typeahead's suggestion list stays above the cards below */
+.config-main-app-wrap .dropdown-menu {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* =========================================================
+   Devices table: identifier columns are never truncated, and the sticky
+   columns get a visible edge.
+   - Device number, IMEI, phone, serial, MAC and IP: one line at full
+     width. The controller sizes each of these columns to its longest
+     value on the page (DevicesTabController.identifierColumnWidth, whose
+     fonts must match .devices-id-value and .devices-number-cell strong
+     here); when the table is wider than the card, the card scrolls
+     horizontally. Free-text columns (model, description, group, custom
+     fields) keep the ellipsis + tooltip from the block above.
+   - .devices-id-value: monospace so 0/O and 1/I are distinguishable, and
+     plain selectable text (rows have no click action).
+   - Sticky edges: box-shadow doesn't render on these table cells, so a
+     scrolled cell cut off at the sticky edge looked like a stray fragment
+     ("…le" of a configuration pill next to Device number). The edge is
+     now drawn inside the sticky cell (a ::after, since the cell clips
+     anything outside itself): a 1px divider always, plus a soft shadow
+     while content is scrolled underneath (app-scroll-edge-shadow's
+     app-scrolled-left/-right classes). Sticky cells already have solid
+     backgrounds (white body, grey header, hover color) and sit above the
+     scrolling cells (z-index 2 / 4 in the header).
+   ========================================================= */
+
+.devices-id-value {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  /* Same font-size as the other cells (14px): at 13px the monospace face
+     rendered visibly smaller than its neighbours (8px vs 10px capitals) */
+  font-size: 14px;
+  letter-spacing: 0;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+@media (min-width: 701px) {
+  .devices-page .modern-responsive-table td.devices-col-number,
+  .devices-page .modern-responsive-table td.devices-col-imei,
+  .devices-page .modern-responsive-table td.devices-col-phone,
+  .devices-page .modern-responsive-table td.devices-col-serial,
+  .devices-page .modern-responsive-table td.devices-col-mac,
+  .devices-page .modern-responsive-table td.devices-col-public-ip {
+    text-overflow: clip;
+  }
+
+  .devices-page .devices-number-cell strong {
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .devices-page .devices-sticky-edge::after,
+  .devices-page .devices-sticky-actions::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    pointer-events: none;
+  }
+
+  .devices-page .devices-sticky-edge::after {
+    right: 0;
+    border-right: 1px solid var(--color-border-subtle);
+  }
+
+  .devices-page .devices-sticky-actions::before {
+    left: 0;
+    border-left: 1px solid var(--color-border-subtle);
+  }
+
+  .devices-page .modern-table-wrap.app-scrolled-left .devices-sticky-edge::after {
+    background: linear-gradient(to left, rgba(15, 23, 42, 0.08), transparent);
+  }
+
+  .devices-page .modern-table-wrap.app-scrolled-right .devices-sticky-actions::before {
+    background: linear-gradient(to right, rgba(15, 23, 42, 0.08), transparent);
+  }
+}
+
+/* Devices page summary tiles: a skeleton in place of each number while the
+   counts reload for a new group/configuration selection (the whole-row
+   skeleton above covers the very first load). It's a sibling of the
+   number, never a wrapper inside it: main.css's global "* { font-size:
+   14px }" would size any inner element at 14px instead of the number's
+   26px. Its box is exactly the number's line box (.summary-kpi-value: 26px
+   x line-height 1.1), so nothing moves when the counts arrive; the visible
+   bar is inset inside that box. */
+.devices-kpi-skeleton {
+  box-sizing: border-box;
+  width: 48px;
+  height: calc(26px * 1.1);
+  padding: 4px 0;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--color-surface-muted) 25%, var(--color-surface-hover) 50%, var(--color-surface-muted) 75%) content-box;
+  background-size: 200% 100%;
+  animation: device-details-shimmer 1.2s linear infinite;
+}
+
+/* =========================================================
+   Searchable select (app/shared/directives.js appSearchableSelect) - the
+   Devices page Group/Configuration filters. The trigger is a .form-control
+   .modern-select button (same height/border/radius as the selects it
+   replaced) with a chevron; the panel is a fixed-position portal on
+   <body> (never clipped by a card), the trigger's width on desktop and
+   full width (12px gutters) on phones. Reuses .config-env-dot for the
+   configuration environment dots.
+   ========================================================= */
+
+.app-ss {
+  position: relative;
+  width: 100%;
+}
+
+.app-ss-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-right: 34px;
+  text-align: left;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  position: relative;
+}
+
+.app-ss-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-ss-chevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  color: var(--color-text-tertiary);
+  transition: transform 0.15s ease;
+}
+
+.app-ss-trigger[aria-expanded="true"] .app-ss-chevron {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.app-ss-panel {
+  position: fixed;
+  z-index: 1060; /* above the sticky headers and modals' backdrop */
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+  overflow: hidden;
+}
+
+.app-ss-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.app-ss-search-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+}
+
+.app-ss-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 34px 0 34px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  outline: none;
+}
+
+.app-ss-input:focus {
+  border-color: var(--brand-dark);
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.12);
+}
+
+.app-ss-clear {
+  position: absolute;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  padding: 4px;
+  cursor: pointer;
+}
+
+.app-ss-clear:hover {
+  color: var(--color-text-secondary);
+}
+
+.app-ss-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.app-ss-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.app-ss-option.app-ss-active {
+  background: var(--color-surface-hover);
+}
+
+.app-ss-option.app-ss-selected {
+  font-weight: 600;
+}
+
+/* "All groups" / "All configurations": set apart from the real options */
+.app-ss-option.app-ss-pinned {
+  border-bottom: 1px solid var(--color-border-subtle);
+  border-radius: 6px 6px 0 0;
+  margin-bottom: 4px;
+}
+
+.app-ss-check {
+  flex: 0 0 14px;
+  display: inline-flex;
+  color: var(--brand-dark);
+}
+
+.app-ss-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-ss-hit {
+  background: rgba(217, 119, 6, 0.18);
+  border-radius: 2px;
+  font-weight: 700;
+}
+
+.app-ss-empty {
+  padding: 12px 14px 14px;
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+}
+
+@media (max-width: 600px) {
+  .app-ss-option {
+    padding: 11px 10px; /* bigger touch targets */
+  }
 }

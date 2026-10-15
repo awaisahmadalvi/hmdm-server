@@ -814,6 +814,7 @@ angular.module('headwind-kiosk')
         $scope.manageAppVersionConfigurations = function (applicationVersion, closeOnExit) {
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/applicationVersionConfigurations.html',
+                windowClass: 'app-modal-narrow app-modal-version-configs app-modal-fullscreen-mobile',
                 controller: 'ApplicationVersionConfigurationsModalController',
                 resolve: {
                     applicationVersion: function () {
@@ -1094,6 +1095,7 @@ angular.module('headwind-kiosk')
         $scope.manageConfigurations = function (applicationVersion) {
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/applicationVersionConfigurations.html',
+                windowClass: 'app-modal-narrow app-modal-version-configs app-modal-fullscreen-mobile',
                 controller: 'ApplicationVersionConfigurationsModalController',
                 resolve: {
                     applicationVersion: function () {
@@ -1291,6 +1293,7 @@ angular.module('headwind-kiosk')
         $scope.manageConfigurations = function (closeOnExit) {
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/applicationVersionConfigurations.html',
+                windowClass: 'app-modal-narrow app-modal-version-configs app-modal-fullscreen-mobile',
                 controller: 'ApplicationVersionConfigurationsModalController',
                 resolve: {
                     applicationVersion: function () {
@@ -1348,11 +1351,6 @@ angular.module('headwind-kiosk')
 
             $scope.actionGroup = -1;
             $scope.toggleSelectAll = false;
-            $scope.selectAllChanged = function() {
-                for (var i in $scope.configurations) {
-                    $scope.configurations[i].selected = $scope.toggleSelectAll;
-                }
-            };
 
             $scope.selectionChanged = function(configuration) {
                 $scope.toggleSelectAll = false;
@@ -1370,10 +1368,115 @@ angular.module('headwind-kiosk')
                 }
             };
 
+            // ---------------------------------------------------------------
+            // Presentation helpers for the redesigned dialog. They only read
+            // configurations/action/selected; the values sent by save() are
+            // still produced solely by actionChanged/actionGroupChanged above.
+            // ---------------------------------------------------------------
+            var originalActions = {};
+            $scope.loaded = false;
+            $scope.filter = {text: ''};
+
+            // Bulk "Apply" button: the old dialog applied the bulk action on
+            // select change, this runs exactly that same logic on click
+            $scope.applyActionGroup = function () {
+                $scope.actionGroupChanged();
+                $scope.actionGroup = -1;
+            };
+
+            $scope.filteredConfigurations = function () {
+                var text = ($scope.filter.text || '').toLowerCase();
+                return $scope.configurations.filter(function (item) {
+                    return !text || (item.configurationName || '').toLowerCase().indexOf(text) !== -1;
+                }).sort(function (a, b) {
+                    return (a.configurationName || '').localeCompare(b.configurationName || '', undefined, {numeric: true});
+                });
+            };
+
+            // With a filter typed in, "Select all" only (de)selects the
+            // visible rows, so a bulk action never touches hidden ones
+            $scope.selectAllChanged = function () {
+                $scope.filteredConfigurations().forEach(function (item) {
+                    item.selected = $scope.toggleSelectAll;
+                });
+            };
+
+            $scope.selectedCount = function () {
+                return $scope.configurations.filter(function (item) {
+                    return item.selected;
+                }).length;
+            };
+
+            $scope.rowClicked = function (configuration, $event) {
+                var tag = $event.target.tagName;
+                if (tag === 'INPUT' || tag === 'SELECT' || tag === 'OPTION') {
+                    return;
+                }
+                configuration.selected = !configuration.selected;
+                $scope.selectionChanged(configuration);
+            };
+
+            $scope.isChanged = function (configuration) {
+                return originalActions.hasOwnProperty(configuration.configurationId) &&
+                    originalActions[configuration.configurationId] != configuration.action;
+            };
+
+            $scope.changedCount = function () {
+                return $scope.configurations.filter($scope.isChanged).length;
+            };
+
+            // Dot color of the pill-select, same groups as the configuration
+            // editor's Applications tab (configurations.controller.js)
+            $scope.actionGroupKey = function (action) {
+                if (action == 1) {
+                    return 'install';
+                }
+                if (action == 0) {
+                    return $scope.application && $scope.isInstallOptionAvailable($scope.application) ? 'not-install' : 'block';
+                }
+                return 'delete';
+            };
+
+            $scope.summaryText = function () {
+                var count = $scope.configurations.filter(function (item) {
+                    return item.action == 1;
+                }).length;
+                var key = $scope.application && !$scope.isInstallOptionAvailable($scope.application) ?
+                    'form.application.version.configurations.summary.allowed' :
+                    'form.application.version.configurations.summary.installed';
+                return localization.localize(key)
+                    .replace('${count}', count)
+                    .replace('${total}', $scope.configurations.length);
+            };
+
+            // Unsaved-changes guard for every way of dismissing (Cancel, x,
+            // ESC, backdrop click) - ui-bootstrap 0.14 broadcasts
+            // modal.closing before closing. A successful save uses close(),
+            // which isn't guarded.
+            var discardConfirmed = false;
+            $scope.$on('modal.closing', function (event, reason, closing) {
+                if (closing || discardConfirmed || $scope.changedCount() === 0) {
+                    return;
+                }
+                event.preventDefault();
+                confirmModal.getUserConfirmation(localization.localize('form.application.version.configurations.unsaved.confirm'), function () {
+                    discardConfirmed = true;
+                    $modalInstance.dismiss();
+                });
+            });
+
             var loadData = function () {
                 applicationService.getVersionConfigurations({"id": applicationVersion.id}, function (response) {
+                    $scope.loaded = true;
                     if (response.data) {
                         $scope.configurations = response.data;
+                        // Baseline for the "Changed" tags: the values as stored
+                        // on the server (taken before the autoUpdate defaults
+                        // below, which are themselves unsaved until Save)
+                        originalActions = {};
+                        $scope.configurations.forEach(function (item) {
+                            originalActions[item.configurationId] = item.action;
+                        });
                         // For new version, this will always return "Do not install" for all configurations
                         // The autoUpdate flag updates the default actions
                         if (applicationVersion.autoUpdate) {
@@ -1422,12 +1525,17 @@ angular.module('headwind-kiosk')
 
                 applicationService.updateApplicationVersionConfigurations(request, function (response) {
                     if (response.status === 'OK') {
+                        alertService.success(localization.localize('form.application.version.configurations.saved'));
                         $modalInstance.close();
                     } else {
                         $scope.loading = false;
                         $scope.errorMessage = localization.localizeServerResponse(response);
+                        alertService.error($scope.errorMessage);
                     }
-                }, alertService.onRequestFailure);
+                }, function () {
+                    $scope.loading = false;
+                    alertService.error(localization.localize('error.request.failure'));
+                });
             };
 
             $scope.closeModal = function () {

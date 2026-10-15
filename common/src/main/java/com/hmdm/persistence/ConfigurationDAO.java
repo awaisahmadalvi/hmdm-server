@@ -40,6 +40,7 @@ import com.hmdm.persistence.domain.ConfigurationFile;
 import com.hmdm.persistence.mapper.ApplicationMapper;
 import com.hmdm.persistence.domain.ConfigurationApplicationParameters;
 import com.hmdm.persistence.mapper.ConfigurationMapper;
+import com.hmdm.security.SecurityContext;
 import com.hmdm.security.SecurityException;
 import com.hmdm.util.CryptoUtil;
 import org.mybatis.guice.transactional.Transactional;
@@ -95,6 +96,24 @@ public class ConfigurationDAO extends AbstractLinkedDAO<Configuration, Applicati
         Configuration c = getSingleRecordWithCurrentUser(currentUser ->
                 this.mapper.checkConfigurationAccess(currentUser.getCustomerId(), currentUser.getId(), configurationId));
         return c != null;
+    }
+
+    /**
+     * <p>Sets the display-only environment marker (null, TESTING or PRODUCTION) of a configuration of the current
+     * user's customer. Touches no other column and doesn't notify devices.</p>
+     */
+    public void updateConfigurationEnvironment(int configurationId, String environment) {
+        SecurityContext.get().getCurrentUser().ifPresent(user ->
+                this.mapper.updateConfigurationEnvironment(configurationId, user.getCustomerId(), environment));
+    }
+
+    /**
+     * <p>Sets the reporting-only main app (an application ID, or null) of a configuration of the current
+     * user's customer. Touches no other column and doesn't notify devices.</p>
+     */
+    public void updateConfigurationMainActiveApp(int configurationId, Integer applicationId) {
+        SecurityContext.get().getCurrentUser().ifPresent(user ->
+                this.mapper.updateConfigurationMainActiveApp(configurationId, user.getCustomerId(), applicationId));
     }
 
     public void insertConfiguration(Configuration config) {

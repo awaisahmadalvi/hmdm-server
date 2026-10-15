@@ -153,6 +153,17 @@ public class DeviceDAO extends AbstractDAO<Device> {
         return new PaginatedData<>(devices, totalItemsCount);
     }
 
+    /**
+     * <p>Device counts by status for the Devices page summary tiles, for the devices the current user may
+     * see (same access rules as {@link #getAllDevices(DeviceSearchRequest)}), optionally limited to a group
+     * and/or configuration. One aggregate query; no device rows are loaded.</p>
+     */
+    public DeviceStatusSummary getDeviceStatusSummary(Integer groupId, Integer configurationId) {
+        return SecurityContext.get().getCurrentUser()
+                .map(user -> this.mapper.getDeviceStatusSummary(user.getCustomerId(), user.getId(), groupId, configurationId))
+                .orElse(new DeviceStatusSummary());
+    }
+
     public List<Device> getDeviceIdsByConfigurationId(int configurationId) {
         return getList(customerId -> this.mapper.getDeviceIdsByConfigurationId(customerId, configurationId));
     }

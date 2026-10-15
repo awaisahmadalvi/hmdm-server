@@ -75,10 +75,46 @@ angular.module('headwind-kiosk',
         };
 
     })
+    // State definition for a signed-in page that isn't one of the main nav's
+    // own tabs (Profile, Updates, a plugin's detail page, ...). The main nav
+    // is content.html's <tabset> (TabController) - a route with its own
+    // top-level templateUrl never renders it, which is how the nav went
+    // missing on the Configuration editor, the Versions page and Profile,
+    // one route at a time. This renders the page inside content.html instead,
+    // in its hidden PAGE tab (so no nav item is marked active); the page
+    // template names its own controller with ng-controller. Usage:
+    //   $stateProvider.state('name', appShellPage('/url', 'path/page.html', {extra state props}))
+    // A page under the Settings or Functions menu (e.g. a plugin's detail
+    // page) passes {data: {navSection: 'settings' | 'functions'}} to keep
+    // that menu marked active.
+    // Injectable into .config() blocks (plugin modules too). The run block
+    // below logs an error for any signed-in route that still skips the shell.
+    .constant("appShellPage", function (url, pageTemplate, extra) {
+        var state = {
+            url: url,
+            templateUrl: 'app/components/main/view/content.html',
+            controller: 'TabController',
+            data: {pageTemplate: pageTemplate},
+            resolve: {
+                openTab: function () {
+                    return 'PAGE';
+                }
+            }
+        };
+        extra = angular.extend({}, extra || {});
+        if (extra.data) {
+            state.data = angular.extend({}, extra.data, state.data);
+            delete extra.data;
+        }
+        return angular.extend(state, extra);
+    })
     .constant("localizeText", function (locale, key) {
         var value = document.localization[locale][key];
         if (!value) {
 //            console.error('Message key ', key, ' is missing from I18N resource bundle for locale ', locale);
+            // Not translated into this language (yet): English rather than
+            // the raw key
+            value = document.localization['en_US'] && document.localization['en_US'][key];
         }
         return value ? value : key;
     })
@@ -95,7 +131,8 @@ angular.module('headwind-kiosk',
                 return $delegate;
             }]);
     }])
-    .config(function ($stateProvider, $locationProvider, $urlRouterProvider, getBrowserLanguageProvider, localizeText) {
+    .config(function ($stateProvider, $locationProvider, $urlRouterProvider, getBrowserLanguageProvider, localizeText,
+                     appShellPage) {
         $locationProvider.hashPrefix('');
         $urlRouterProvider.otherwise('/');
 
@@ -323,16 +360,11 @@ angular.module('headwind-kiosk',
                 templateUrl: 'app/components/main/view/login.html',
                 controller: 'LoginController'
             })
-            .state('profile', {
-                url: '/profile',
-                templateUrl: 'app/components/main/view/profile.html',
-                controller: 'ProfileController'
-            })
-            .state('updates', {
-                url: '/updates',
-                templateUrl: 'app/components/main/view/updates.html',
-                controller: 'UpdatesController'
-            })
+            // Inside the app shell (main nav) - see appShellPage above;
+            // ProfileController / UpdatesController are ng-controllers in the
+            // page templates themselves
+            .state('profile', appShellPage('/profile', 'app/components/main/view/profile.html'))
+            .state('updates', appShellPage('/updates', 'app/components/main/view/updates.html'))
             .state('control-panel', {
                 url: '/control-panel',
                 templateUrl: 'app/components/control-panel/view/panel.html',
@@ -528,6 +560,23 @@ angular.module('headwind-kiosk',
                    $window, $transitions, rebranding, Idle) {
         $rootScope.$state = $state;
         $rootScope.$stateParams = $stateParams;
+
+        // Guard for appShellPage (above): every signed-in route must render
+        // inside content.html, the app shell with the main nav. Routes that
+        // are deliberately outside it: the public/pre-login pages and the
+        // super-admin Control panel (its own Customers tab bar). Anything
+        // else - e.g. a new route, or a plugin's - is reported loudly instead
+        // of silently shipping a page without the nav.
+        var ROUTES_WITHOUT_MAIN_NAV = ['login', 'qr', 'passwordReset', 'passwordRecovery', 'twoFactorAuth', 'signup',
+            'signupComplete', 'control-panel'];
+        $transitions.onSuccess({}, function (trans) {
+            var to = trans.to();
+            if (ROUTES_WITHOUT_MAIN_NAV.indexOf(to.name) === -1 && authService.isLoggedIn() &&
+                to.templateUrl !== 'app/components/main/view/content.html') {
+                console.error('[main nav] Route "' + to.name + '" renders without the app shell, so it has no main nav - ' +
+                    'declare it with appShellPage() (app/app.js)');
+            }
+        });
 
         var initIdleLogout = function() {
             var user = authService.getUser();

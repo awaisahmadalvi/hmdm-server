@@ -21,7 +21,9 @@
 
 package com.hmdm.rest.resource;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -68,6 +70,9 @@ import io.swagger.annotations.Authorization;
 public class ConfigurationResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigurationResource.class);
+
+    private static final String ENVIRONMENT_TESTING = "TESTING";
+    private static final String ENVIRONMENT_PRODUCTION = "PRODUCTION";
 
     private ConfigurationDAO configurationDAO;
     private ApplicationDAO applicationDAO;
@@ -126,6 +131,91 @@ public class ConfigurationResource {
                 .map(configuration -> new LookupItem(configuration.getId(), configuration.getName()))
                 .collect(Collectors.toList());
         return Response.OK(items);
+    }
+
+    // =================================================================================================================
+    @ApiOperation(value = "Get configuration environments", notes = "Gets the display-only environment marker " +
+            "(TESTING / PRODUCTION) of every available configuration that has one, as a map of configuration ID to value")
+    @GET
+    @Path("/environments")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getConfigurationEnvironments() {
+        // Same audience as /list (configuration names): the Devices page uses it next to that list
+        Map<Integer, String> environments = new HashMap<>();
+        this.configurationDAO.getAllConfigurations().forEach(c -> {
+            if (c.getEnvironment() != null) {
+                environments.put(c.getId(), c.getEnvironment());
+            }
+        });
+        return Response.OK(environments);
+    }
+
+    // =================================================================================================================
+    @ApiOperation(value = "Set configuration environment", notes = "Sets the display-only environment marker of a " +
+            "configuration: {\"environment\": \"TESTING\" | \"PRODUCTION\" | null}. Changes nothing else and doesn't " +
+            "notify devices; the value is never sent to devices.")
+    @PUT
+    @Path("/{id}/environment")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateConfigurationEnvironment(@PathParam("id") Integer id, Map<String, String> request) {
+        if (!SecurityContext.get().hasPermission("configurations") ||
+                !configurationDAO.hasConfigurationAccess(id)) {
+            log.error("Unauthorized attempt to set the environment of the configuration " + id +
+                    " by user " + SecurityContext.get().getCurrentUserName());
+            return Response.PERMISSION_DENIED();
+        }
+        String environment = request != null ? request.get("environment") : null;
+        if (environment != null && environment.isEmpty()) {
+            environment = null;
+        }
+        if (environment != null && !ENVIRONMENT_TESTING.equals(environment) && !ENVIRONMENT_PRODUCTION.equals(environment)) {
+            return Response.ERROR("error.configuration.environment.invalid");
+        }
+        try {
+            this.configurationDAO.updateConfigurationEnvironment(id, environment);
+            log.info("Configuration " + id + " environment set to " + environment + " by user "
+                    + SecurityContext.get().getCurrentUserName());
+            return Response.OK();
+        } catch (Exception e) {
+            log.error("Unexpected error when setting the environment of the configuration " + id, e);
+            return Response.INTERNAL_ERROR();
+        }
+    }
+
+    // =================================================================================================================
+    @ApiOperation(value = "Set configuration main app", notes = "Sets the reporting-only main app of a configuration: " +
+            "{\"applicationId\": <ID of an application in the configuration> | null}. Changes nothing else and doesn't " +
+            "notify devices; the value is never sent to devices.")
+    @PUT
+    @Path("/{id}/main-active-app")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateConfigurationMainActiveApp(@PathParam("id") Integer id, Map<String, Integer> request) {
+        if (!SecurityContext.get().hasPermission("configurations") ||
+                !configurationDAO.hasConfigurationAccess(id)) {
+            log.error("Unauthorized attempt to set the main app of the configuration " + id +
+                    " by user " + SecurityContext.get().getCurrentUserName());
+            return Response.PERMISSION_DENIED();
+        }
+        Integer applicationId = request != null ? request.get("applicationId") : null;
+        try {
+            if (applicationId != null) {
+                // Only an application that is part of this configuration
+                boolean inConfiguration = this.configurationDAO.getConfigurationApplications(id).stream()
+                        .anyMatch(app -> app.isSelected() && applicationId.equals(app.getId()));
+                if (!inConfiguration) {
+                    return Response.ERROR("error.configuration.main.app.invalid");
+                }
+            }
+            this.configurationDAO.updateConfigurationMainActiveApp(id, applicationId);
+            log.info("Configuration " + id + " main app set to " + applicationId + " by user "
+                    + SecurityContext.get().getCurrentUserName());
+            return Response.OK();
+        } catch (Exception e) {
+            log.error("Unexpected error when setting the main app of the configuration " + id, e);
+            return Response.INTERNAL_ERROR();
+        }
     }
 
     // =================================================================================================================

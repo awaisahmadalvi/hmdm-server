@@ -65,6 +65,7 @@ public interface UserRoleSettingsMapper {
                     "columnDisplayedCustom1," +
                     "columnDisplayedCustom2," +
                     "columnDisplayedCustom3," +
+                    "columnDisplayedMainAppVersion," +
                     "roleId," +
                     "customerId" +
                     ") VALUES (" +
@@ -92,6 +93,7 @@ public interface UserRoleSettingsMapper {
                     "#{columnDisplayedCustom1}," +
                     "#{columnDisplayedCustom2}," +
                     "#{columnDisplayedCustom3}," +
+                    "#{columnDisplayedMainAppVersion}," +
                     "#{roleId}," +
                     "#{customerId}" +
                     ") " +
@@ -120,7 +122,8 @@ public interface UserRoleSettingsMapper {
                     "columnDisplayedPublicIp = EXCLUDED.columnDisplayedPublicIp, " +
                     "columnDisplayedCustom1 = EXCLUDED.columnDisplayedCustom1, " +
                     "columnDisplayedCustom2 = EXCLUDED.columnDisplayedCustom2, " +
-                    "columnDisplayedCustom3 = EXCLUDED.columnDisplayedCustom3"
+                    "columnDisplayedCustom3 = EXCLUDED.columnDisplayedCustom3, " +
+                    "columnDisplayedMainAppVersion = EXCLUDED.columnDisplayedMainAppVersion"
     })
     void saveUserRoleCommonSettings(UserRoleSettings settings);
 }

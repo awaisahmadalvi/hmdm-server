@@ -21,8 +21,29 @@
 
 // Localization completed
 angular.module('headwind-kiosk')
+    // Shared plugin metadata (Settings -> Plugins page, About dialog).
+    // Small config mapping a plugin's stable string identifier to a
+    // representative icon and one-line description. The Functions menu
+    // itself shows no icons to copy (checked content.html), so these
+    // were chosen to match what each plugin's own page actually does.
+    // "xtra" (shows up here as "More plugins...") is a real, permission-
+    // gated plugin with its own Functions-menu entry and ui-router
+    // state (plugin-xtra) - mechanically identical to the others, so it
+    // keeps its toggle - but its actual page is a Premium-upsell/
+    // browse-more-plugins page, not a device-management feature, so
+    // it's called out visually instead of given an invented feature
+    // description; its real API-provided description is used instead.
+    // Unknown future plugins fall back the same way.
+    .constant('PLUGIN_META', {
+        audit: {icon: 'glyphicon-list-alt', descriptionKey: 'form.settings.plugins.desc.audit'},
+        deviceinfo: {icon: 'glyphicon-info-sign', descriptionKey: 'form.settings.plugins.desc.deviceinfo'},
+        devicelog: {icon: 'glyphicon-list', descriptionKey: 'form.settings.plugins.desc.devicelog'},
+        messaging: {icon: 'glyphicon-comment', descriptionKey: 'form.settings.plugins.desc.messaging'},
+        push: {icon: 'glyphicon-send', descriptionKey: 'form.settings.plugins.desc.push'},
+        xtra: {icon: 'glyphicon-star', browseMore: true}
+    })
     .controller('PluginsTabController', function ($scope, $rootScope, $timeout, $state,
-                                                   localization, pluginService) {
+                                                   localization, pluginService, PLUGIN_META) {
         $scope.loading = false;
         $scope.savingPlugins = false;
         $scope.pluginsToast = null;
@@ -44,26 +65,6 @@ angular.module('headwind-kiosk')
             }, 3000);
         };
 
-        // Small config mapping a plugin's stable string identifier to a
-        // representative icon and one-line description. The Functions menu
-        // itself shows no icons to copy (checked content.html), so these
-        // were chosen to match what each plugin's own page actually does.
-        // "xtra" (shows up here as "More plugins...") is a real, permission-
-        // gated plugin with its own Functions-menu entry and ui-router
-        // state (plugin-xtra) - mechanically identical to the others, so it
-        // keeps its toggle - but its actual page is a Premium-upsell/
-        // browse-more-plugins page, not a device-management feature, so
-        // it's called out visually instead of given an invented feature
-        // description; its real API-provided description is used instead.
-        // Unknown future plugins fall back the same way.
-        var PLUGIN_META = {
-            audit: {icon: 'glyphicon-list-alt', descriptionKey: 'form.settings.plugins.desc.audit'},
-            deviceinfo: {icon: 'glyphicon-info-sign', descriptionKey: 'form.settings.plugins.desc.deviceinfo'},
-            devicelog: {icon: 'glyphicon-list', descriptionKey: 'form.settings.plugins.desc.devicelog'},
-            messaging: {icon: 'glyphicon-comment', descriptionKey: 'form.settings.plugins.desc.messaging'},
-            push: {icon: 'glyphicon-send', descriptionKey: 'form.settings.plugins.desc.push'},
-            xtra: {icon: 'glyphicon-star', browseMore: true}
-        };
 
         $scope.pluginIcon = function (plugin) {
             var meta = PLUGIN_META[plugin.identifier];

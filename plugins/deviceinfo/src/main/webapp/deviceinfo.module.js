@@ -130,7 +130,7 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
 
         return data;
     })
-    .config(function ($stateProvider) {
+    .config(function ($stateProvider, appShellPage) {
         try {
             $stateProvider.state('plugin-deviceinfo', {
                 url: "/" + 'plugin-deviceinfo/{deviceNumber}',
@@ -157,15 +157,16 @@ angular.module('plugin-deviceinfo', ['ngResource', 'ui.bootstrap', 'ui.router', 
         }
 
         try {
-            $stateProvider.state('plugin-deviceinfo-dynamic', {
-                url: "/" + 'plugin-deviceinfo-dynamic/{deviceNumber}',
-                templateUrl: 'app/components/plugins/deviceinfo/views/dynamic.html',
-                controller: 'PluginDeviceDynamicInfoController',
-                ncyBreadcrumb: {
-                    label: '{{"breadcrumb.plugin.deviceinfo.dynamic.main" | localize}}', //label to show in breadcrumbs
-                    parent: 'plugin-deviceinfo'
-                },
-            });
+            // Inside the app shell, so the main nav shows (appShellPage, app.js);
+            // PluginDeviceDynamicInfoController is an ng-controller in dynamic.html
+            $stateProvider.state('plugin-deviceinfo-dynamic', appShellPage("/" + 'plugin-deviceinfo-dynamic/{deviceNumber}',
+                'app/components/plugins/deviceinfo/views/dynamic.html', {
+                    data: {navSection: 'functions'},
+                    ncyBreadcrumb: {
+                        label: '{{"breadcrumb.plugin.deviceinfo.dynamic.main" | localize}}', //label to show in breadcrumbs
+                        parent: 'plugin-deviceinfo'
+                    }
+                }));
         } catch (e) {
             console.log('An error when adding state ' + 'plugin-deviceinfo-dynamic', e);
         }

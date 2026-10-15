@@ -391,6 +391,7 @@
   }
   .login-form-panel {
     flex: 1 1 100%;
+    min-width: 0; /* lets .login-form-inner's max-width: 100% shrink it on phones instead of widening the page */
   }
 }
 

@@ -3,6 +3,8 @@ angular.module('headwind-kiosk')
     .factory('deviceService', function ($resource) {
         return $resource('', {}, {
             getAllDevices: {url: 'rest/private/devices/search', method: 'POST'},
+            // Devices page summary tiles: counts only (one aggregate query on the server)
+            getStatusSummary: {url: 'rest/private/devices/summary', method: 'GET'},
             updateDevice: {url: 'rest/private/devices', method: 'PUT'},
             updateDeviceDesc: {url: 'rest/private/devices/:id/description', method: 'POST'},
             removeDevice: {url: 'rest/private/devices/:id', method: 'DELETE'},
@@ -46,7 +48,31 @@ angular.module('headwind-kiosk')
             upgradeConfigurationApplication: {url: 'rest/private/configurations/:id/application/:appId/upgrade', method: 'PUT'},
             removeConfiguration: {url: 'rest/private/configurations/:id', method: 'DELETE'},
             getApplications: {url: 'rest/private/configurations/applications/:id', method: 'GET'},
+            // Display-only environment marker (TESTING / PRODUCTION / null): its own endpoints,
+            // never part of updateConfiguration and never sent to devices
+            getEnvironments: {url: 'rest/private/configurations/environments', method: 'GET'},
+            setEnvironment: {url: 'rest/private/configurations/:id/environment', method: 'PUT'},
+            // Reporting-only main app (an application ID or null): same rules as the environment
+            setMainActiveApp: {url: 'rest/private/configurations/:id/main-active-app', method: 'PUT'},
         });
+    })
+    // Presentation of the configuration environment marker, shared by the Configurations page,
+    // the configuration editor and the Devices table. Colors: --env-production / --env-testing
+    // (dashboard.css).
+    .factory('configEnvironment', function (localization) {
+        var KEYS = {PRODUCTION: 'production', TESTING: 'testing'};
+        return {
+            values: ['PRODUCTION', 'TESTING'],
+            key: function (environment) {
+                return KEYS[environment] || null;
+            },
+            label: function (environment) {
+                return KEYS[environment] ? localization.localize('config.env.' + KEYS[environment]) : '';
+            },
+            tooltip: function (environment) {
+                return KEYS[environment] ? localization.localize('config.env.' + KEYS[environment] + '.tooltip') : '';
+            }
+        };
     })
     .factory('customerService', function ($resource) {
         return $resource('', {}, {

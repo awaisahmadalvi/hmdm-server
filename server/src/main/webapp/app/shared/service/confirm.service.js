@@ -22,7 +22,7 @@ angular.module('headwind-kiosk')
 
                 modalInstance.result.then(function () {
                     if (callback) callback();
-                });
+                }, angular.noop); // Cancel/Esc/backdrop dismisses - not an error
             }
         }
     })
